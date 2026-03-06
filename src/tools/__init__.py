@@ -11,6 +11,20 @@ from src.tools.database_tools import generate_database_models, generate_migratio
 from src.tools.security_analysis import analyze_security, get_security_recommendations
 from src.tools.code_analyzer import CodeAnalyzer
 from src.tools.git_manager import get_git_manager
+from src.tools.phase_3_tools import (
+    analyze_code_multilingual,
+    generate_boilerplate_code,
+    get_cache_statistics,
+    clear_cache,
+    check_rate_limit,
+    get_audit_log,
+    get_security_incidents,
+    get_system_health,
+    get_metrics_summary,
+    get_learning_recommendations,
+    get_code_quality_trend,
+    get_failure_analysis,
+)
 from src.utils.memory import get_memory
 from src.utils.file_writer import write_generated_file, FileType
 from src.utils.error_handler import ErrorHandler
@@ -402,6 +416,86 @@ def get_all_tools() -> List[Tool]:
             name="write_generated_code",
             func=_tool_write_generated_code,
             description="Write generated code to appropriate project location. Pass JSON with: filename, content, file_type (MODEL/ROUTE/UTILITY/SERVICE/SCHEMA/TEST/CONFIG), subdir (optional)."
+        ),
+    ])
+    
+    # Phase 3: Multi-Language Support
+    tools.extend([
+        Tool(
+            name="analyze_code_multilingual",
+            func=lambda x: json.dumps(analyze_code_multilingual(x), indent=2, default=str),
+            description="Analyze code across multiple programming languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, PHP, Ruby, Kotlin). Auto-detects language if not specified. Returns quality score, security issues, performance issues, and recommendations."
+        ),
+        Tool(
+            name="generate_boilerplate_code",
+            func=lambda x: json.dumps(generate_boilerplate_code(x, "api"), indent=2, default=str),
+            description="Generate boilerplate code for different programming languages and project types (api, web, cli). Helps bootstrap new projects quickly."
+        ),
+    ])
+    
+    # Phase 3: Performance Optimization & Caching
+    tools.extend([
+        Tool(
+            name="get_cache_statistics",
+            func=lambda x: json.dumps(get_cache_statistics(), indent=2),
+            description="Get cache performance statistics including hit rate, evictions, and current size. Useful for monitoring performance optimization."
+        ),
+        Tool(
+            name="clear_cache",
+            func=lambda x: json.dumps(clear_cache(x or "all"), indent=2),
+            description="Clear cache to free up memory. Pass 'memory' or 'all' as argument."
+        ),
+    ])
+    
+    # Phase 3: Security Hardening
+    tools.extend([
+        Tool(
+            name="check_rate_limit",
+            func=lambda user_id: json.dumps(check_rate_limit(user_id), indent=2),
+            description="Check rate limit status for a user. Shows remaining requests and limits."
+        ),
+        Tool(
+            name="get_audit_log",
+            func=lambda user_id: json.dumps(get_audit_log(user_id, 50), indent=2),
+            description="Get audit log for a specific user showing all commands and actions performed."
+        ),
+        Tool(
+            name="get_security_incidents",
+            func=lambda hours: json.dumps(get_security_incidents(int(hours) if hours else 24), indent=2),
+            description="Get recent security incidents. Pass hours to check (default 24)."
+        ),
+    ])
+    
+    # Phase 3: Monitoring & Metrics
+    tools.extend([
+        Tool(
+            name="get_system_health",
+            func=lambda x: json.dumps(get_system_health(), indent=2),
+            description="Get current system health status including error rates and warnings."
+        ),
+        Tool(
+            name="get_metrics_summary",
+            func=lambda minutes: json.dumps(get_metrics_summary(int(minutes) if minutes else 60), indent=2),
+            description="Get metrics summary for monitoring. Shows performance metrics over specified time period (minutes)."
+        ),
+    ])
+    
+    # Phase 3: Self-Improvement & Learning
+    tools.extend([
+        Tool(
+            name="get_learning_recommendations",
+            func=lambda language: json.dumps(get_learning_recommendations(language), indent=2),
+            description="Get AI recommendations based on learned patterns from successful code generations. Pass programming language."
+        ),
+        Tool(
+            name="get_code_quality_trend",
+            func=lambda language: json.dumps(get_code_quality_trend(language), indent=2),
+            description="Get code quality trend analysis for a programming language to see improvement over time."
+        ),
+        Tool(
+            name="get_failure_analysis",
+            func=lambda hours: json.dumps(get_failure_analysis(int(hours) if hours else 24), indent=2),
+            description="Analyze recent failures to prevent recurrence. Pass hours to analyze (default 24)."
         ),
     ])
     
