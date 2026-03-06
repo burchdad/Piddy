@@ -24,3 +24,19 @@ cryptography==41.0.7
 requests==2.31.0
 numpy==1.24.3
 
+# Phase 5 Dependencies - MLOps & Observability
+prometheus-client>=0.15.0
+opentelemetry-api>=1.15.0
+opentelemetry-sdk>=1.15.0
+opentelemetry-exporter-prometheus>=0.36b0
+opentelemetry-exporter-jaeger>=1.15.0
+scikit-learn>=1.2.0
+tensorflow>=2.11.0
+torch>=1.13.0
+pandas>=1.5.0
+mlflow>=2.0.0
+PyYAML>=6.0
+pykube-ng>=21.0.0
+docker>=6.0.0
+boto3>=1.26.0
+
