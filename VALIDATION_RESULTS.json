@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-03-06T14:57:51.585670",
+  "validation_run": "PIDDY_AUTONOMOUS_SYSTEM_VALIDATION",
+  "tests_run": 3,
+  "test_results": {
+    "test_validation_dead_code_standalone.py": {
+      "status": "success",
+      "returncode": 0,
+      "metrics": {
+        "test_name": "Dead Code Removal Validation",
+        "metrics": {
+          "identified_dead_code": 0,
+          "successful_removals": 0,
+          "false_positives": 0,
+          "false_positive_rate_pct": "0.00%"
+        },
+        "validation_checks": {
+          "compilation_success": true,
+          "tests_passing": true,
+          "false_positive_acceptable": true,
+          "average_confidence": "80.83%"
+        },
+        "pass_fail": "FAIL",
+        "summary": "Dead code cleanup mission executed. Confidence: 80.83%. Tests passing. Compilation: success."
+      },
+      "outcome": "FAIL",
+      "summary": "Dead code cleanup mission executed. Confidence: 80.83%. Tests passing. Compilation: success."
+    },
+    "test_validation_refactor_standalone.py": {
+      "status": "failed",
+      "returncode": 1,
+      "metrics": {
+        "test_name": "Refactor Safety (Service Extraction)",
+        "compilation": {
+          "status": "PASS"
+        },
+        "safety_checks": {
+          "contract_violations": 0,
+          "type_violations": 0,
+          "imports_valid": true,
+          "overall": "PASS"
+        },
+        "overall": {
+          "confidence": "37.50%",
+          "status": "FAIL"
+        },
+        "summary": "Compilation: True | Contract violations: 0 | Type violations: 0 | Confidence: 37.50%"
+      },
+      "summary": "Compilation: True | Contract violations: 0 | Type violations: 0 | Confidence: 37.50%",
+      "overall": {
+        "confidence": "37.50%",
+        "status": "FAIL"
+      }
+    },
+    "test_validation_change_selection_standalone.py": {
+      "status": "success",
+      "returncode": 0,
+      "metrics": {
+        "test_name": "Change-Based Test Selection",
+        "statistics": {
+          "total_tests": 18,
+          "selected_tests": 6,
+          "reduction_pct": "66.7%"
+        },
+        "ci_impact": {
+          "estimated_time_saved_pct": "66.7%",
+          "example": "Run ~6 of 18 tests"
+        },
+        "status": "PASS",
+        "summary": "Selected 6/18 tests (66.7% reduction). Estimated CI savings: 66.7%"
+      },
+      "summary": "Selected 6/18 tests (66.7% reduction). Estimated CI savings: 66.7%"
+    }
+  },
+  "overall_status": "PARTIAL",
+  "critical_metrics": {
+    "tests_executed": 3,
+    "tests_passed": 2,
+    "pass_rate": "66.7%",
+    "system_readiness": "NEEDS_WORK"
+  },
+  "recommendations": [
+    "Some validation tests failed. Review error logs and address issues."
+  ]
+}

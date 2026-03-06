@@ -23,6 +23,12 @@ class AgentRole(str, Enum):
     DEVOPS_ENGINEER = "devops_engineer"
     DATA_ENGINEER = "data_engineer"
     COORDINATOR = "coordinator"
+    PERFORMANCE_ANALYST = "performance_analyst"
+    TECH_DEBT_HUNTER = "tech_debt_hunter"
+    API_COMPATIBILITY = "api_compatibility"
+    DATABASE_MIGRATION = "database_migration"
+    ARCHITECTURE_REVIEWER = "architecture_reviewer"
+    COST_OPTIMIZER = "cost_optimizer"
 
 
 class TaskPriority(int, Enum):

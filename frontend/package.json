@@ -1,0 +1,35 @@
+{
+  "name": "piddy-dashboard",
+  "version": "1.0.0",
+  "description": "Real-time monitoring dashboard for the Piddy autonomous system",
+  "type": "module",
+  "main": "src/main.jsx",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite",
+    "lint": "eslint src --ext js,jsx",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.3.0",
+    "eslint": "^8.40.0",
+    "eslint-plugin-react": "^7.32.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^2.8.0",
+    "vitest": "^0.33.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^5.16.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
