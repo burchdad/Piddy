@@ -195,6 +195,83 @@ Mention Piddy in a channel or DM to request backend development tasks:
 | **Architecture** | Design patterns, system architecture blueprints |
 | **Documentation** | Technical specs, API docs, system design docs |
 
+## Background Service
+
+### Running Piddy 24/7
+
+Run Piddy as a background service that continuously listens to Slack messages:
+
+```bash
+# Start Piddy in the background
+./piddy-service.sh start
+
+# Check status
+./piddy-service.sh status
+
+# View live logs
+./piddy-service.sh logs
+
+# Stop when done
+./piddy-service.sh stop
+```
+
+### Service Management
+
+Piddy includes comprehensive background service management:
+
+**Features**:
+- ✅ Automatic restart on crash (with exponential backoff)
+- ✅ Real-time health monitoring and metrics
+- ✅ Message throughput tracking
+- ✅ Error rate monitoring
+- ✅ Memory and resource usage tracking
+- ✅ Systemd integration (auto-start on boot)
+- ✅ Process status file
+- ✅ Comprehensive logging
+
+**Health Check Endpoints**:
+```bash
+# Quick health check
+curl http://localhost:8000/health
+
+# Detailed health status
+curl http://localhost:8000/health/detailed
+
+# Performance metrics
+curl http://localhost:8000/status
+```
+
+### Systemd Service (Production)
+
+On Linux, install Piddy as a systemd service for auto-start on boot:
+
+```bash
+# Install as service
+./piddy-service.sh install-service
+
+# Enable auto-start
+sudo systemctl enable piddy@$USER
+
+# Start service
+sudo systemctl start piddy@$USER
+
+# View status
+sudo systemctl status piddy@$USER
+
+# View logs
+sudo journalctl -u piddy@$USER -f
+```
+
+### Full Documentation
+
+See **[BACKGROUND_SERVICE.md](BACKGROUND_SERVICE.md)** for:
+- Complete setup instructions
+- Service commands reference
+- Health monitoring & alerts
+- Troubleshooting guide
+- Docker & Kubernetes deployment
+- Multiple instance setup
+
 ## Development
 
 ### Running Tests

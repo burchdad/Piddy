@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 import logging
 
 from config.settings import get_settings, setup_logging
@@ -78,6 +79,32 @@ def create_app() -> FastAPI:
             logger.info("✅ Slack Socket Mode listener stopped")
         except Exception as e:
             logger.debug(f"Slack listener cleanup: {str(e)}")
+    
+    # Health check endpoints
+    @app.get("/health")
+    async def health():
+        """Health check endpoint."""
+        from src.service.health_check import check_health
+        health_status = check_health()
+        return {
+            "status": health_status.status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "checks": health_status.checks,
+        }
+    
+    @app.get("/health/detailed")
+    async def health_detailed():
+        """Detailed health check with metrics."""
+        from src.service.health_check import get_status
+        return get_status()
+    
+    @app.get("/status")
+    async def status():
+        """Service status endpoint."""
+        from src.service.health_check import get_monitor
+        monitor = get_monitor()
+        status_dict = monitor.get_status_dict()
+        return status_dict
     
     return app
 
