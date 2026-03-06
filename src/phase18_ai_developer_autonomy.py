@@ -287,7 +287,7 @@ class CodebaseAnalyzer:
 
     def analyze_codebase(self, depth: AnalysisDepth = AnalysisDepth.MEDIUM) -> Dict[str, Any]:
         """Analyze entire codebase"""
-        Python_files = self._find_code_files()
+        python_files = self._find_code_files()
 
         for py_file in python_files:
             self._analyze_file(py_file)
