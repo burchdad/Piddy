@@ -25,6 +25,27 @@ from src.tools.phase_3_tools import (
     get_code_quality_trend,
     get_failure_analysis,
 )
+from src.tools.phase_4_tools import (
+    get_cache_statistics as get_redis_cache_stats,
+    clear_cache_namespace,
+    get_cache_entry,
+    set_cache_entry,
+    detect_code_patterns,
+    get_pattern_recommendations,
+    learn_from_code,
+    encrypt_sensitive_data,
+    decrypt_sensitive_data,
+    auto_encrypt_config,
+    get_encryption_key_fingerprint,
+    submit_task_to_agent_pool,
+    get_agent_pool_status,
+    register_ai_agent,
+    get_agent_recommendations,
+    trigger_ci_pipeline,
+    get_ci_build_metrics,
+    get_ci_pipeline_status,
+    verify_ci_webhook,
+)
 from src.utils.memory import get_memory
 from src.utils.file_writer import write_generated_file, FileType
 from src.utils.error_handler import ErrorHandler
@@ -496,6 +517,121 @@ def get_all_tools() -> List[Tool]:
             name="get_failure_analysis",
             func=lambda hours: json.dumps(get_failure_analysis(int(hours) if hours else 24), indent=2),
             description="Analyze recent failures to prevent recurrence. Pass hours to analyze (default 24)."
+        ),
+    ])
+    
+    # Phase 4: Distributed Caching (Redis)
+    tools.extend([
+        Tool(
+            name="get_redis_cache_stats",
+            func=lambda x: json.dumps(get_redis_cache_stats(), indent=2),
+            description="Get distributed Redis cache statistics including memory usage, connections, and throughput."
+        ),
+        Tool(
+            name="clear_cache_namespace",
+            func=lambda namespace: json.dumps(clear_cache_namespace(namespace or "default"), indent=2),
+            description="Clear all cache entries in a specific namespace. Useful for invalidating categories of cached data."
+        ),
+        Tool(
+            name="get_cache_entry",
+            func=lambda x: json.dumps(get_cache_entry(x.get('key', '') if isinstance(x, dict) else x, x.get('namespace', 'default') if isinstance(x, dict) else 'default'), indent=2),
+            description="Retrieve a specific cache entry by key. Pass JSON with: key, namespace (optional)."
+        ),
+        Tool(
+            name="set_cache_entry",
+            func=lambda x: json.dumps(set_cache_entry(x.get('key', ''), x.get('value') if isinstance(x, dict) else None, x.get('ttl', 3600) if isinstance(x, dict) else 3600, x.get('namespace', 'default') if isinstance(x, dict) else 'default'), indent=2),
+            description="Set a cache entry with custom TTL. Pass JSON with: key, value, ttl (seconds), namespace (optional)."
+        ),
+    ])
+    
+    # Phase 4: ML Pattern Detection
+    tools.extend([
+        Tool(
+            name="detect_code_patterns",
+            func=lambda x: json.dumps(detect_code_patterns(x.get('code', '') if isinstance(x, dict) else x, x.get('language', 'python') if isinstance(x, dict) else 'python'), indent=2, default=str),
+            description="Use ML to detect patterns, anti-patterns, and optimization opportunities in code. Pass JSON with: code, language (optional, default python)."
+        ),
+        Tool(
+            name="get_pattern_recommendations",
+            func=lambda language: json.dumps(get_pattern_recommendations(language or "python"), indent=2, default=str),
+            description="Get AI-driven recommendations based on learned code patterns. Pass programming language."
+        ),
+        Tool(
+            name="learn_from_code",
+            func=lambda x: json.dumps(learn_from_code(x.get('code', ''), x.get('language', ''), x.get('outcome', ''), x.get('metadata') if isinstance(x, dict) else {}), indent=2),
+            description="Teach ML system from successful/failed code patterns. Pass JSON with: code, language, outcome (success/failure), metadata (optional)."
+        ),
+    ])
+    
+    # Phase 4: At-Rest Encryption
+    tools.extend([
+        Tool(
+            name="encrypt_sensitive_data",
+            func=lambda x: json.dumps(encrypt_sensitive_data(x), indent=2),
+            description="Encrypt sensitive data using AES-128 authenticated encryption. Pass data to encrypt (JSON serializable)."
+        ),
+        Tool(
+            name="decrypt_sensitive_data",
+            func=lambda x: json.dumps(decrypt_sensitive_data(x.get('encrypted_data', '') if isinstance(x, dict) else x, x.get('return_type', 'auto') if isinstance(x, dict) else 'auto'), indent=2),
+            description="Decrypt encrypted data. Pass JSON with: encrypted_data, return_type (optional)."
+        ),
+        Tool(
+            name="auto_encrypt_config",
+            func=lambda x: json.dumps(auto_encrypt_config(x), indent=2),
+            description="Automatically encrypt sensitive fields in configuration (tokens, passwords, keys, etc)."
+        ),
+        Tool(
+            name="get_encryption_key_fingerprint",
+            func=lambda x: json.dumps(get_encryption_key_fingerprint(), indent=2),
+            description="Get fingerprint of current encryption key for verification and auditing."
+        ),
+    ])
+    
+    # Phase 4: Multi-Agent Coordination
+    tools.extend([
+        Tool(
+            name="submit_task_to_agent_pool",
+            func=lambda x: json.dumps(submit_task_to_agent_pool(x.get('task_type', '') if isinstance(x, dict) else '', x.get('description', '') if isinstance(x, dict) else '', x.get('priority', 2) if isinstance(x, dict) else 2, x.get('required_role') if isinstance(x, dict) else None, x.get('required_capabilities') if isinstance(x, dict) else None, x.get('metadata') if isinstance(x, dict) else None), indent=2),
+            description="Submit task to multi-agent coordination pool. Pass JSON with: task_type, description, priority (1-4, default 2), required_role (optional), required_capabilities (optional)."
+        ),
+        Tool(
+            name="get_agent_pool_status",
+            func=lambda x: json.dumps(get_agent_pool_status(), indent=2),
+            description="Get status of multi-agent coordination pool including agents, tasks, and metrics."
+        ),
+        Tool(
+            name="register_ai_agent",
+            func=lambda x: json.dumps(register_ai_agent(x.get('agent_name', '') if isinstance(x, dict) else x, x.get('agent_role', '') if isinstance(x, dict) else '', x.get('capabilities', []) if isinstance(x, dict) else []), indent=2),
+            description="Register new AI agent in coordination pool. Pass JSON with: agent_name, agent_role, capabilities (list)."
+        ),
+        Tool(
+            name="get_agent_recommendations",
+            func=lambda x: json.dumps(get_agent_recommendations(), indent=2),
+            description="Get optimization recommendations for agent pool performance."
+        ),
+    ])
+    
+    # Phase 4: Advanced CI/CD Integration
+    tools.extend([
+        Tool(
+            name="trigger_ci_pipeline",
+            func=lambda x: json.dumps(trigger_ci_pipeline(x.get('platform', '') if isinstance(x, dict) else '', x.get('job_name', '') if isinstance(x, dict) else '', x.get('parameters') if isinstance(x, dict) else None), indent=2),
+            description="Trigger CI/CD pipeline on specified platform. Pass JSON with: platform (github_actions, jenkins, gitlab_ci), job_name, parameters (optional)."
+        ),
+        Tool(
+            name="get_ci_build_metrics",
+            func=lambda platform: json.dumps(get_ci_build_metrics(platform or None if isinstance(platform, str) else None), indent=2),
+            description="Get CI/CD build metrics and success rates. Pass platform name or leave empty for all platforms."
+        ),
+        Tool(
+            name="get_ci_pipeline_status",
+            func=lambda x: json.dumps(get_ci_pipeline_status(), indent=2),
+            description="Get comprehensive CI/CD orchestrator status and pipeline information."
+        ),
+        Tool(
+            name="verify_ci_webhook",
+            func=lambda x: json.dumps(verify_ci_webhook(x.get('platform', '') if isinstance(x, dict) else '', x.get('payload', '') if isinstance(x, dict) else '', x.get('signature', '') if isinstance(x, dict) else '', x.get('secret', '') if isinstance(x, dict) else ''), indent=2),
+            description="Verify CI/CD webhook signature for security. Pass JSON with: platform, payload, signature, secret."
         ),
     ])
     

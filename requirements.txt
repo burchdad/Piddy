@@ -18,3 +18,9 @@ flake8==6.1.0
 mypy==1.7.1
 python-dateutil==2.8.2
 
+# Phase 4 Dependencies
+redis==5.0.1
+cryptography==41.0.7
+requests==2.31.0
+numpy==1.24.3
+
