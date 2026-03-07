@@ -65,15 +65,24 @@ if not exist "venv" (
     )
 )
 
+REM Check requirements.txt exists
+if not exist "requirements.txt" (
+    echo [ERROR] requirements.txt not found in: %cd%
+    echo [DEBUG] Current directory: %cd%
+    echo [DEBUG] Files in current directory:
+    dir /b
+    pause
+    exit /b 1
+)
+
 REM Activate venv and install requirements
 echo [*] Activating virtual environment...
 call venv\Scripts\activate.bat
 
-echo [*] Installing requirements...
-pip install --quiet -r requirements.txt
+echo [*] Installing requirements from: %cd%\requirements.txt
+pip install -r requirements.txt
 if errorlevel 1 (
     echo [ERROR] Failed to install requirements
-    echo Check that requirements.txt exists
     pause
     exit /b 1
 )
