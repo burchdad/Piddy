@@ -70,7 +70,7 @@ Question: {input}
             tools=self.tools,
             verbose=self.settings.debug,
             handle_parsing_errors=True,
-            max_iterations=10,
+            max_iterations=25,  # Increased for complex multi-step tasks
         )
         return executor
     
@@ -242,7 +242,7 @@ Question: {input}
             tools=self.tools,
             verbose=self.settings.debug,
             handle_parsing_errors=True,
-            max_iterations=10,
+            max_iterations=25,  # Increased for complex multi-step tasks
         )
         return executor
     
