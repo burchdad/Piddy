@@ -1,123 +1,165 @@
 @echo off
 REM Piddy Dashboard Full Stack Startup Script for Windows
-REM This batch script starts all necessary services for the Piddy Dashboard
+REM Robust version with logging and error handling
 
 setlocal enabledelayedexpansion
+cd /d "%~dp0"
 
-title Piddy Dashboard - Startup
+title Piddy Dashboard
 
 echo.
 echo ===============================================
-echo.
 echo 🎯 PIDDY DASHBOARD STARTUP
-echo.
 echo ===============================================
 echo.
 
 REM Check for Python
-python --version >nul 2>&1
+echo [CHECK] Looking for Python...
+where python >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python is not installed or not in PATH
-    echo Please install Python 3.11+ from https://www.python.org/
+    echo [ERROR] Python not found!
+    echo Install from: https://www.python.org/
     pause
     exit /b 1
 )
-echo [OK] Python is installed
+for /f "tokens=*" %%i in ('python --version') do set PYTHON_VER=%%i
+echo [OK] %PYTHON_VER%
 
 REM Check for Node.js
-node --version >nul 2>&1
+echo [CHECK] Looking for Node.js...
+where node >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Node.js is not installed or not in PATH
-    echo Please install Node.js from https://nodejs.org/
+    echo [ERROR] Node.js not found!
+    echo Install from: https://nodejs.org/
     pause
     exit /b 1
 )
-echo [OK] Node.js is installed
+for /f "tokens=*" %%i in ('node --version') do set NODE_VER=%%i
+echo [OK] Node %NODE_VER%
 
 REM Check for npm
-npm --version >nul 2>&1
+echo [CHECK] Looking for npm...
+where npm >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] npm is not installed or not in PATH
+    echo [ERROR] npm not found!
     pause
     exit /b 1
 )
-echo [OK] npm is installed
+for /f "tokens=*" %%i in ('npm --version') do set NPM_VER=%%i
+echo [OK] npm %NPM_VER%
 
 echo.
 echo ===============================================
-echo [1/3] Starting Piddy Backend (Port 8000)
+echo [1/3] Backend Setup
 echo ===============================================
 echo.
 
-REM Check if virtual env exists
-if not exist "venv\" (
-    echo [*] Creating Python virtual environment...
+REM Setup Python virtual environment
+if not exist "venv" (
+    echo [*] Creating virtual environment...
     python -m venv venv
-    call venv\Scripts\activate.bat
-    echo [*] Installing Python dependencies...
-    pip install -r requirements.txt
-) else (
-    call venv\Scripts\activate.bat
+    if errorlevel 1 (
+        echo [ERROR] Failed to create venv
+        pause
+        exit /b 1
+    )
 )
 
-echo [*] Starting backend server on port 8000...
-start "Piddy Backend" cmd /k "cd /d %CD% && call venv\Scripts\activate.bat && python -m src.main"
-timeout /t 3 /nobreak
+REM Activate venv and install requirements
+echo [*] Activating virtual environment...
+call venv\Scripts\activate.bat
+
+echo [*] Installing requirements...
+pip install --quiet -r requirements.txt
+if errorlevel 1 (
+    echo [ERROR] Failed to install requirements
+    echo Check that requirements.txt exists
+    pause
+    exit /b 1
+)
+
+echo [OK] Backend dependencies ready
 
 echo.
 echo ===============================================
-echo [2/3] Starting Piddy Frontend (Port 3000)
+echo [2/3] Frontend Setup
 echo ===============================================
 echo.
 
-REM Check if frontend node_modules exist
-if not exist "frontend\node_modules\" (
+REM Install frontend dependencies if needed
+if not exist "frontend\node_modules" (
     echo [*] Installing frontend dependencies...
     cd frontend
-    call npm install
+    call npm install --silent
+    if errorlevel 1 (
+        echo [ERROR] Failed to install npm packages
+        cd ..
+        pause
+        exit /b 1
+    )
+    
+    echo [*] Building frontend...
+    call npm run build
+    if errorlevel 1 (
+        echo [ERROR] Failed to build frontend
+        cd ..
+        pause
+        exit /b 1
+    )
     cd ..
+) else (
+    echo [OK] Frontend dependencies cached
+)
+
+REM Check if dist folder exists
+if not exist "frontend\dist" (
     echo [*] Building frontend...
     cd frontend
     call npm run build
     cd ..
 )
 
-echo [*] Starting frontend server on port 3000...
-start "Piddy Frontend" cmd /k "cd /d %CD%\frontend\dist && python -m http.server 3000"
-timeout /t 2 /nobreak
+echo [OK] Frontend ready
 
 echo.
 echo ===============================================
-echo [3/3] Opening Dashboard
+echo [3/3] Starting Services
 echo ===============================================
 echo.
 
-REM Wait a moment for services to start
-timeout /t 2 /nobreak
+echo [*] Starting Backend on port 8000...
+start "Piddy Backend - API Server" cmd /c "title Piddy Backend && cd /d %CD% && call venv\Scripts\activate.bat && echo. && echo Starting Piddy Backend API... && echo. && python -m src.main && pause"
+timeout /t 2
 
-echo [OK] All services started!
+echo [*] Starting Frontend on port 3000...
+start "Piddy Frontend - Dashboard" cmd /c "title Piddy Frontend && cd /d %CD%\frontend\dist && echo. && echo Starting Piddy Frontend Server... && echo Serving files from: %CD% && echo. && python -m http.server 3000 && pause"
+timeout /t 2
+
 echo.
-echo Dashboard URLs:
-echo   - Frontend:  http://localhost:3000
-echo   - Backend:   http://localhost:8000
-echo   - API Docs:  http://localhost:8000/docs
+echo ===============================================
+echo SUCCESS - All Services Started!
+echo ===============================================
 echo.
 
-echo [*] Opening dashboard in browser...
+echo Dashboard is available at:
+echo   Frontend:  http://localhost:3000
+echo   Backend:   http://localhost:8000
+echo   API Docs:  http://localhost:8000/docs
+echo.
+
+echo Opening dashboard in your browser...
+timeout /t 3
 start http://localhost:3000
 
 echo.
-echo ===============================================
-echo 🎯 PIDDY DASHBOARD IS RUNNING
-echo ===============================================
+echo ✅ Piddy Dashboard is RUNNING!
 echo.
-echo [*] Backend console window shows API server logs
-echo [*] Frontend console window shows static file server logs
+echo Two console windows opened:
+echo   1. Piddy Backend - Shows API logs
+echo   2. Piddy Frontend - Shows web server logs
 echo.
-echo [IMPORTANT] Keep this window open! Services run in the other windows.
-echo [IMPORTANT] Close other windows to stop services.
+echo To stop: Close the console windows
 echo.
-echo Press any key to close this window...
 pause
 
 endlocal
