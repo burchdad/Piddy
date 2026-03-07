@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
+import './styles/App.css';
+import './styles/components.css';
 
 // Import components
 import Sidebar from './components/Sidebar';
@@ -20,17 +21,39 @@ function App() {
   const [activePage, setActivePage] = useState('overview');
   const [systemStatus, setSystemStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch system status on mount
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/system/overview');
+        setError(null);
+        // Use localhost:8000 for backend API
+        const response = await fetch('http://localhost:8000/api/system/overview', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
-        setSystemStatus(data);
+        console.log('✅ System status fetched:', data);
+        
+        // Add is_healthy based on status
+        setSystemStatus({
+          ...data,
+          is_healthy: data.status === 'operational'
+        });
         setLoading(false);
       } catch (error) {
-        console.error('Failed to fetch system status:', error);
+        console.error('❌ Failed to fetch system status:', error);
+        setError(error.message);
+        // Still show the page even if fetch fails
+        setSystemStatus({ is_healthy: false, status: 'offline' });
         setLoading(false);
       }
     };
@@ -84,9 +107,17 @@ function App() {
             ) : (
               <span className="status-warning">● System Warning</span>
             )}
+            {error && <span className="status-error"> Error: {error}</span>}
           </div>
         </div>
-        {loading ? <div className="loading">Loading...</div> : renderPage()}
+        {loading ? (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Connecting to Piddy...</p>
+          </div>
+        ) : (
+          renderPage()
+        )}
       </div>
     </div>
   );

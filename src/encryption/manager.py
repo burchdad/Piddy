@@ -7,11 +7,9 @@ import json
 import logging
 from typing import Any, Optional, Dict
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
-from cryptography.hazmat.backends import default_backend
 import base64
 import binascii
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -53,20 +51,27 @@ class EncryptionManager:
         logger.info("✅ Encryption manager initialized")
 
     def _derive_key_from_password(self, password: str, salt: bytes = None) -> bytes:
-        """Derive encryption key from password using PBKDF2."""
+        """Derive encryption key from password using SHA256."""
         if salt is None:
             salt = b'\x00' * 16  # Use empty salt for deterministic derivation
 
-        kdf = PBKDF2(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100000,
-            backend=default_backend(),
+        # Use SHA256 for key derivation (simpler than PBKDF2 for Fernet)
+        key_material = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode(),
+            salt,
+            100000
         )
-
-        derived_key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-        return derived_key
+        
+        # Fernet requires exactly 32 bytes, base64 encoded
+        # Pad to ensure valid Fernet key (must be 44 bytes when base64 encoded)
+        derived_key = base64.urlsafe_b64encode(key_material[:32])
+        
+        # Ensure it's 44 bytes (valid Fernet key length)
+        while len(derived_key) < 44:
+            derived_key += b'='
+        
+        return derived_key[:44]  # Return exactly 44 bytes
 
     def encrypt_data(self, data: Any) -> str:
         """
