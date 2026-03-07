@@ -1,11 +1,13 @@
 """Core Piddy backend developer agent."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain.tools import Tool
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
+from langchain.base_language import BaseLanguageModel
 
 from config.settings import get_settings
 from src.models.command import Command, CommandResponse, CommandType
@@ -25,16 +27,46 @@ class BackendDeveloperAgent:
     def __init__(self):
         """Initialize the backend developer agent."""
         self.settings = get_settings()
-        self.llm = ChatAnthropic(
+        self.primary_llm = self._create_primary_llm()
+        self.fallback_llm = self._create_fallback_llm()
+        self.llm = self.primary_llm  # Start with primary
+        self.tools = self._initialize_tools()
+        self.executor = self._create_executor()
+        self.conversation_executor = self._create_conversation_executor()
+        logger.info(f"BackendDeveloperAgent initialized with primary={self.settings.agent_model}")
+    
+    def _create_primary_llm(self) -> BaseLanguageModel:
+        """Create primary Claude LLM."""
+        return ChatAnthropic(
             model=self.settings.agent_model,
             temperature=self.settings.agent_temperature,
             max_tokens=self.settings.agent_max_tokens,
             api_key=self.settings.anthropic_api_key,
         )
-        self.tools = self._initialize_tools()
-        self.executor = self._create_executor()
-        self.conversation_executor = self._create_conversation_executor()
-        logger.info("BackendDeveloperAgent initialized")
+    
+    def _create_fallback_llm(self) -> Optional[BaseLanguageModel]:
+        """Create fallback OpenAI LLM if configured."""
+        if not self.settings.openai_api_key:
+            logger.warning("OpenAI API key not configured - no fallback available")
+            return None
+        
+        return ChatOpenAI(
+            model=self.settings.openai_model,
+            temperature=self.settings.agent_temperature,
+            max_tokens=self.settings.agent_max_tokens,
+            api_key=self.settings.openai_api_key,
+        )
+    
+    def _switch_to_fallback(self) -> bool:
+        """Switch to fallback LLM if available."""
+        if self.fallback_llm and self.llm != self.fallback_llm:
+            logger.warning(f"Switching from {self.settings.agent_model} to {self.settings.openai_model}")
+            self.llm = self.fallback_llm
+            # Recreate executors with new LLM
+            self.executor = self._create_executor()
+            self.conversation_executor = self._create_conversation_executor()
+            return True
+        return False
     
     def _initialize_tools(self) -> List[Tool]:
         """Initialize all available tools for the agent."""
@@ -279,6 +311,64 @@ Question: {input}
             )
         
         except Exception as e:
+            error_str = str(e).lower()
+            
+            # Check for token limit, rate limit, credit limit, or service errors
+            # These are all reasons to fall back to the secondary LLM
+            error_phrases = [
+                "rate_limit",
+                "token",
+                "quota",
+                "429",
+                "limit",
+                "credit",
+                "balance",
+                "insufficient",
+                "overloaded",
+                "unavailable",
+                "too low",
+                "400"
+            ]
+            
+            if any(phrase in error_str for phrase in error_phrases):
+                logger.warning(f"LLM service error detected: {str(e)}")
+                
+                # Try to switch to fallback LLM
+                if self._switch_to_fallback():
+                    logger.info("Retrying with fallback LLM...")
+                    try:
+                        executor = self.conversation_executor if is_conversation else self.executor
+                        result = executor.invoke({"input": prompt})
+                        
+                        return CommandResponse(
+                            success=True,
+                            command_type=command.command_type,
+                            result=result.get("output", ""),
+                            execution_time=0.0,
+                            metadata={
+                                "source": command.source, 
+                                "is_conversation": is_conversation,
+                                "switched_to_fallback": True
+                            }
+                        )
+                    except Exception as fallback_error:
+                        logger.error(f"Fallback LLM also failed: {str(fallback_error)}")
+                        return CommandResponse(
+                            success=False,
+                            command_type=command.command_type,
+                            result=None,
+                            error=f"Primary LLM service error detected, fallback also failed: {str(fallback_error)}",
+                            metadata={"source": command.source}
+                        )
+                else:
+                    return CommandResponse(
+                        success=False,
+                        command_type=command.command_type,
+                        result=None,
+                        error=f"LLM service error and no fallback LLM configured: {str(e)}",
+                        metadata={"source": command.source}
+                    )
+            
             logger.error(f"Error processing command: {str(e)}", exc_info=True)
             return CommandResponse(
                 success=False,

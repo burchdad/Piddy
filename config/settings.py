@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     # Anthropic API
     anthropic_api_key: str = ""
     
-    # Agent Configuration
+    # OpenAI API (Fallback)
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o"
     agent_model: str = "claude-opus-4-1-20250805"
     agent_temperature: float = 0.7
     agent_max_tokens: int = 4096

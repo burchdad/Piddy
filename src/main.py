@@ -10,6 +10,7 @@ import os
 from config.settings import get_settings, setup_logging
 from src.api.agent_commands import router as agent_router
 from src.api.slack_commands import router as slack_router
+from src.api.responses import router as responses_router
 
 
 def create_app() -> FastAPI:
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(agent_router)
     app.include_router(slack_router)
+    app.include_router(responses_router)
     
     @app.on_event("startup")
     async def startup_event():

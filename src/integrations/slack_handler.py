@@ -11,6 +11,7 @@ from src.models.command import Command, CommandType
 from src.utils.memory import get_memory
 from src.tools.git_manager import get_git_manager
 from src.utils.error_handler import ErrorHandler, ErrorInfo
+from src.services.response_storage import get_response_storage
 
 
 logger = logging.getLogger(__name__)
@@ -421,26 +422,32 @@ class SlackMessageProcessor:
         if response.success:
             result_text = str(response.result)
             
-            # Split into sections if too long
+            # If response is too long, store it and provide a link
             if len(result_text) > 2000:
-                # Section 1
+                storage = get_response_storage()
+                metadata = {
+                    "command_type": response.command_type.value,
+                    "switched_to_fallback": response.metadata.get("switched_to_fallback", False)
+                }
+                response_id = storage.store_response(result_text, metadata)
+                
+                # Show preview and link
+                preview = result_text[:800]
                 blocks.append({
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"```\n{result_text[:1500]}\n```"
+                        "text": f"```\n{preview}\n```"
                     }
                 })
                 
-                # Add note about truncation
+                # Add link button to full response
                 blocks.append({
-                    "type": "context",
-                    "elements": [
-                        {
-                            "type": "mrkdwn",
-                            "text": "_* Output truncated. Full response available in API or thread._"
-                        }
-                    ]
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"📄 *Output truncated ({len(result_text)} characters)* - <http://localhost:8000/api/responses/{response_id}|View Full Response>"
+                    }
                 })
             else:
                 blocks.append({
