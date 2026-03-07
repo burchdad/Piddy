@@ -163,8 +163,10 @@ class GitManager:
         """
         try:
             if files is None:
-                # Stage all changes
+                # Stage all changes including submodules
                 self._run_git("add", "-A")
+                # Also update submodule references
+                self._run_git("add", "--update")
                 staged = "all changes"
             else:
                 # Stage specific files
@@ -206,8 +208,16 @@ class GitManager:
 
             # Check for staged changes
             status = self.get_status()
-            if not status["has_changes"]:
-                return {"success": False, "error": "No changes to commit"}
+            if not status.get("has_changes", False):
+                return {
+                    "success": False,
+                    "error": "No changes to commit",
+                    "status": {
+                        "staged": status.get("staged", []),
+                        "unstaged": status.get("unstaged", []),
+                        "untracked": status.get("untracked", [])
+                    }
+                }
 
             # Commit
             self._run_git("commit", "-m", message)
@@ -305,6 +315,20 @@ class GitManager:
 
             self._run_git(*args)
             logger.info(f"Pushed branch: {branch}")
+            
+            # Verify the push worked by checking if local is ahead of remote
+            try:
+                ahead_behind = self._run_git("rev-list", "--left-right", "--count", f"{branch}...origin/{branch}")
+                ahead_count = int(ahead_behind.strip().split()[0])
+                if ahead_count > 0:
+                    logger.warning(f"Push verification: Still {ahead_count} commits ahead. Push may have failed.")
+                    return {
+                        "success": False,
+                        "error": f"Push verification failed: {ahead_count} commits still ahead of remote",
+                        "branch": branch
+                    }
+            except Exception as verify_error:
+                logger.debug(f"Push verification skipped: {verify_error}")
 
             return {
                 "success": True,
