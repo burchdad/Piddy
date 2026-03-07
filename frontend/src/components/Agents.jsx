@@ -8,7 +8,7 @@ function Agents() {
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/agents');
+        const response = await fetch('http://localhost:8001/api/agents');
         const data = await response.json();
         setAgents(data.agents || []);
         setLoading(false);

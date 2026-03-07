@@ -5,7 +5,7 @@ function Messages() {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/messages')
+    fetch('http://localhost:8001/api/messages')
       .then(r => r.json())
       .then(data => setMessages(data.messages || []))
       .catch(e => console.error(e));

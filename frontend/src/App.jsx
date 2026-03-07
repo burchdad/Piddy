@@ -28,8 +28,8 @@ function App() {
     const fetchStatus = async () => {
       try {
         setError(null);
-        // Use localhost:8000 for backend API
-        const response = await fetch('http://localhost:8000/api/system/overview', {
+        // Use localhost:8001 for backend API
+        const response = await fetch('http://localhost:8001/api/system/overview', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
