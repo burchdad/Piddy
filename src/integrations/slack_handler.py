@@ -21,9 +21,16 @@ class SlackMessageProcessor:
     
     def __init__(self):
         """Initialize message processor."""
-        self.agent = BackendDeveloperAgent()
+        self._agent = None  # Lazy initialization
         self.slack = SlackIntegration()
         self.conversation_manager = get_conversation_manager()
+    
+    @property
+    def agent(self):
+        """Get or initialize agent lazily."""
+        if self._agent is None:
+            self._agent = BackendDeveloperAgent()
+        return self._agent
     
     async def process_message(self, event: Dict[str, Any]) -> None:
         """

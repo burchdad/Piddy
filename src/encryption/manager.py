@@ -7,8 +7,6 @@ import json
 import logging
 from typing import Any, Optional, Dict
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 import binascii
 import hashlib
@@ -57,20 +55,12 @@ class EncryptionManager:
         if salt is None:
             salt = b'\x00' * 16  # Use empty salt for deterministic derivation
 
-<<<<<<< HEAD
-        # Use SHA256 for key derivation (simpler than PBKDF2 for Fernet)
+        # Use SHA256 for key derivation (simple and effective for Fernet)
         key_material = hashlib.pbkdf2_hmac(
             'sha256',
             password.encode(),
             salt,
             100000
-=======
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100000,
->>>>>>> bca9ed5 (Fix cryptography import compatibility)
         )
         
         # Fernet requires exactly 32 bytes, base64 encoded

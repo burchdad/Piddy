@@ -12,7 +12,16 @@ from src.integrations.slack_handler import SlackMessageListener
 router = APIRouter(prefix="/slack", tags=["slack"])
 event_handler = SlackEventHandler()
 slack_client = SlackIntegration()
-message_listener = SlackMessageListener()
+
+# Lazy initialize message listener (avoid hanging on import)
+_message_listener = None
+
+def get_message_listener():
+    """Get or create message listener lazily."""
+    global _message_listener
+    if _message_listener is None:
+        _message_listener = SlackMessageListener()
+    return _message_listener
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +53,7 @@ async def handle_slack_events(request: Request):
     # Process message event
     if event.get("type") == "message":
         # Process asynchronously to avoid timeout
-        asyncio.create_task(message_listener.handle_event(event))
+        asyncio.create_task(get_message_listener().handle_event(event))
     
     return {"ok": True}
 
