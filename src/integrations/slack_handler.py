@@ -389,6 +389,7 @@ class SlackMessageProcessor:
         
         return blocks
     
+    def _format_response(self, response) -> list:
         """
         Format agent response into Slack block kit format.
         

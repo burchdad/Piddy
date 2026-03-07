@@ -241,7 +241,7 @@ def _tool_git_push(description: str) -> str:
         return json.dumps({"success": False, "error": str(e)})
 
 
-def _tool_git_status() -> str:
+def _tool_git_status(*args, **kwargs) -> str:
     """Wrapper for checking Git status."""
     try:
         git = get_git_manager()
@@ -438,7 +438,7 @@ def _tool_cleanup_dead_code_autonomously(min_confidence: str = "0.9") -> str:
         return json.dumps({"success": False, "error": str(e)})
 
 
-def _tool_fix_architecture_autonomously() -> str:
+def _tool_fix_architecture_autonomously(*args, **kwargs) -> str:
     """Wrapper for autonomous architecture fix"""
     try:
         planner = _get_planning_integration()

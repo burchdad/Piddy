@@ -2,10 +2,10 @@
 
 import logging
 from typing import Any, Dict, List, Optional
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import AgentExecutor, create_react_agent
 from langchain_anthropic import ChatAnthropic
 from langchain.tools import Tool
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
 
 from config.settings import get_settings
 from src.models.command import Command, CommandResponse, CommandType
@@ -42,16 +42,29 @@ class BackendDeveloperAgent:
     
     def _create_conversation_executor(self) -> AgentExecutor:
         """Create the agent executor for conversational mode."""
-        system_prompt = CONVERSATIONAL_SYSTEM_PROMPT
+        # Create a simple ReAct prompt with string placeholders
+        prompt_template = """Answer the following question as helpfully as possible. You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+{agent_scratchpad}"""
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
-        
-        agent = create_tool_calling_agent(self.llm, self.tools, prompt)
+        prompt = PromptTemplate.from_template(prompt_template)
+        agent = create_react_agent(self.llm, self.tools, prompt)
         executor = AgentExecutor(
             agent=agent,
             tools=self.tools,
@@ -199,14 +212,31 @@ When generating code or solutions:
 
 Always prioritize code quality, security, maintainability, performance, and user experience."""
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
+        # Create a simple ReAct prompt with string placeholders
+        prompt_template = """You are Piddy, an expert backend developer AI agent.
+
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+{agent_scratchpad}"""
         
-        agent = create_tool_calling_agent(self.llm, self.tools, prompt)
+        prompt = PromptTemplate.from_template(prompt_template)
+        agent = create_react_agent(self.llm, self.tools, prompt)
         executor = AgentExecutor(
             agent=agent,
             tools=self.tools,
@@ -237,7 +267,8 @@ Always prioritize code quality, security, maintainability, performance, and user
             prompt = self._format_command_prompt(command)
             
             # Execute with the appropriate executor
-            result = executor.invoke({"input": prompt, "chat_history": []})
+            # ReAct agents only need 'input', they manage scratchpad internally
+            result = executor.invoke({"input": prompt})
             
             return CommandResponse(
                 success=True,

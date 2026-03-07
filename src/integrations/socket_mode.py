@@ -24,6 +24,7 @@ class SlackSocketModeListener:
         self.running = False
         self.thread: Optional[threading.Thread] = None
         self.client: Optional[SocketModeClient] = None
+        self.handler_registered = False  # Track whether handler has been registered
     
     def start(self) -> None:
         """Start listening for events."""
@@ -80,9 +81,13 @@ class SlackSocketModeListener:
                     logger.error(f"   Error in socket_mode_request_handler: {str(e)}", exc_info=True)
             
             logger.info("Registering socket mode request handler...")
-            # Register the handler using the correct attribute name
-            self.client.socket_mode_request_listeners.append(socket_mode_request_handler)
-            logger.info(f"Handler registered. Total listeners: {len(self.client.socket_mode_request_listeners)}")
+            # Register the handler only once to prevent duplicate listeners
+            if not self.handler_registered:
+                self.client.socket_mode_request_listeners.append(socket_mode_request_handler)
+                self.handler_registered = True
+                logger.info(f"Handler registered. Total listeners: {len(self.client.socket_mode_request_listeners)}")
+            else:
+                logger.info("Handler already registered, skipping duplicate registration")
             
             # Keep trying to connect
             max_retries = 3
