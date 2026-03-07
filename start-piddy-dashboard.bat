@@ -79,10 +79,15 @@ REM Activate venv and install requirements
 echo [*] Activating virtual environment...
 call venv\Scripts\activate.bat
 
+echo [*] Upgrading pip to latest version...
+python -m pip install --upgrade pip setuptools wheel >nul 2>&1
+
 echo [*] Installing requirements from: %cd%\requirements.txt
-pip install -r requirements.txt
+echo [*] Using pre-built wheels (no Rust compilation needed)...
+pip install --prefer-binary -r requirements.txt
 if errorlevel 1 (
     echo [ERROR] Failed to install requirements
+    echo [DEBUG] If pydantic-core fails, ensure you have the latest pip version
     pause
     exit /b 1
 )
