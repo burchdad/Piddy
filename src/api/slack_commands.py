@@ -2,14 +2,17 @@
 
 from fastapi import APIRouter, Request, HTTPException
 import logging
+import asyncio
 
 from src.integrations.slack_events import SlackEventHandler
 from src.integrations.slack import SlackIntegration
+from src.integrations.slack_handler import SlackMessageListener
 
 
 router = APIRouter(prefix="/slack", tags=["slack"])
 event_handler = SlackEventHandler()
 slack_client = SlackIntegration()
+message_listener = SlackMessageListener()
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +41,10 @@ async def handle_slack_events(request: Request):
     # Log event
     logger.info(f"Slack event received: {event.get('type')}")
     
-    # TODO: Process message event and send to agent
-    # This will be handled by the message processing service
+    # Process message event
+    if event.get("type") == "message":
+        # Process asynchronously to avoid timeout
+        asyncio.create_task(message_listener.handle_event(event))
     
     return {"ok": True}
 

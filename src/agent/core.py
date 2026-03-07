@@ -10,6 +10,7 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from config.settings import get_settings
 from src.models.command import Command, CommandResponse, CommandType
 from src.tools import get_all_tools
+from src.agent.conversational_prompt import CONVERSATIONAL_SYSTEM_PROMPT
 
 
 logger = logging.getLogger(__name__)
@@ -32,11 +33,33 @@ class BackendDeveloperAgent:
         )
         self.tools = self._initialize_tools()
         self.executor = self._create_executor()
+        self.conversation_executor = self._create_conversation_executor()
         logger.info("BackendDeveloperAgent initialized")
     
     def _initialize_tools(self) -> List[Tool]:
         """Initialize all available tools for the agent."""
         return get_all_tools()
+    
+    def _create_conversation_executor(self) -> AgentExecutor:
+        """Create the agent executor for conversational mode."""
+        system_prompt = CONVERSATIONAL_SYSTEM_PROMPT
+        
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ])
+        
+        agent = create_tool_calling_agent(self.llm, self.tools, prompt)
+        executor = AgentExecutor(
+            agent=agent,
+            tools=self.tools,
+            verbose=self.settings.debug,
+            handle_parsing_errors=True,
+            max_iterations=10,
+        )
+        return executor
     
     def _create_executor(self) -> AgentExecutor:
         """Create the agent executor."""
@@ -206,18 +229,22 @@ Always prioritize code quality, security, maintainability, performance, and user
         try:
             logger.info(f"Processing command: {command.command_type}")
             
+            # Check if this is a conversation mode request
+            is_conversation = command.metadata.get("is_conversation", False)
+            executor = self.conversation_executor if is_conversation else self.executor
+            
             # Format the command into a prompt
             prompt = self._format_command_prompt(command)
             
-            # Execute with the agent
-            result = self.executor.invoke({"input": prompt, "chat_history": []})
+            # Execute with the appropriate executor
+            result = executor.invoke({"input": prompt, "chat_history": []})
             
             return CommandResponse(
                 success=True,
                 command_type=command.command_type,
                 result=result.get("output", ""),
                 execution_time=0.0,
-                metadata={"source": command.source}
+                metadata={"source": command.source, "is_conversation": is_conversation}
             )
         
         except Exception as e:

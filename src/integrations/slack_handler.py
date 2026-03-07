@@ -6,6 +6,7 @@ import json
 from typing import Dict, Any, Optional
 from src.agent.core import BackendDeveloperAgent
 from src.integrations.slack import SlackIntegration
+from src.integrations.slack_conversation import get_conversation_manager
 from src.models.command import Command, CommandType
 from src.utils.memory import get_memory
 from src.tools.git_manager import get_git_manager
@@ -22,6 +23,7 @@ class SlackMessageProcessor:
         """Initialize message processor."""
         self.agent = BackendDeveloperAgent()
         self.slack = SlackIntegration()
+        self.conversation_manager = get_conversation_manager()
     
     async def process_message(self, event: Dict[str, Any]) -> None:
         """
@@ -44,47 +46,23 @@ class SlackMessageProcessor:
             # Add thinking reaction to show we're processing
             await self.slack.add_reaction(channel_id, ts, "thinking_face")
             
-            # Send acknowledgment
-            ack_text = "🔄 Processing your request..."
-            await self.slack.send_message(
-                channel=channel_id,
-                text=ack_text,
-                thread_ts=thread_ts or ts,
+            # Add message to conversation history
+            self.conversation_manager.add_user_message(
+                channel_id=channel_id,
+                user_id=user_id,
+                content=text,
+                thread_ts=thread_ts
             )
             
-            # Parse command from message
-            command = self._parse_message_to_command(text, user_id, channel_id)
+            # Determine if this is a command or conversational message
+            is_command = self._is_command(text)
             
-            # Handle Phase 2 commands
-            phase2_command = command.metadata.get("phase2_command")
-            if phase2_command == "git_commit":
-                await self._handle_git_commit(channel_id, thread_ts or ts, user_id)
-                return
-            elif phase2_command == "git_status":
-                await self._handle_git_status(channel_id, thread_ts or ts)
-                return
-            elif phase2_command == "save_memory":
-                await self._handle_save_memory(channel_id, thread_ts or ts, text, user_id)
-                return
-            
-            # Process with agent
-            logger.info(f"Processing Slack message: {text[:50]}...")
-            response = await self.agent.process_command(command)
-            
-            # Generate formatted response
-            formatted_response = self._format_response(response)
-            
-            # Send response
-            await self.slack.send_rich_message(
-                channel=channel_id,
-                blocks=formatted_response,
-                thread_ts=thread_ts or ts,
-            )
-            
-            # Add checkmark reaction
-            await self.slack.add_reaction(channel_id, ts, "white_check_mark")
-            
-            logger.info("Message processed successfully")
+            if is_command:
+                # Handle as a command
+                await self._handle_as_command(event, text, user_id, channel_id, thread_ts, ts)
+            else:
+                # Handle as conversational message
+                await self._handle_as_conversation(event, text, user_id, channel_id, thread_ts, ts)
             
         except Exception as e:
             logger.error(f"Error processing Slack message: {str(e)}", exc_info=True)
@@ -102,6 +80,174 @@ class SlackMessageProcessor:
                 event.get("ts"),
                 "x"
             )
+    
+    def _is_command(self, text: str) -> bool:
+        """
+        Determine if a message is a command or conversational.
+        
+        Commands typically start with action verbs or specific keywords.
+        
+        Args:
+            text: Message text
+            
+        Returns:
+            True if command, False if conversational
+        """
+        text_lower = text.lower().strip()
+        
+        # Command keywords
+        command_keywords = [
+            "generate", "create", "write", "code", "review", "analyze", "check",
+            "audit", "design", "schema", "database", "model", "debug", "fix",
+            "error", "issue", "secure", "security", "vulnerability", "docker",
+            "kubernetes", "infra", "deploy", "document", "docs", "comment",
+            "migrate", "migration", "commit", "push", "commit changes", "git status",
+            "git", "status", "what's changed", "remember", "save context", "memory",
+            "advanced review"
+        ]
+        
+        return any(keyword in text_lower for keyword in command_keywords)
+    
+    async def _handle_as_command(
+        self,
+        event: Dict[str, Any],
+        text: str,
+        user_id: str,
+        channel_id: str,
+        thread_ts: Optional[str],
+        ts: str
+    ) -> None:
+        """Handle message as a command."""
+        # Send acknowledgment
+        ack_text = "🔄 Processing your request..."
+        await self.slack.send_message(
+            channel=channel_id,
+            text=ack_text,
+            thread_ts=thread_ts or ts,
+        )
+        
+        # Parse command from message
+        command = self._parse_message_to_command(text, user_id, channel_id)
+        
+        # Handle Phase 2 commands
+        phase2_command = command.metadata.get("phase2_command")
+        if phase2_command == "git_commit":
+            await self._handle_git_commit(channel_id, thread_ts or ts, user_id)
+            return
+        elif phase2_command == "git_status":
+            await self._handle_git_status(channel_id, thread_ts or ts)
+            return
+        elif phase2_command == "save_memory":
+            await self._handle_save_memory(channel_id, thread_ts or ts, text, user_id)
+            return
+        
+        # Process with agent
+        logger.info(f"Processing Slack command: {text[:50]}...")
+        response = await self.agent.process_command(command)
+        
+        # Generate formatted response
+        formatted_response = self._format_response(response)
+        
+        # Send response
+        await self.slack.send_rich_message(
+            channel=channel_id,
+            blocks=formatted_response,
+            thread_ts=thread_ts or ts,
+        )
+        
+        # Add bot response to conversation history
+        self.conversation_manager.add_bot_message(
+            channel_id=channel_id,
+            user_id=user_id,
+            content=str(response.result),
+            thread_ts=thread_ts,
+            metadata={"command_type": response.command_type.value}
+        )
+        
+        # Add checkmark reaction
+        await self.slack.add_reaction(channel_id, ts, "white_check_mark")
+        
+        logger.info("Command processed successfully")
+    
+    async def _handle_as_conversation(
+        self,
+        event: Dict[str, Any],
+        text: str,
+        user_id: str,
+        channel_id: str,
+        thread_ts: Optional[str],
+        ts: str
+    ) -> None:
+        """Handle message as conversational text."""
+        try:
+            # Get conversation history for context
+            context_history = self.conversation_manager.get_context_history(
+                channel_id=channel_id,
+                user_id=user_id,
+                thread_ts=thread_ts,
+                limit=5  # Last 5 exchanges
+            )
+            
+            # Create a conversational command
+            prompt = f"{context_history}\n\nCurrent message: {text}"
+            
+            command = Command(
+                command_type=CommandType.CUSTOM,
+                description=prompt,
+                context={
+                    "source": "slack",
+                    "user_id": user_id,
+                    "channel_id": channel_id,
+                    "conversation_mode": True,
+                    "conversation_history": context_history,
+                },
+                source="slack",
+                priority=5,
+                metadata={
+                    "slack_user": user_id,
+                    "slack_channel": channel_id,
+                    "is_conversation": True,
+                }
+            )
+            
+            # Add thinking emoji
+            await self.slack.add_reaction(channel_id, ts, "thought_balloon")
+            
+            logger.info(f"Processing Slack conversation: {text[:50]}...")
+            response = await self.agent.process_command(command)
+            
+            # Format conversational response (more natural, less structured)
+            formatted_response = self._format_conversational_response(response, text)
+            
+            # Send response
+            await self.slack.send_rich_message(
+                channel=channel_id,
+                blocks=formatted_response,
+                thread_ts=thread_ts or ts,
+            )
+            
+            # Add bot response to conversation history
+            self.conversation_manager.add_bot_message(
+                channel_id=channel_id,
+                user_id=user_id,
+                content=str(response.result),
+                thread_ts=thread_ts,
+                metadata={"is_conversation": True}
+            )
+            
+            # Clear thinking emoji and add smile
+            await self.slack.add_reaction(channel_id, ts, "smile")
+            
+            logger.info("Conversation processed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error handling conversation: {str(e)}")
+            await self.slack.send_message(
+                channel=channel_id,
+                text=f"Sorry, I had trouble understanding that. Could you clarify? (Error: {str(e)[:50]})",
+                thread_ts=thread_ts or ts,
+            )
+            await self.slack.add_reaction(channel_id, ts, "confused")
     
     def _parse_message_to_command(
         self,
@@ -180,7 +326,62 @@ class SlackMessageProcessor:
             metadata=metadata
         )
     
-    def _format_response(self, response) -> list:
+    def _format_conversational_response(self, response, user_message: str) -> list:
+        """
+        Format agent response for conversational mode (more natural).
+        
+        Args:
+            response: Command response from agent
+            user_message: Original user message
+            
+        Returns:
+            List of Slack blocks for conversational format
+        """
+        blocks = []
+        
+        if response.success:
+            result_text = str(response.result).strip()
+            
+            # For conversations, keep it simple and natural
+            # Just show the content without command type header
+            if len(result_text) > 3000:
+                # Split long responses
+                blocks.append({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": result_text[:2800]
+                    }
+                })
+                blocks.append({
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "_(Response truncated - use full API for complete output)_"
+                        }
+                    ]
+                })
+            else:
+                blocks.append({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": result_text
+                    }
+                })
+        else:
+            # Error response - still conversational
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Sorry, I ran into an issue: {response.error}"
+                }
+            })
+        
+        return blocks
+    
         """
         Format agent response into Slack block kit format.
         
