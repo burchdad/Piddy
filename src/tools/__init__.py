@@ -59,6 +59,14 @@ from src.phase32_production import (
     plan_service_refactoring,
 )
 from src.phase33_planning_integration import Phase33PlanningIntegration
+from src.tools.autonomous_tools import (
+    autonomous_monitor_start,
+    autonomous_monitor_stop,
+    autonomous_monitor_status,
+    autonomous_analyze_now,
+    autonomous_get_prs,
+)
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -485,6 +493,58 @@ def _tool_get_mission_status(mission_id: str) -> str:
         return json.dumps({"success": False, "error": str(e)})
 
 
+# Autonomous Monitoring Tools - Wrappers for async functions
+def _tool_autonomous_monitor_start(interval_str: str = "3600") -> str:
+    """Wrapper for starting autonomous monitoring"""
+    try:
+        interval = int(interval_str) if interval_str else 3600
+        result = asyncio.run(autonomous_monitor_start(interval))
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Autonomous monitor start error: {e}")
+        return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
+
+
+def _tool_autonomous_monitor_stop(*args, **kwargs) -> str:
+    """Wrapper for stopping autonomous monitoring"""
+    try:
+        result = asyncio.run(autonomous_monitor_stop())
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Autonomous monitor stop error: {e}")
+        return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
+
+
+def _tool_autonomous_monitor_status(*args, **kwargs) -> str:
+    """Wrapper for getting autonomous monitor status"""
+    try:
+        result = asyncio.run(autonomous_monitor_status())
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Autonomous monitor status error: {e}")
+        return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
+
+
+def _tool_autonomous_analyze_now(*args, **kwargs) -> str:
+    """Wrapper for running code analysis immediately"""
+    try:
+        result = asyncio.run(autonomous_analyze_now())
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Autonomous analyze error: {e}")
+        return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
+
+
+def _tool_autonomous_get_prs(*args, **kwargs) -> str:
+    """Wrapper for getting list of created PRs"""
+    try:
+        result = asyncio.run(autonomous_get_prs())
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"Autonomous get PRs error: {e}")
+        return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
+
+
 def get_all_tools() -> List[Tool]:
     """Get all available tools for the agent."""
     tools = []
@@ -880,6 +940,35 @@ def get_all_tools() -> List[Tool]:
             name="get_mission_status",
             func=_tool_get_mission_status,
             description="Get detailed status of a running or completed mission. Pass mission_id to retrieve progress, task list, confidence scores, and results."
+        ),
+    ])
+    
+    # Autonomous Monitoring & Self-Healing
+    tools.extend([
+        Tool(
+            name="autonomous_monitor_start",
+            func=_tool_autonomous_monitor_start,
+            description="Start autonomous code monitoring and self-healing. Optionally pass interval_seconds (default 3600=1 hour). Piddy will continuously analyze codebase, detect issues, and create PRs for fixes."
+        ),
+        Tool(
+            name="autonomous_monitor_stop",
+            func=_tool_autonomous_monitor_stop,
+            description="Stop autonomous code monitoring. Piddy will no longer analyze codebase or create PRs automatically."
+        ),
+        Tool(
+            name="autonomous_monitor_status",
+            func=_tool_autonomous_monitor_status,
+            description="Get current status of autonomous monitoring system. Shows enabled/disabled status, issues detected, PRs created, and issue breakdown by severity and type."
+        ),
+        Tool(
+            name="autonomous_analyze_now",
+            func=_tool_autonomous_analyze_now,
+            description="Run code analysis immediately. Scans entire codebase for print statements, broad exceptions, and TODO comments. Returns detailed issue summary with file locations."
+        ),
+        Tool(
+            name="autonomous_get_prs",
+            func=_tool_autonomous_get_prs,
+            description="Get list of pull requests created by autonomous monitoring system. Shows PR titles, URLs, and status."
         ),
     ])
     
