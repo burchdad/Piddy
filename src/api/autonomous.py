@@ -36,12 +36,13 @@ async def get_monitor_status():
 
 
 @router.post("/monitor/start")
-async def start_monitoring(interval_seconds: int = 3600):
+async def start_monitoring(strategy: str = "smart", interval_seconds: int = 3600):
     """
     Start autonomous monitoring loop.
     
     Args:
-        interval_seconds: Check interval in seconds
+        strategy: "smart" (daily+weekly, recommended) or "hourly" (deprecated, comprehensive)
+        interval_seconds: Use interval (applies to hourly only)
         
     Returns:
         Status confirmation
@@ -50,14 +51,29 @@ async def start_monitoring(interval_seconds: int = 3600):
     monitor = get_autonomous_monitor()
     
     if monitor.monitoring_enabled:
-        return {"status": "already_running"}
+        return {"status": "already_running", "strategy": monitor.monitoring_strategy}
     
     monitor.monitoring_enabled = True
+    monitor.monitoring_strategy = strategy
     
-    # Run in background
-    asyncio.create_task(monitor.run_monitoring_loop(interval_seconds))
-    
-    return {"status": "monitoring_started", "interval_seconds": interval_seconds}
+    if strategy == "smart":
+        logger.info("🎯 Starting SMART monitoring (daily perf/security + weekly code analysis)")
+        asyncio.create_task(monitor.run_smart_monitoring_loop())
+        return {
+            "status": "smart_monitoring_started",
+            "schedule": {
+                "daily": "06:00 UTC - Performance & Security checks",
+                "weekly": "Sundays 02:00 UTC - Code Quality analysis"
+            }
+        }
+    else:
+        logger.warning("⚠️ Hourly monitoring is deprecated. Using smart strategy instead.")
+        asyncio.create_task(monitor.run_smart_monitoring_loop())
+        return {
+            "status": "monitoring_started",
+            "note": "Using smart strategy instead of hourly",
+            "strategy": "smart"
+        }
 
 
 @router.post("/monitor/stop")
@@ -140,8 +156,16 @@ async def get_autonomous_status():
     return {
         "monitor": {
             "enabled": monitor.monitoring_enabled,
+            "strategy": monitor.monitoring_strategy,
+            "last_daily_check": monitor.last_daily_check.isoformat() if monitor.last_daily_check else None,
+            "last_weekly_check": monitor.last_weekly_check.isoformat() if monitor.last_weekly_check else None,
             "issues_detected": len(monitor.issues),
             "issues_fixed": len(monitor.fixed_issues)
+        },
+        "schedule": {
+            "daily": "06:00 UTC - Performance & Security checks",
+            "weekly": "Sundays 02:00 UTC - Code Quality analysis",
+            "hourly": "⛔ DISABLED (redundant)"
         },
         "pr_manager": {
             "prs_created": len(monitor.created_prs),
