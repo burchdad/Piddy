@@ -1151,7 +1151,7 @@ class MockDataGenerator:
                 step_number=10,
                 type="validation",
                 title="Validation Results",
-                description": "All tests passed: 156 unit + 42 integration. 100% coverage on changed code",
+                description="All tests passed: 156 unit + 42 integration. 100% coverage on changed code",
                 timestamp=(now - timedelta(minutes=1)).isoformat(),
                 timestamp_display="05:00",
                 agent_id="validator_1",

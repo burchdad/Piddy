@@ -1,5 +1,6 @@
 """Advanced database tools for backend development."""
 
+import logging
 from typing import Dict, List, Any, Optional
 from enum import Enum
 

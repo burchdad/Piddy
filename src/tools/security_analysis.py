@@ -1,5 +1,6 @@
 """Security analysis and best practices tools."""
 
+import logging
 from typing import Dict, List, Any
 from dataclasses import dataclass
 from enum import Enum

@@ -522,7 +522,7 @@ response = middleware.execute(request)
     return {"error": "Language not supported"}
 
 
-def get_architecture_bluelogger.info(architecture: ArchitecturePattern, language: str = "python") -> Dict[str, Any]:
+def get_architecture_blueprint(architecture: ArchitecturePattern, language: str = "python") -> Dict[str, Any]:
     """Get complete architecture blueprint."""
     
     blueprints = {

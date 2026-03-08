@@ -302,7 +302,7 @@ def auto_encrypt_config(config_dict: Dict) -> Dict[str, Any]:
     }
 
 
-def get_encryption_key_fingerlogger.info() -> Dict[str, Any]:
+def get_encryption_key_fingerprint() -> Dict[str, Any]:
     """
     Get fingerprint of current encryption key for verification.
 

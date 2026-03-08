@@ -166,7 +166,7 @@ def _tool_get_architecture(arch_name: str) -> str:
     """Wrapper for architecture blueprint."""
     try:
         architecture = ArchitecturePattern(arch_name.lower())
-        result = get_architecture_bluelogger.info(architecture)
+        result = get_architecture_blueprint(architecture)
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
         return f"Error: {str(e)}"

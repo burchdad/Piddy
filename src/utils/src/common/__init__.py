@@ -1,16 +1,17 @@
 """Common base classes for phase modules.
 
-logger = logging.getLogger(__name__)
 Consolidates duplicate __init__ patterns into reusable base classes.
 """
-from src.common.base_component import (
 import logging
+from src.common.base_component import (
     BaseAutonomyEngine,
     BaseComponent,
     BaseEcosystemPlugin,
     BaseServiceManager,
     BaseStreamProcessor,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "BaseComponent",
