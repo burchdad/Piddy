@@ -252,65 +252,65 @@ class EnhancedAutonomousSystem:
 
 def demonstrate_enhanced_system():
     """Demonstrate the enhanced autonomous system"""
-    print("\n" + "=" * 70)
-    print("ENHANCED AUTONOMOUS DEVELOPER SYSTEM DEMONSTRATION")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("ENHANCED AUTONOMOUS DEVELOPER SYSTEM DEMONSTRATION")
+    logger.info("=" * 70)
     
     try:
         system = EnhancedAutonomousSystem()
         
         # Show what's integrated
-        print("\n✓ Components Integrated (Phases 34-38):")
-        print("  1. Phase 34: Mission Telemetry (track every metric)")
-        print("  2. Phase 35: Parallel Task Execution (3-5x faster)")
-        print("  3. Phase 36: Diff-Aware Planning (context-aware)")
-        print("  4. Phase 37: PR Generation (automatic)")
-        print("  5. Phase 38: LLM-Assisted Planning (intelligent!)") 
+        logger.info("\n✓ Components Integrated (Phases 34-38):")
+        logger.info("  1. Phase 34: Mission Telemetry (track every metric)")
+        logger.info("  2. Phase 35: Parallel Task Execution (3-5x faster)")
+        logger.info("  3. Phase 36: Diff-Aware Planning (context-aware)")
+        logger.info("  4. Phase 37: PR Generation (automatic)")
+        logger.info("  5. Phase 38: LLM-Assisted Planning (intelligent!)") 
         
         # Show workflow
-        print("\n✓ Workflow with LLM Enhancement:")
-        print("  1. Analyze git diff (what changed?)")
-        print("  2. Generate base plan (diff-aware)")
-        print("  3. → LLM analyzes & enhances plan (SEMANTIC UNDERSTANDING)")
-        print("  4. Execute optimized tasks in parallel")
-        print("  5. Log telemetry for learning")
-        print("  6. Generate PR with reasoning")
+        logger.info("\n✓ Workflow with LLM Enhancement:")
+        logger.info("  1. Analyze git diff (what changed?)")
+        logger.info("  2. Generate base plan (diff-aware)")
+        logger.info("  3. → LLM analyzes & enhances plan (SEMANTIC UNDERSTANDING)")
+        logger.info("  4. Execute optimized tasks in parallel")
+        logger.info("  5. Log telemetry for learning")
+        logger.info("  6. Generate PR with reasoning")
         
         # Show LLM capabilities
-        print("\n✓ LLM Planning Capabilities:")
+        logger.info("\n✓ LLM Planning Capabilities:")
         capabilities = system.get_llm_planning_capabilities()
         for capability, description in capabilities.items():
-            print(f"  • {capability}: {description}")
+            logger.info(f"  • {capability}: {description}")
         
         # Show example
-        print("\n✓ Example Mission Flow (with LLM Enhancement):")
-        print("  Input: Code changes detected")
-        print("  Phase 36 Analysis: 15 files changed, 'high' risk level")
-        print("  → Phase 38 LLM Enhancement:")
-        print("    - Semantic: 'Database schema changes + API updates'")
-        print("    - Strategy: 'Conservative' (run extra validation)")
-        print("    - Risks: ['Breaking changes', 'Type mismatches']")
-        print("    - Mitigation: ['Full type checking', 'Integration tests']")
-        print("    - Confidence: 87%")
-        print("  Execution: Optimized 8-task sequence (2x original speed)")
-        print("  Result: PR ready with reasoning")
+        logger.info("\n✓ Example Mission Flow (with LLM Enhancement):")
+        logger.info("  Input: Code changes detected")
+        logger.info("  Phase 36 Analysis: 15 files changed, 'high' risk level")
+        logger.info("  → Phase 38 LLM Enhancement:")
+        logger.info("    - Semantic: 'Database schema changes + API updates'")
+        logger.info("    - Strategy: 'Conservative' (run extra validation)")
+        logger.info("    - Risks: ['Breaking changes', 'Type mismatches']")
+        logger.info("    - Mitigation: ['Full type checking', 'Integration tests']")
+        logger.info("    - Confidence: 87%")
+        logger.info("  Execution: Optimized 8-task sequence (2x original speed)")
+        logger.info("  Result: PR ready with reasoning")
         
         # Show telemetry
-        print("\n✓ Telemetry Available:")
+        logger.info("\n✓ Telemetry Available:")
         stats = system.get_system_stats()
         if stats.get('total_missions', 0) > 0:
-            print(f"  Total missions: {stats['total_missions']}")
-            print(f"  Success rate: {stats.get('success_rate', 0):.1%}")
-            print(f"  Average confidence: {stats.get('avg_confidence', 0):.1%}")
+            logger.info(f"  Total missions: {stats['total_missions']}")
+            logger.info(f"  Success rate: {stats.get('success_rate', 0):.1%}")
+            logger.info(f"  Average confidence: {stats.get('avg_confidence', 0):.1%}")
         else:
-            print("  (No missions recorded yet)")
+            logger.info("  (No missions recorded yet)")
         
-        print("\n" + "=" * 70)
-        print("STATUS: Production-ready with LLM-assisted planning")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("STATUS: Production-ready with LLM-assisted planning")
+        logger.info("=" * 70)
         
     except Exception as e:
-        print(f"\nError demonstrating system: {e}")
+        logger.info(f"\nError demonstrating system: {e}")
         import traceback
         traceback.print_exc()
 

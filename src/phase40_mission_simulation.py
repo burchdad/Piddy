@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 40: Mission Simulation Mode
 Predicts mission outcomes before execution to ensure safety
 
@@ -16,6 +17,7 @@ import asyncio
 from src.infrastructure.simulation_engine import SimulationEngine, SimulationResult
 from src.infrastructure.approval_system import ApprovalManager, ApprovalRequest
 from src.infrastructure.mission_config import MissionConfig, MissionConfigManager
+import logging
 
 
 class ApprovalStrategy(Enum):

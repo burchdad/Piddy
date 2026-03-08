@@ -5,8 +5,10 @@ from typing import List
 
 from src.models.command import Command, CommandResponse, CommandType
 from src.agent.core import BackendDeveloperAgent
+import logging
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/agent", tags=["agent"])
 agent = BackendDeveloperAgent()
 

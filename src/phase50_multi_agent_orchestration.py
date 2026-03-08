@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 50: Multi-Agent Orchestration
 Advanced autonomous agent coordination and consensus mechanisms
 
@@ -11,6 +12,7 @@ from enum import Enum
 import asyncio
 from datetime import datetime
 import uuid
+import logging
 
 
 class AgentRole(Enum):

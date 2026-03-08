@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 32d: API Contracts
 
 Defines and tracks function API surfaces.
@@ -11,6 +12,7 @@ import sqlite3
 import json
 from typing import Dict, List
 from dataclasses import dataclass
+import logging
 
 @dataclass
 class APIContract:
@@ -65,7 +67,7 @@ class APIContractTracker:
             ''')
 
             conn.commit()
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             pass
         finally:
             conn.close()
@@ -105,7 +107,7 @@ class APIContractTracker:
             ))
             conn.commit()
         except Exception as e:
-            print(f"Error defining contract: {e}")
+            logger.info(f"Error defining contract: {e}")
         finally:
             conn.close()
 
@@ -172,7 +174,7 @@ class APIContractTracker:
                     'changes': row['contract_count'],
                     'severity': 'high'
                 })
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             pass
 
         conn.close()
@@ -195,7 +197,7 @@ class APIContractTracker:
             ''', (f'%{module_prefix}%',))
 
             contracts = [dict(row) for row in cursor.fetchall()]
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             pass
 
         conn.close()
@@ -228,7 +230,7 @@ class ServiceBoundaryAnalyzer:
                     if module not in services:
                         services[module] = []
 
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             pass
 
         conn.close()
@@ -254,7 +256,7 @@ class ServiceBoundaryAnalyzer:
                 WHERE source_node_id != target_node_id
             ''')
             analysis['cross_service_calls'] = cursor.fetchone()[0]
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             pass
 
         conn.close()
@@ -262,13 +264,13 @@ class ServiceBoundaryAnalyzer:
 
 
 if __name__ == '__main__':
-    print("Phase 32d: API Contracts")
-    print("=" * 70)
+    logger.info("Phase 32d: API Contracts")
+    logger.info("=" * 70)
 
     tracker = APIContractTracker('.piddy_callgraph.db')
 
     # Define sample contracts
-    print("\n1. Defining API contracts...")
+    logger.info("\n1. Defining API contracts...")
     import sqlite3
     conn = sqlite3.connect('.piddy_callgraph.db')
     cursor = conn.cursor()
@@ -284,18 +286,18 @@ if __name__ == '__main__':
             returns='Result',
             side_effects=['logs', 'db_write']
         )
-    print(f"   ✅ Contracts defined for {len(funcs)} functions")
+    logger.info(f"   ✅ Contracts defined for {len(funcs)} functions")
 
     # Detect breaking changes
-    print("\n2. Detecting breaking changes...")
+    logger.info("\n2. Detecting breaking changes...")
     changes = tracker.detect_breaking_changes()
-    print(f"   ✅ Breaking changes found: {len(changes)}")
+    logger.info(f"   ✅ Breaking changes found: {len(changes)}")
 
     # Analyze boundaries
-    print("\n3. Analyzing service boundaries...")
+    logger.info("\n3. Analyzing service boundaries...")
     analyzer = ServiceBoundaryAnalyzer('.piddy_callgraph.db')
     boundary_analysis = analyzer.analyze_boundaries()
-    print(f"   ✅ Services identified: {boundary_analysis['services']}")
-    print(f"   ✅ Cross-service calls: {boundary_analysis['cross_service_calls']}")
+    logger.info(f"   ✅ Services identified: {boundary_analysis['services']}")
+    logger.info(f"   ✅ Cross-service calls: {boundary_analysis['cross_service_calls']}")
 
-    print("\n✅ Phase 32d API contracts complete")
+    logger.info("\n✅ Phase 32d API contracts complete")

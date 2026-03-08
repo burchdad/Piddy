@@ -67,5 +67,5 @@ async def handle_slash_command(command_name: str, request: Request):
         command_name: Name of the slash command
         request: Request data
     """
-    # TODO: Implement slash command handling
+    # TODO (2026-03-08): Implement slash command handling
     return {"response_type": "in_channel", "text": f"Command {command_name} received"}

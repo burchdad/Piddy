@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 26: Enterprise Autonomous Engineering Platform
 
 Production deployment, continuous evolution, enterprise policies, and compliance.
@@ -23,6 +24,7 @@ from enum import Enum
 from datetime import datetime, timedelta
 import hashlib
 import asyncio
+import logging
 
 
 class ComplianceFramework(Enum):

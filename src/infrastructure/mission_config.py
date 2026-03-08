@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Mission Configuration Framework
 Standardizes mission definitions for Phases 40-42+
 
@@ -14,6 +15,7 @@ from enum import Enum
 import json
 import yaml
 from pathlib import Path
+import logging
 
 
 class MissionType(Enum):
@@ -129,7 +131,7 @@ class MissionConfigManager:
                     config = MissionConfig.from_dict(data)
                     self.configs[config.name] = config
             except Exception as e:
-                print(f"Error loading {config_file}: {e}")
+                logger.info(f"Error loading {config_file}: {e}")
     
     def get_config(self, mission_name: str) -> Optional[MissionConfig]:
         """Get configuration for mission"""

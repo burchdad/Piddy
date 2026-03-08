@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 32 Migration 3: Incremental Rebuild Support
 
 Tests incremental extraction and rebuild capabilities for fast file-change processing.
@@ -11,6 +12,7 @@ import time
 from pathlib import Path
 from typing import Dict, Set, List
 from datetime import datetime
+import logging
 
 
 class IncrementalRebuildEngine:
@@ -160,38 +162,38 @@ class IncrementalRebuildEngine:
 
 def test_incremental_rebuild():
     """Test incremental rebuild performance"""
-    print("Testing Incremental Rebuild Engine")
-    print("=" * 70)
+    logger.info("Testing Incremental Rebuild Engine")
+    logger.info("=" * 70)
     
     engine = IncrementalRebuildEngine('/workspaces/Piddy/.piddy_callgraph.db')
     
     # Detect changes
-    print("\n1. Detecting file changes...")
+    logger.info("\n1. Detecting file changes...")
     start = time.time()
     changes = engine.detect_changes('/workspaces/Piddy/src')
     elapsed = time.time() - start
     
-    print(f"   ✅ Detection took {elapsed*1000:.1f}ms")
-    print(f"      Added: {len(changes['added'])} files")
-    print(f"      Modified: {len(changes['modified'])} files")
-    print(f"      Deleted: {len(changes['deleted'])} files")
+    logger.info(f"   ✅ Detection took {elapsed*1000:.1f}ms")
+    logger.info(f"      Added: {len(changes['added'])} files")
+    logger.info(f"      Modified: {len(changes['modified'])} files")
+    logger.info(f"      Deleted: {len(changes['deleted'])} files")
     
     # Estimate rebuild time
-    print("\n2. Estimating rebuild time...")
+    logger.info("\n2. Estimating rebuild time...")
     est_time = engine.get_rebuild_time_estimate(changes)
-    print(f"   Estimated: {est_time*1000:.1f}ms")
+    logger.info(f"   Estimated: {est_time*1000:.1f}ms")
     
     # Verify performance targets
-    print("\n3. Performance Analysis:")
+    logger.info("\n3. Performance Analysis:")
     if elapsed < 0.1:  # <100ms for change detection
-        print("   ✅ Change detection: FAST (<100ms)")
+        logger.info("   ✅ Change detection: FAST (<100ms)")
     else:
-        print(f"   ⚠️  Change detection: {elapsed*1000:.1f}ms")
+        logger.info(f"   ⚠️  Change detection: {elapsed*1000:.1f}ms")
     
     if est_time < 0.5:  # <500ms overall
-        print("   ✅ Estimated rebuild: MEETS TARGET (<500ms)")
+        logger.info("   ✅ Estimated rebuild: MEETS TARGET (<500ms)")
     else:
-        print(f"   ⚠️  Estimated rebuild: {est_time*1000:.1f}ms (> 500ms target)")
+        logger.info(f"   ⚠️  Estimated rebuild: {est_time*1000:.1f}ms (> 500ms target)")
     
     return {
         'detection_time_ms': elapsed * 1000,
@@ -202,13 +204,13 @@ def test_incremental_rebuild():
 
 def test_delta_recording():
     """Test delta recording for audit trail"""
-    print("\nTesting Delta Recording")
-    print("=" * 70)
+    logger.info("\nTesting Delta Recording")
+    logger.info("=" * 70)
     
     engine = IncrementalRebuildEngine('/workspaces/Piddy/.piddy_callgraph.db')
     
     # Record sample deltas
-    print("\n1. Recording sample deltas...")
+    logger.info("\n1. Recording sample deltas...")
     test_files = [
         ('/workspaces/Piddy/src/test_file1.py', 'add'),
         ('/workspaces/Piddy/src/test_file2.py', 'modify'),
@@ -217,7 +219,7 @@ def test_delta_recording():
     
     for file_path, operation in test_files:
         engine.record_delta(file_path, operation)
-        print(f"   ✅ Recorded: {operation} {Path(file_path).name}")
+        logger.info(f"   ✅ Recorded: {operation} {Path(file_path).name}")
     
     # Verify recorded
     conn = sqlite3.connect('/workspaces/Piddy/.piddy_callgraph.db')
@@ -226,29 +228,29 @@ def test_delta_recording():
     count = cursor.fetchone()[0]
     conn.close()
     
-    print(f"\n2. Total deltas recorded: {count}")
-    print("   ✅ Delta recording working")
+    logger.info(f"\n2. Total deltas recorded: {count}")
+    logger.info("   ✅ Delta recording working")
 
 
 def test_file_hash_tracking():
     """Test file hash update tracking"""
-    print("\nTesting File Hash Tracking")
-    print("=" * 70)
+    logger.info("\nTesting File Hash Tracking")
+    logger.info("=" * 70)
     
     engine = IncrementalRebuildEngine('/workspaces/Piddy/.piddy_callgraph.db')
     
     # Check loaded hashes
-    print(f"\n1. Loaded file hashes: {len(engine.file_hashes)}")
+    logger.info(f"\n1. Loaded file hashes: {len(engine.file_hashes)}")
     
     if engine.file_hashes:
         # Show sample hashes
-        print("   Sample tracked files:")
+        logger.info("   Sample tracked files:")
         for i, (file_path, hash_val) in enumerate(list(engine.file_hashes.items())[:3]):
-            print(f"      {Path(file_path).name}: {hash_val[:8]}...")
+            logger.info(f"      {Path(file_path).name}: {hash_val[:8]}...")
             if i >= 2:
                 break
     
-    print("   ✅ File hash tracking working")
+    logger.info("   ✅ File hash tracking working")
 
 
 if __name__ == '__main__':
@@ -257,13 +259,13 @@ if __name__ == '__main__':
     test_delta_recording()
     test_file_hash_tracking()
     
-    print("\n" + "=" * 70)
-    print("INCREMENTAL REBUILD VERIFICATION SUMMARY")
-    print("=" * 70)
-    print(f"Change detection time: {results['detection_time_ms']:.1f}ms")
-    print(f"Estimated rebuild time: {results['estimated_rebuild_ms']:.1f}ms")
+    logger.info("\n" + "=" * 70)
+    logger.info("INCREMENTAL REBUILD VERIFICATION SUMMARY")
+    logger.info("=" * 70)
+    logger.info(f"Change detection time: {results['detection_time_ms']:.1f}ms")
+    logger.info(f"Estimated rebuild time: {results['estimated_rebuild_ms']:.1f}ms")
     
     if results['estimated_rebuild_ms'] < 500:
-        print("\n✅ PERFORMANCE TARGET MET (<500ms for incremental rebuilds)")
+        logger.info("\n✅ PERFORMANCE TARGET MET (<500ms for incremental rebuilds)")
     else:
-        print(f"\n⚠️  Performance target: {results['estimated_rebuild_ms']:.1f}ms (> 500ms)")
+        logger.info(f"\n⚠️  Performance target: {results['estimated_rebuild_ms']:.1f}ms (> 500ms)")

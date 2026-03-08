@@ -1,4 +1,6 @@
+import logging
 """
+logger = logging.getLogger(__name__)
 Piddy - Advanced DevOps & MLOps Integration Platform
 Phase 5: Advanced capabilities for production-grade systems
 """

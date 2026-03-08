@@ -163,6 +163,7 @@ class PluginRegistry:
 # --- AFTER (consolidated via BaseEcosystemPlugin) ---
 """
 from src.common.base_component import BaseEcosystemPlugin
+import logging
 
 class PluginRegistry(BaseEcosystemPlugin):
     def _post_init(self) -> None:

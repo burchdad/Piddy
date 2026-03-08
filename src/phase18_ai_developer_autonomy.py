@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 18: AI Developer Autonomy Toolkit
 
 Transform Piddy from coding assistant to autonomous AI developer with:
@@ -21,6 +22,7 @@ import ast
 import re
 from collections import defaultdict
 from enum import Enum
+import logging
 
 
 class FileChangeType(Enum):
@@ -158,7 +160,7 @@ class FileReader:
                 next_indent = indent + ("    " if is_last else "│   ")
                 tree += self._build_tree(d, next_indent, max_depth - 1, exclude_dirs)
 
-        except Exception:
+        except Exception as e:
             pass
 
         return tree

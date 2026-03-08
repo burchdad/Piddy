@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Multi-Agent Framework
 Base classes for agent coordination and communication
 
@@ -15,6 +16,7 @@ from abc import ABC, abstractmethod
 import asyncio
 import json
 from datetime import datetime
+import logging
 
 
 class AgentRole(Enum):

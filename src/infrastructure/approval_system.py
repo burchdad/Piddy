@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Approval & Notification System
 Manages approvals and notifications for high-risk missions
 
@@ -13,6 +14,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import asyncio
 from datetime import datetime, timedelta
+import logging
 
 
 class ApprovalStatus(Enum):
@@ -227,8 +229,8 @@ class NotificationService:
         self.notifications.append(notification)
         
         # In production, send to Slack, PagerDuty, email, etc.
-        print(f"[NOTIFICATION] Approval needed for: {request.mission_name}")
-        print(f"[NOTIFICATION] Risk: {request.risk_level}, Confidence: {request.confidence}")
+        logger.info(f"[NOTIFICATION] Approval needed for: {request.mission_name}")
+        logger.info(f"[NOTIFICATION] Risk: {request.risk_level}, Confidence: {request.confidence}")
     
     async def send_approval_response_notification(self, response: ApprovalResponse) -> None:
         """Send notification about approval response"""
@@ -243,8 +245,8 @@ class NotificationService:
         
         self.notifications.append(notification)
         
-        print(f"[NOTIFICATION] Mission {response.mission_id} {response.status.value}")
-        print(f"[NOTIFICATION] By: {response.approved_by}")
+        logger.info(f"[NOTIFICATION] Mission {response.mission_id} {response.status.value}")
+        logger.info(f"[NOTIFICATION] By: {response.approved_by}")
     
     async def send_mission_complete_notification(self, mission_id: str, result: Dict) -> None:
         """Send notification when mission completes"""
@@ -257,8 +259,8 @@ class NotificationService:
         
         self.notifications.append(notification)
         
-        print(f"[NOTIFICATION] Mission {mission_id} complete")
-        print(f"[NOTIFICATION] Result: {result}")
+        logger.info(f"[NOTIFICATION] Mission {mission_id} complete")
+        logger.info(f"[NOTIFICATION] Result: {result}")
     
     async def send_mission_failed_notification(self, mission_id: str, error: str) -> None:
         """Send notification when mission fails"""
@@ -271,8 +273,8 @@ class NotificationService:
         
         self.notifications.append(notification)
         
-        print(f"[NOTIFICATION] Mission {mission_id} failed")
-        print(f"[NOTIFICATION] Error: {error}")
+        logger.info(f"[NOTIFICATION] Mission {mission_id} failed")
+        logger.info(f"[NOTIFICATION] Error: {error}")
     
     def get_notifications(self, notification_type: str = None) -> List[Dict]:
         """Get all notifications or by type"""

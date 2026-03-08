@@ -444,13 +444,13 @@ async def demo_multi_agent():
         {"spec": "JWT authentication endpoint"}
     )
 
-    print("\nPhase 30: Multi-Agent Protocol - Demo")
-    print("=" * 60)
-    print(f"Task: {result['task']}")
-    print(f"Steps completed: {len(result['steps'])}")
-    print(f"Overall success: {result['success']}")
-    print("\nRegistry status:")
-    print(json.dumps(registry.get_registry_status(), indent=2))
+    logger.info("\nPhase 30: Multi-Agent Protocol - Demo")
+    logger.info("=" * 60)
+    logger.info(f"Task: {result['task']}")
+    logger.info(f"Steps completed: {len(result['steps'])}")
+    logger.info(f"Overall success: {result['success']}")
+    logger.info("\nRegistry status:")
+    logger.info(json.dumps(registry.get_registry_status(), indent=2))
 
 
 if __name__ == "__main__":

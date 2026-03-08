@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 19: Production Hardening
 Security audit, load testing, and production readiness validation
 
@@ -12,6 +13,7 @@ import asyncio
 from datetime import datetime
 import hashlib
 import json
+import logging
 
 
 class SecurityLevel(Enum):

@@ -588,7 +588,7 @@ class PersistentGraphAgent:
 
 if __name__ == "__main__":
     agent = PersistentGraphAgent()
-    print("Phase 28: Persistent Graph - Initialization Demo")
+    logger.info("Phase 28: Persistent Graph - Initialization Demo")
     result = agent.initialize_graph()
-    print(f"Graph initialized: {result['graph_stats']}")
-    print(f"Status: {agent.get_status()}")
+    logger.info(f"Graph initialized: {result['graph_stats']}")
+    logger.info(f"Status: {agent.get_status()}")

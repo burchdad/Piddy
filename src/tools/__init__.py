@@ -166,7 +166,7 @@ def _tool_get_architecture(arch_name: str) -> str:
     """Wrapper for architecture blueprint."""
     try:
         architecture = ArchitecturePattern(arch_name.lower())
-        result = get_architecture_blueprint(architecture)
+        result = get_architecture_bluelogger.info(architecture)
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
         return f"Error: {str(e)}"
@@ -859,7 +859,7 @@ def get_all_tools() -> List[Tool]:
         ),
         Tool(
             name="get_encryption_key_fingerprint",
-            func=lambda x: json.dumps(get_encryption_key_fingerprint(), indent=2),
+            func=lambda x: json.dumps(get_encryption_key_fingerlogger.info(), indent=2),
             description="Get fingerprint of current encryption key for verification and auditing."
         ),
     ])

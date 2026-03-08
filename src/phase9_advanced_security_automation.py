@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 9: Advanced Security, Automation & Intelligence
 
 This module implements cutting-edge security, automation, and intelligence features:
@@ -21,6 +22,7 @@ from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime, timedelta
 from enum import Enum
 import statistics
+import logging
 
 
 # ============================================================================

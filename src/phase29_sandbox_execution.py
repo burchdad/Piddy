@@ -190,7 +190,7 @@ class SandboxExecutor:
         try:
             subprocess.run(['docker', 'version'], capture_output=True, check=True, timeout=5)
             return True
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             return False
 
     def execute_with_isolation(
@@ -420,5 +420,5 @@ if __name__ == "__main__":
         validation_commands=['python -c "import ast; ast.parse(open(\'src/demo_phase29.py\').read())"']
     )
     
-    print("Phase 29: Sandboxed Execution - Demo")
-    print(f"Result: {json.dumps(result, indent=2, default=str)}")
+    logger.info("Phase 29: Sandboxed Execution - Demo")
+    logger.info(f"Result: {json.dumps(result, indent=2, default=str)}")

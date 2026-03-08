@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 19: Self-Improving Agent with Continuous Learning
 
 Transform Piddy from static AI developer to continuously learning, self-improving system:
@@ -21,6 +22,7 @@ from enum import Enum
 import hashlib
 from collections import defaultdict
 import statistics
+import logging
 
 
 class OutcomeType(Enum):
@@ -176,7 +178,7 @@ class LearningDatabase:
             self.conn.commit()
             return True
         except Exception as e:
-            print(f"Error adding event: {e}")
+            logger.info(f"Error adding event: {e}")
             return False
 
     def get_events(self, file_path: Optional[str] = None, limit: int = 100) -> List[Dict]:
@@ -213,7 +215,7 @@ class LearningDatabase:
             self.conn.commit()
             return True
         except Exception as e:
-            print(f"Error adding pattern: {e}")
+            logger.info(f"Error adding pattern: {e}")
             return False
 
     def get_pattern(self, pattern_id: str) -> Optional[Dict]:

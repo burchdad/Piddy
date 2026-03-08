@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 15: Advanced ML-Based Cost Optimization & Resource Management
 
 ML-driven cost optimization delivering:
@@ -21,6 +22,7 @@ from enum import Enum
 import json
 from collections import defaultdict
 from abc import ABC, abstractmethod
+import logging
 
 
 class ResourceType(Enum):

@@ -383,8 +383,8 @@ if __name__ == '__main__':
     collector = MissionTelemetryCollector()
     
     # Print telemetry report
-    print(collector.generate_report())
+    logger.info(collector.generate_report())
     
     # Get stats
     stats = collector.get_all_stats()
-    print(f"\nOverall Stats: {json.dumps(stats, indent=2)}")
+    logger.info(f"\nOverall Stats: {json.dumps(stats, indent=2)}")

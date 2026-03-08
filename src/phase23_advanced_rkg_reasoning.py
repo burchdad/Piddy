@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 23: Advanced RKG-Based Reasoning
 
 Enhanced Repository Knowledge Graph with bidirectional edges and intelligent querying.
@@ -17,6 +18,7 @@ from enum import Enum
 from datetime import datetime
 from collections import defaultdict, deque
 import hashlib
+import logging
 
 
 class EdgeDirection(Enum):

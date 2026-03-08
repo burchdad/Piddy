@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 51: Advanced Graph Reasoning & Emergent Intelligence
 Uses graph-based reasoning to enable autonomous architectural optimization
 
@@ -12,6 +13,7 @@ from enum import Enum
 import asyncio
 from datetime import datetime
 import uuid
+import logging
 
 
 class ReasoningMode(Enum):

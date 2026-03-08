@@ -249,7 +249,7 @@ def encrypt_sensitive_data(data: Any) -> Dict[str, Any]:
         return {
             "status": "success",
             "encrypted_data": encrypted,
-            "key_fingerprint": manager.get_key_fingerprint(),
+            "key_fingerprint": manager.get_key_fingerlogger.info(),
         }
     except Exception as e:
         logger.error(f"Encryption failed: {e}")
@@ -302,7 +302,7 @@ def auto_encrypt_config(config_dict: Dict) -> Dict[str, Any]:
     }
 
 
-def get_encryption_key_fingerprint() -> Dict[str, Any]:
+def get_encryption_key_fingerlogger.info() -> Dict[str, Any]:
     """
     Get fingerprint of current encryption key for verification.
 
@@ -310,7 +310,7 @@ def get_encryption_key_fingerprint() -> Dict[str, Any]:
         Dictionary with key fingerprint
     """
     manager = get_encryption_manager()
-    fingerprint = manager.get_key_fingerprint()
+    fingerprint = manager.get_key_fingerlogger.info()
     logger.info(f"Encryption key fingerprint: {fingerprint}")
     return {
         "status": "success",

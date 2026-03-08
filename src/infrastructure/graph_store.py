@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Graph Store Infrastructure
 Stores and queries dependency graphs for Phases 39-41+
 
@@ -14,6 +15,7 @@ import sqlite3
 from dataclasses import dataclass, asdict
 import json
 from datetime import datetime
+import logging
 
 
 @dataclass
@@ -245,7 +247,7 @@ class DependencyGraphStore:
         try:
             cycles = list(nx.simple_cycles(G))
             return cycles
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             return []
     
     def get_critical_path(self, graph_id: str, source: str, target: str) -> Optional[List[str]]:

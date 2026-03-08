@@ -77,18 +77,18 @@ def example_extract_authentication_service():
     )
     
     # Print results
-    print(f"\nMission: {mission.goal}")
-    print(f"Status: {mission.status.value}")
-    print(f"Progress: {mission.progress * 100:.1f}%")
-    print(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
-    print(f"Confidence: {mission.confidence:.2f}")
+    logger.info(f"\nMission: {mission.goal}")
+    logger.info(f"Status: {mission.status.value}")
+    logger.info(f"Progress: {mission.progress * 100:.1f}%")
+    logger.info(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
+    logger.info(f"Confidence: {mission.confidence:.2f}")
     
     if mission.is_complete:
-        print("\n✅ Service extraction autonomous mission COMPLETE")
+        logger.info("\n✅ Service extraction autonomous mission COMPLETE")
     else:
-        print(f"\n⚠️  Mission has {mission.failed_tasks} failures")
+        logger.info(f"\n⚠️  Mission has {mission.failed_tasks} failures")
         for error in mission.errors:
-            print(f"  - {error}")
+            logger.info(f"  - {error}")
     
     return mission
 
@@ -152,17 +152,17 @@ def example_improve_test_coverage():
     mission = planner.improve_coverage(target_coverage=0.85)
     
     # Print results
-    print(f"\nMission: {mission.goal}")
-    print(f"Status: {mission.status.value}")
-    print(f"Progress: {mission.progress * 100:.1f}%")
-    print(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
-    print(f"Confidence: {mission.confidence:.2f}")
+    logger.info(f"\nMission: {mission.goal}")
+    logger.info(f"Status: {mission.status.value}")
+    logger.info(f"Progress: {mission.progress * 100:.1f}%")
+    logger.info(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
+    logger.info(f"Confidence: {mission.confidence:.2f}")
     
     if mission.is_complete:
-        print("\n✅ Coverage improvement autonomous mission COMPLETE")
-        print(f"  Expected improvement: 72% → 85%")
+        logger.info("\n✅ Coverage improvement autonomous mission COMPLETE")
+        logger.info(f"  Expected improvement: 72% → 85%")
     else:
-        print(f"\n⚠️  Mission incomplete with {mission.failed_tasks} failures")
+        logger.info(f"\n⚠️  Mission incomplete with {mission.failed_tasks} failures")
     
     return mission
 
@@ -226,18 +226,18 @@ def example_cleanup_dead_code():
     mission = planner.cleanup_dead_code(min_confidence=0.95)
     
     # Print results
-    print(f"\nMission: {mission.goal}")
-    print(f"Status: {mission.status.value}")
-    print(f"Progress: {mission.progress * 100:.1f}%")
-    print(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
-    print(f"Confidence: {mission.confidence:.2f}")
+    logger.info(f"\nMission: {mission.goal}")
+    logger.info(f"Status: {mission.status.value}")
+    logger.info(f"Progress: {mission.progress * 100:.1f}%")
+    logger.info(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
+    logger.info(f"Confidence: {mission.confidence:.2f}")
     
     if mission.is_complete:
-        print("\n✅ Dead code cleanup autonomous mission COMPLETE")
-        print(f"  Lines removed: ~340")
-        print(f"  Functions deleted: 18")
+        logger.info("\n✅ Dead code cleanup autonomous mission COMPLETE")
+        logger.info(f"  Lines removed: ~340")
+        logger.info(f"  Functions deleted: 18")
     else:
-        print(f"\n⚠️  Mission incomplete with {mission.failed_tasks} failures")
+        logger.info(f"\n⚠️  Mission incomplete with {mission.failed_tasks} failures")
     
     return mission
 
@@ -305,18 +305,18 @@ def example_fix_architecture_violations():
     mission = planner.fix_architecture()
     
     # Print results
-    print(f"\nMission: {mission.goal}")
-    print(f"Status: {mission.status.value}")
-    print(f"Progress: {mission.progress * 100:.1f}%")
-    print(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
-    print(f"Confidence: {mission.confidence:.2f}")
+    logger.info(f"\nMission: {mission.goal}")
+    logger.info(f"Status: {mission.status.value}")
+    logger.info(f"Progress: {mission.progress * 100:.1f}%")
+    logger.info(f"Tasks: {mission.completed_tasks}/{len(mission.tasks)} completed")
+    logger.info(f"Confidence: {mission.confidence:.2f}")
     
     if mission.is_complete:
-        print("\n✅ Architecture fix autonomous mission COMPLETE")
-        print(f"  Violations resolved: 3")
-        print(f"  Modules refactored: 7")
+        logger.info("\n✅ Architecture fix autonomous mission COMPLETE")
+        logger.info(f"  Violations resolved: 3")
+        logger.info(f"  Modules refactored: 7")
     else:
-        print(f"\n⚠️  Mission incomplete with {mission.failed_tasks} failures")
+        logger.info(f"\n⚠️  Mission incomplete with {mission.failed_tasks} failures")
     
     return mission
 
@@ -349,7 +349,7 @@ def example_query_capabilities():
         "Refactor legacy code",
     ]
     
-    print("\nAutonomous Capability Query Results:\n")
+    logger.info("\nAutonomous Capability Query Results:\n")
     
     for goal in goals:
         capability = planner.query_autonomous_capability(goal)
@@ -357,13 +357,13 @@ def example_query_capabilities():
         status = "✅ CAN EXECUTE" if capability.get('can_execute') else "❌ CANNOT"
         confidence = capability.get('confidence', 0.0)
         
-        print(f"Goal: {goal}")
-        print(f"  Status: {status}")
-        print(f"  Confidence: {confidence:.2f}")
-        print(f"  Workflow: {capability.get('workflow_type', 'unknown')}")
-        print(f"  Steps: {capability.get('estimated_steps', '?')}")
-        print(f"  Recommendation: {capability.get('recommendation', '?')}")
-        print()
+        logger.info(f"Goal: {goal}")
+        logger.info(f"  Status: {status}")
+        logger.info(f"  Confidence: {confidence:.2f}")
+        logger.info(f"  Workflow: {capability.get('workflow_type', 'unknown')}")
+        logger.info(f"  Steps: {capability.get('estimated_steps', '?')}")
+        logger.info(f"  Recommendation: {capability.get('recommendation', '?')}")
+        logger.info()
 
 
 # ============================================================================
@@ -389,17 +389,17 @@ def example_mission_analysis():
     mission = planner.improve_coverage(target_coverage=0.85)
     
     # Analyze the mission
-    print(f"\n📊 MISSION ANALYSIS: {mission.goal}\n")
+    logger.info(f"\n📊 MISSION ANALYSIS: {mission.goal}\n")
     
-    print(f"Overall Status: {mission.status.value}")
-    print(f"Total Tasks: {len(mission.tasks)}")
-    print(f"Completed: {mission.completed_tasks}")
-    print(f"Failed: {mission.failed_tasks}")
-    print(f"Progress: {mission.progress * 100:.1f}%")
-    print(f"Average Confidence: {mission.confidence:.2f}")
-    print(f"Revisions: {mission.revisions}")
+    logger.info(f"Overall Status: {mission.status.value}")
+    logger.info(f"Total Tasks: {len(mission.tasks)}")
+    logger.info(f"Completed: {mission.completed_tasks}")
+    logger.info(f"Failed: {mission.failed_tasks}")
+    logger.info(f"Progress: {mission.progress * 100:.1f}%")
+    logger.info(f"Average Confidence: {mission.confidence:.2f}")
+    logger.info(f"Revisions: {mission.revisions}")
     
-    print("\n📋 TASK DETAILS:\n")
+    logger.info("\n📋 TASK DETAILS:\n")
     
     for i, task in enumerate(mission.tasks, 1):
         status_emoji = {
@@ -411,32 +411,32 @@ def example_mission_analysis():
             "revised": "🔄"
         }.get(task.status.value, "?")
         
-        print(f"{i}. {status_emoji} {task.title}")
-        print(f"   Tool: {task.tool}")
-        print(f"   Status: {task.status.value}")
-        print(f"   Confidence: {task.confidence:.2f}")
+        logger.info(f"{i}. {status_emoji} {task.title}")
+        logger.info(f"   Tool: {task.tool}")
+        logger.info(f"   Status: {task.status.value}")
+        logger.info(f"   Confidence: {task.confidence:.2f}")
         
         if task.result:
-            print(f"   Result: {json.dumps(task.result, indent=4).split(chr(10))[0]}...")
+            logger.info(f"   Result: {json.dumps(task.result, indent=4).split(chr(10))[0]}...")
         
         if task.error:
-            print(f"   ❌ Error: {task.error}")
+            logger.info(f"   ❌ Error: {task.error}")
         
-        print()
+        logger.info()
     
     # Summary
-    print("\n📈 EXECUTION SUMMARY:\n")
+    logger.info("\n📈 EXECUTION SUMMARY:\n")
     
     success_rate = (mission.completed_tasks / len(mission.tasks)) * 100 if mission.tasks else 0
     
-    print(f"Success Rate: {success_rate:.1f}%")
-    print(f"Average Task Confidence: {mission.confidence:.2f}")
-    print(f"Execution Time: {mission.created_at} - {mission.completed_at}")
+    logger.info(f"Success Rate: {success_rate:.1f}%")
+    logger.info(f"Average Task Confidence: {mission.confidence:.2f}")
+    logger.info(f"Execution Time: {mission.created_at} - {mission.completed_at}")
     
     if mission.errors:
-        print(f"\n⚠️  Errors encountered:")
+        logger.info(f"\n⚠️  Errors encountered:")
         for error in mission.errors:
-            print(f"  - {error}")
+            logger.info(f"  - {error}")
     
     return mission
 
@@ -448,13 +448,13 @@ def example_mission_analysis():
 if __name__ == "__main__":
     import json
     
-    print("\n" + "🚀 " * 40)
-    print("PHASE 33: AUTONOMOUS DEVELOPER MISSIONS")
-    print("Planning Loop with Phase 32 Validation")
-    print("🚀 " * 40 + "\n")
+    logger.info("\n" + "🚀 " * 40)
+    logger.info("PHASE 33: AUTONOMOUS DEVELOPER MISSIONS")
+    logger.info("Planning Loop with Phase 32 Validation")
+    logger.info("🚀 " * 40 + "\n")
     
     # Run examples
-    print("\nExecuting examples...\n")
+    logger.info("\nExecuting examples...\n")
     
     try:
         example_extract_authentication_service()
@@ -486,6 +486,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Example 6 error: {e}")
     
-    print("\n" + "✅ " * 40)
-    print("ALL EXAMPLES COMPLETE")
-    print("✅ " * 40 + "\n")
+    logger.info("\n" + "✅ " * 40)
+    logger.info("ALL EXAMPLES COMPLETE")
+    logger.info("✅ " * 40 + "\n")

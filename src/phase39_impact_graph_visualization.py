@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 39: Impact Graph Visualization
 Visualizes dependency graphs to show impact of changes
 
@@ -437,3 +438,4 @@ class ImpactGraphVisualizer:
 
 # Import for compatibility
 import math
+import logging

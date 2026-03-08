@@ -296,24 +296,24 @@ if __name__ == '__main__':
     planner = DiffAwarePlanner()
     
     # Analyze diff
-    print("=" * 70)
-    print("DIFF ANALYSIS")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("DIFF ANALYSIS")
+    logger.info("=" * 70)
     
     try:
         # Try to get diff if in git repo
         analysis = planner.analyzer.analyze_diff("HEAD~1", "HEAD")
-        print(f"Files changed: {analysis.files_changed}")
-        print(f"Total changes: {analysis.total_changes} lines")
-        print(f"Risk level: {analysis.risk_level}")
-        print(f"Affected modules: {analysis.affected_modules}")
-    except:
-        print("(Not in git repo or no history)")
+        logger.info(f"Files changed: {analysis.files_changed}")
+        logger.info(f"Total changes: {analysis.total_changes} lines")
+        logger.info(f"Risk level: {analysis.risk_level}")
+        logger.info(f"Affected modules: {analysis.affected_modules}")
+    except Exception as e:  # TODO (2026-03-08): specify exception type
+        logger.info("(Not in git repo or no history)")
     
     # Generate cleanup plan
-    print("\n" + "=" * 70)
-    print("CLEANUP MISSION PLAN (based on diff)")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("CLEANUP MISSION PLAN (based on diff)")
+    logger.info("=" * 70)
     
     plan = planner.plan_cleanup_mission()
-    print(json.dumps(plan, indent=2))
+    logger.info(json.dumps(plan, indent=2))

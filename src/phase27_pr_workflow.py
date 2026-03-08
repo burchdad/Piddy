@@ -364,4 +364,4 @@ class PullRequestManager:
 if __name__ == "__main__":
     # Demo
     mgr = PullRequestManager()
-    print("Phase 27: PR-Based Workflow - Ready")
+    logger.info("Phase 27: PR-Based Workflow - Ready")

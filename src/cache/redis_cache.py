@@ -137,7 +137,7 @@ class RedisCache:
                     # Fall back to unpickling
                     try:
                         return pickle.loads(value.encode() if isinstance(value, str) else value)
-                    except:
+                    except Exception as e:  # TODO (2026-03-08): specify exception type
                         return value
             else:
                 # Fallback cache

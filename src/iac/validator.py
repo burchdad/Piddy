@@ -289,7 +289,7 @@ class IaCValidator:
             config = yaml.safe_load(manifest)
             if not config:
                 config = {}
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             config = {}
 
         # Security checks

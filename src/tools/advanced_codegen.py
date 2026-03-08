@@ -2,8 +2,10 @@
 
 from typing import Dict, Any, Optional
 from enum import Enum
+import logging
 
 
+logger = logging.getLogger(__name__)
 class APIStyle(str, Enum):
     """Supported API styles."""
     REST = "rest"
@@ -124,7 +126,7 @@ async def {endpoint_name}({params_str}) -> {response_annotation}:
         {response_annotation}: Response payload
     """
     code += "\n    try:"
-    code += "\n        # TODO: Implement business logic"
+    code += "\n        # TODO (2026-03-08): Implement business logic"
     code += '\n        return {"status": "success", "data": {}}'
     code += "\n    except Exception as e:"
     code += "\n        raise HTTPException(status_code=500, detail=str(e))"
@@ -157,7 +159,7 @@ def _generate_django_endpoint(
     code += f"        Handle {http_method} request\n"
     code += "        \"\"\"\n"
     code += "        try:\n"
-    code += "            # TODO: Implement business logic\n"
+    code += "            # TODO (2026-03-08): Implement business logic\n"
     code += '            return Response({"status": "success", "data": {}}, status=status.HTTP_200_OK)\n'
     code += "        except Exception as e:\n"
     code += '            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)\n'
@@ -187,7 +189,7 @@ def {endpoint_name}():
     """
     try:
         if request.method == '{http_method}':
-            # TODO: Implement business logic
+            # TODO (2026-03-08): Implement business logic
             return jsonify({{"status": "success", "data": {{}}}}), 200
     except Exception as e:
         return jsonify({{"error": str(e)}}), 500

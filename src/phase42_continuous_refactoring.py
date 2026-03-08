@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 42: Continuous Refactoring Mode
 Automatically runs refactoring missions on a schedule
 
@@ -15,6 +16,7 @@ import asyncio
 
 from src.infrastructure.mission_config import MissionConfig, MissionConfigManager, MissionType
 from src.infrastructure.scheduler import MissionScheduler, ScheduleFrequency, ScheduledMission, ScheduleBuilder
+import logging
 
 
 class AutoMergePolicy(Enum):
@@ -290,7 +292,7 @@ class NightlyMissionExecutor:
             
             try:
                 # Execute with simulation (Phase 40)
-                # TODO: Integrate with Phase 40 simulator
+                # TODO (2026-03-08): Integrate with Phase 40 simulator
                 
                 results['executed'] += 1
                 results['prs_created'].append({
@@ -300,6 +302,6 @@ class NightlyMissionExecutor:
                 
             except Exception as e:
                 results['failed'] += 1
-                print(f"Failed to execute {mission.name}: {e}")
+                logger.info(f"Failed to execute {mission.name}: {e}")
         
         return results

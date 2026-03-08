@@ -147,7 +147,7 @@ class FileWriter:
             ...     FileType.MODEL
             ... )
             >>> if result['success']:
-            ...     print(f"File written to {result['path']}")
+            ...     logger.info(f"File written to {result['path']}")
         """
         try:
             # Get suggested path
@@ -212,7 +212,7 @@ class FileWriter:
 
         Example:
             >>> preview = writer.get_file_preview("auth.py", FileType.ROUTE)
-            >>> print(preview['message'])
+            >>> logger.info(preview['message'])
             📁 Would write to: src/api/routes/auth.py
         """
         file_path = self.suggest_path(filename, file_type)

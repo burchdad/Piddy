@@ -3,8 +3,10 @@
 from fastapi import APIRouter, HTTPException
 from src.services.autonomous_monitor import get_autonomous_monitor
 from src.services.pr_manager import get_pr_manager
+import logging
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/autonomous", tags=["autonomous"])
 
 

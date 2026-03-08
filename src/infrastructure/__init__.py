@@ -7,7 +7,9 @@ from .approval_system import ApprovalManager, ApprovalRequest, ApprovalStatus
 from .scheduler import MissionScheduler
 from .simulation_engine import SimulationEngine, SimulationResult
 from .agent_framework import AgentOrchestrator, Agent, AgentMessage
+import logging
 
+logger = logging.getLogger(__name__)
 __all__ = [
     "DependencyGraphStore",
     "GraphNode",

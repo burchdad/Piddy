@@ -7,8 +7,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
+import logging
 
 # Configuration (move to config file in production)
+logger = logging.getLogger(__name__)
 SECRET_KEY = "your-secret-key-change-this-in-production"  # Change this!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30

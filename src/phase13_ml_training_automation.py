@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 13: Advanced ML Training Automation & Orchestration
 
 Complete machine learning lifecycle automation with:
@@ -29,6 +30,7 @@ from sklearn.model_selection import cross_val_score
 from scipy.optimize import minimize, differential_evolution
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, auc, roc_curve
 import warnings
+import logging
 warnings.filterwarnings('ignore')
 
 
@@ -106,7 +108,7 @@ class HyperparameterOptimizer(ABC):
             score = objective(params)
             return score
         except Exception as e:
-            print(f"Error in evaluation: {e}")
+            logger.info(f"Error in evaluation: {e}")
             return float('-inf')
 
 
@@ -225,7 +227,7 @@ class AutomaticFeatureEngineer:
             poly_features = poly.fit_transform(X)
             if poly_features.shape[1] <= self.max_features:
                 features.append(poly_features[:, X.shape[1]:])
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             pass
 
         # Interaction features
@@ -389,7 +391,7 @@ class AutoMLPipeline:
                 model = GradientBoostingClassifier(**params, random_state=42)
                 score = cross_val_score(model, X_eng, y, cv=3).mean()
                 return score
-            except:
+            except Exception as e:  # TODO (2026-03-08): specify exception type
                 return 0
 
         opt_result = optimizer.optimize(objective)
@@ -507,7 +509,7 @@ class MLTrainingAutomation:
                 model = RandomForestClassifier(**params, random_state=42)
                 score = cross_val_score(model, X_eng, y, cv=3).mean()
                 return score
-            except:
+            except Exception as e:  # TODO (2026-03-08): specify exception type
                 return 0
 
         opt_result = optimizer.optimize(objective)

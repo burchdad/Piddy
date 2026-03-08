@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 17: Advanced Federated Identity Management & CIAM
 
 Enterprise identity governance with:
@@ -24,6 +25,7 @@ import hashlib
 import secrets
 import base64
 from collections import defaultdict
+import logging
 
 
 class AuthenticationMethod(Enum):

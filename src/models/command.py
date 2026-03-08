@@ -3,8 +3,10 @@
 from pydantic import BaseModel
 from typing import Any, Dict, Optional
 from enum import Enum
+import logging
 
 
+logger = logging.getLogger(__name__)
 class CommandType(str, Enum):
     """Types of commands Piddy can handle."""
     CODE_GENERATION = "code_generation"

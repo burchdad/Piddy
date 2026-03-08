@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 14: Real-Time Data Streaming Analytics & Processing
 
 High-performance streaming data processing with:
@@ -24,6 +25,7 @@ import numpy as np
 from enum import Enum
 import threading
 import queue
+import logging
 
 
 class WindowType(Enum):
@@ -294,7 +296,7 @@ class ComplexEventProcessor:
                         'matching_events': len(self.pattern_buffer)
                     })
                     self.matched_patterns.append(matches[-1])
-            except:
+            except Exception as e:  # TODO (2026-03-08): specify exception type
                 pass
 
         return matches

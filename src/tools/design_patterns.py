@@ -161,17 +161,17 @@ class PaymentStrategy(ABC):
 
 class CreditCardPayment(PaymentStrategy):
     def pay(self, amount: float) -> bool:
-        print(f"Processing ${amount} via Credit Card")
+        logger.info(f"Processing ${amount} via Credit Card")
         return True
 
 class PayPalPayment(PaymentStrategy):
     def pay(self, amount: float) -> bool:
-        print(f"Processing ${amount} via PayPal")
+        logger.info(f"Processing ${amount} via PayPal")
         return True
 
 class CryptoPayment(PaymentStrategy):
     def pay(self, amount: float) -> bool:
-        print(f"Processing ${amount} via Cryptocurrency")
+        logger.info(f"Processing ${amount} via Cryptocurrency")
         return True
 
 class PaymentProcessor:
@@ -231,7 +231,7 @@ class Subject:
 
 class ConcreteObserver(Observer):
     def update(self, subject: Subject) -> None:
-        print(f"Observer: State changed to {subject.state}")
+        logger.info(f"Observer: State changed to {subject.state}")
 
 # Usage
 subject = Subject()
@@ -261,7 +261,7 @@ def timing_decorator(func):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        print(f"{func.__name__} took {end - start:.4f} seconds")
+        logger.info(f"{func.__name__} took {end - start:.4f} seconds")
         return result
     return wrapper
 
@@ -316,7 +316,7 @@ class Adapter(Target):
 # Usage
 adaptee = Adaptee()
 adapter = Adapter(adaptee)
-print(adapter.request())
+logger.info(adapter.request())
 ''',
             "use_cases": ["Third-party integrations", "Legacy system integration"]
         }
@@ -457,7 +457,7 @@ class Database(ABC):
 
 class PostgresDB(Database):
     def query(self, sql: str):
-        print(f"Executing PostgreSQL: {sql}")
+        logger.info(f"Executing PostgreSQL: {sql}")
 
 class UserService:
     def __init__(self, db: Database):
@@ -502,13 +502,13 @@ class Middleware(ABC):
 
 class AuthMiddleware(Middleware):
     def process(self, request: dict) -> dict:
-        print("Checking authentication...")
+        logger.info("Checking authentication...")
         request["authenticated"] = True
         return request
 
 class LoggingMiddleware(Middleware):
     def process(self, request: dict) -> dict:
-        print(f"Logging request: {request}")
+        logger.info(f"Logging request: {request}")
         return request
 
 # Usage
@@ -522,7 +522,7 @@ response = middleware.execute(request)
     return {"error": "Language not supported"}
 
 
-def get_architecture_blueprint(architecture: ArchitecturePattern, language: str = "python") -> Dict[str, Any]:
+def get_architecture_bluelogger.info(architecture: ArchitecturePattern, language: str = "python") -> Dict[str, Any]:
     """Get complete architecture blueprint."""
     
     blueprints = {

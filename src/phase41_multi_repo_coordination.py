@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 41: Multi-Repository Coordination
 Coordinates missions across multiple repositories and manages dependencies
 
@@ -13,6 +14,7 @@ from dataclasses import dataclass, field
 import asyncio
 
 from src.infrastructure.graph_store import DependencyGraphStore, GraphNode, GraphEdge
+import logging
 
 
 @dataclass

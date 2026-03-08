@@ -34,7 +34,7 @@ class Phase32Migrations:
             result = cursor.fetchone()
             conn.close()
             return result[0] if result else 0
-        except:
+        except Exception as e:  # TODO (2026-03-08): specify exception type
             return 0
 
     def _set_schema_version(self, version: int):
@@ -99,7 +99,7 @@ class Phase32Migrations:
                 cursor.execute(f"PRAGMA table_info({table_name})")
                 columns = {row[1] for row in cursor.fetchall()}
                 return col_name in columns
-            except:
+            except Exception as e:  # TODO (2026-03-08): specify exception type
                 return False
         
         # Add columns to nodes table

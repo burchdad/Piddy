@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 16: Quantum-Ready Service Mesh & Protocol Stack
 
 Quantum-safe and future-ready service mesh with:
@@ -23,6 +24,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 import secrets
 import base64
+import logging
 
 
 class EncryptionAlgorithm(Enum):

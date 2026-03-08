@@ -306,7 +306,7 @@ class RepositoryKnowledgeGraph:
                         if imported_node.module:
                             self._add_import_edge(node_id, imported_node.module)
 
-            except Exception:
+            except Exception as e:
                 pass
 
     def _add_import_edge(self, source_id: str, module_name: str):
@@ -456,7 +456,7 @@ class ImpactAnalyzer:
                     content = f.read()
                     if 'import' in content and Path(file_path).stem in content:
                         test_files.add(str(test_file.relative_to(self.repo_root)))
-            except Exception:
+            except Exception as e:
                 pass
 
         return test_files
@@ -543,7 +543,7 @@ class ChangeValidationPipeline:
             try:
                 with open(self.repo_root / file_path, 'r') as f:
                     content = f.read()
-            except Exception:
+            except Exception as e:
                 return ValidationResult(
                     stage=ValidationStage.IMPORT,
                     passed=True,

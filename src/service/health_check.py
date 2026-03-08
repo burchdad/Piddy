@@ -130,7 +130,7 @@ class HealthChecker:
             last_beat = datetime.fromisoformat(health.last_heartbeat)
             age = (datetime.now() - last_beat).total_seconds()
             return age < 30  # Heartbeat within 30 seconds
-        except Exception:
+        except Exception as e:
             return False
     
     def _check_logs_accessible(self) -> bool:

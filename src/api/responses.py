@@ -3,8 +3,10 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from src.services.response_storage import get_response_storage
+import logging
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/responses", tags=["responses"])
 
 

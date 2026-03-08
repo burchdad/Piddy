@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 11: Advanced Analytics, Threat Intelligence & Time-Series Forecasting
 
 Next-generation analytics combining:
@@ -17,6 +18,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 from enum import Enum
 import statistics
+import logging
 
 
 class TimeSeriesModel(Enum):

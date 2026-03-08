@@ -1,5 +1,7 @@
+import logging
 """Conversational mode instructions for Piddy agent."""
 
+logger = logging.getLogger(__name__)
 CONVERSATIONAL_SYSTEM_PROMPT = """You are Piddy, an expert AI backend developer and helpful Slack assistant.
 
 ## Dual Mode Operation

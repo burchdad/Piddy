@@ -1,5 +1,6 @@
 """Coordination module for Phase 4 - Multi-agent coordination system."""
 from .agent_coordinator import (
+import logging
     AgentCoordinator,
     get_coordinator,
     Agent,
@@ -8,6 +9,7 @@ from .agent_coordinator import (
     AgentRole,
     TaskPriority,
     TaskStatus,
+logger = logging.getLogger(__name__)
 )
 
 __all__ = [

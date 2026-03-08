@@ -253,8 +253,8 @@ if __name__ == '__main__':
     context = {}
     results = executor.execute_plan_parallel_sync(plan[:1], context)  # Just analysis for demo
     
-    print("\nParallel Execution Results:")
-    print(f"Analysis Time Comparison:")
-    print(f"  Sequential: 3 tasks × 0.5s = 1.5s")
-    print(f"  Parallel: 3 tasks in parallel ≈ 0.5s")
-    print(f"  Speedup: 3x faster!")
+    logger.info("\nParallel Execution Results:")
+    logger.info(f"Analysis Time Comparison:")
+    logger.info(f"  Sequential: 3 tasks × 0.5s = 1.5s")
+    logger.info(f"  Parallel: 3 tasks in parallel ≈ 0.5s")
+    logger.info(f"  Speedup: 3x faster!")

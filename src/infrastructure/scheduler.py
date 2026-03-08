@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Mission Scheduler
 Schedules and executes missions on a recurring basis
 
@@ -13,6 +14,7 @@ from enum import Enum
 import asyncio
 from datetime import datetime, time, timedelta
 from abc import ABC, abstractmethod
+import logging
 
 
 class ScheduleFrequency(Enum):
@@ -158,7 +160,7 @@ class MissionScheduler:
                 await asyncio.sleep(60)
                 
             except Exception as e:
-                print(f"Scheduler error: {e}")
+                logger.info(f"Scheduler error: {e}")
                 await asyncio.sleep(60)
     
     async def stop(self) -> None:

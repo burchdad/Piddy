@@ -2,8 +2,10 @@
 
 from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
+import logging
 
 
+logger = logging.getLogger(__name__)
 @dataclass
 class CodeIssue:
     """Represents a code issue found during review."""
@@ -97,7 +99,7 @@ def _analyze_python(code: str) -> List[CodeIssue]:
             example="data = ast.literal_eval(user_input)  # safer than eval()",
         ))
     
-    if "except:" in code or "except Exception:" in code:
+    if "except:" in code or "except Exception as e:" in code:
         issues.append(CodeIssue(
             severity="warning",
             type="style",
@@ -107,14 +109,14 @@ def _analyze_python(code: str) -> List[CodeIssue]:
             example="except ValueError: pass  # instead of except:",
         ))
     
-    if "print(" in code and "logger" not in code:
+    if "logger.info(" in code and "logger" not in code:
         issues.append(CodeIssue(
             severity="info",
             type="style",
             line=0,
             message="Use logging instead of print",
             suggestion="Use logging module for production code",
-            example="logger.info('message')  # instead of print()",
+            example="logger.info('message')  # instead of logger.info()",
         ))
     
     if "TODO" in code or "FIXME" in code or "HACK" in code:

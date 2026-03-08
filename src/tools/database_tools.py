@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Optional
 from enum import Enum
 
 
+logger = logging.getLogger(__name__)
 class DatabaseType(str, Enum):
     """Supported database types."""
     POSTGRESQL = "postgresql"
@@ -379,6 +380,7 @@ Create Date: 2026-03-05
 \"\"\"
 from alembic import op
 import sqlalchemy as sa
+import logging
 
 revision = "xxxxxxx"
 down_revision = "yyyyyyy"

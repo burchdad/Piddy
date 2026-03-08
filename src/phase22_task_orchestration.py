@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 22: Task Planning & Orchestration
 
 Break autonomous requests into ordered task graphs with dependency tracking,
@@ -16,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 import json
 import hashlib
+import logging
 
 
 class TaskStatus(Enum):
@@ -640,7 +642,7 @@ class AutonomousTaskOrchestrator:
         }
         
         # Stage 1: Plan
-        print(f"Stage 1: Planning task graph...")
+        logger.info(f"Stage 1: Planning task graph...")
         graph = self.planner.plan_feature(user_request)
         orchestration_log['stages']['planning'] = {
             'status': 'complete',
@@ -650,7 +652,7 @@ class AutonomousTaskOrchestrator:
         }
         
         # Stage 2: Execute
-        print(f"Stage 2: Executing task graph...")
+        logger.info(f"Stage 2: Executing task graph...")
         execution_log = await self.executor.execute_graph(graph)
         orchestration_log['stages']['execution'] = execution_log
         

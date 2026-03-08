@@ -4,8 +4,10 @@ from pydantic import BaseModel
 from typing import Any, Dict, Optional
 from enum import Enum
 from datetime import datetime
+import logging
 
 
+logger = logging.getLogger(__name__)
 class TaskStatus(str, Enum):
     """Task execution status."""
     PENDING = "pending"

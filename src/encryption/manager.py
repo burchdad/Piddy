@@ -254,7 +254,7 @@ class EncryptionManager:
             logger.error(f"Key rotation failed: {e}")
             raise
 
-    def get_key_fingerprint(self) -> str:
+    def get_key_fingerlogger.info(self) -> str:
         """Get a fingerprint of the current encryption key for verification."""
         import hashlib
         return hashlib.sha256(self.key).hexdigest()[:16]

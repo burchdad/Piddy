@@ -519,34 +519,34 @@ def demo_security():
     auditor = controller.create_user("user-3", "auditor_user", Role.AUDITOR)
 
     # Test permissions
-    print("\nPhase 31: Security & Compliance - Demo")
-    print("=" * 60)
+    logger.info("\nPhase 31: Security & Compliance - Demo")
+    logger.info("=" * 60)
 
     # Admin deploys
     authorized, msg = controller.authorize_action(
         "user-1", Permission.DEPLOY, ActionType.DEPLOY, "production"
     )
-    print(f"Admin deploy: {authorized} - {msg}")
+    logger.info(f"Admin deploy: {authorized} - {msg}")
 
     # Operator creates PR
     authorized, msg = controller.authorize_action(
         "user-2", Permission.CREATE_PR, ActionType.CREATE_PR, "feature-branch"
     )
-    print(f"Operator creates PR: {authorized} - {msg}")
+    logger.info(f"Operator creates PR: {authorized} - {msg}")
 
     # Auditor tries to deploy (should fail)
     authorized, msg = controller.authorize_action(
         "user-3", Permission.DEPLOY, ActionType.DEPLOY, "production"
     )
-    print(f"Auditor deploy attempt: {authorized} - {msg}")
+    logger.info(f"Auditor deploy attempt: {authorized} - {msg}")
 
     # Store and retrieve secret
     controller.secrets_vault.store_secret("api_key", "secret-value-123")
     secret = controller.secrets_vault.retrieve_secret("api_key")
-    print(f"Secret retrieved: {secret is not None}")
+    logger.info(f"Secret retrieved: {secret is not None}")
 
-    print("\nStatus:")
-    print(json.dumps(controller.get_status(), indent=2))
+    logger.info("\nStatus:")
+    logger.info(json.dumps(controller.get_status(), indent=2))
 
 
 if __name__ == "__main__":

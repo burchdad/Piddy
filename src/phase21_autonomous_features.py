@@ -775,7 +775,7 @@ Failed deliveries are retried up to 3 times with exponential backoff.
         """Generate default code"""
         return f'''"""{component.description}"""
 
-# TODO: Implement {component.name}
+# TODO (2026-03-08): Implement {component.name}
 '''
 
 
@@ -844,7 +844,7 @@ class AutonomousFeatureDeveloper:
         }
 
         # Stage 1: Design
-        print(f"Stage 1: Designing architecture...")
+        logger.info(f"Stage 1: Designing architecture...")
         architecture = self.designer.design_feature(user_request)
         development_log['stages']['design'] = {
             'status': 'complete',
@@ -854,7 +854,7 @@ class AutonomousFeatureDeveloper:
         }
 
         # Stage 2: Implement
-        print(f"Stage 2: Generating code...")
+        logger.info(f"Stage 2: Generating code...")
         implementations = self.implementer.implement_feature(architecture)
         development_log['stages']['implementation'] = {
             'status': 'complete',
@@ -863,7 +863,7 @@ class AutonomousFeatureDeveloper:
         }
 
         # Stage 3: Validate
-        print(f"Stage 3: Validating consistency...")
+        logger.info(f"Stage 3: Validating consistency...")
         validation = self.validator.validate_feature(architecture, implementations)
         development_log['stages']['validation'] = validation
 

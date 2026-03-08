@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 25: Multi-Repo Coordination
 
 Coordinate changes across multiple services and repositories.
@@ -13,6 +14,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from datetime import datetime
 import hashlib
+import logging
 
 
 class RepositoryType(Enum):

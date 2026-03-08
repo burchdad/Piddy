@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 24: Autonomous Refactoring
 
 Large-scale safe code transformation using RKG-based analysis.
@@ -13,6 +14,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from datetime import datetime
 import hashlib
+import logging
 
 
 class RefactoringType(Enum):

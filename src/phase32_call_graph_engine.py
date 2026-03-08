@@ -202,7 +202,7 @@ class PythonCallGraphExtractor:
                 left = self._annotation_to_string(annotation.left)
                 right = self._annotation_to_string(annotation.right)
                 return f"{left} | {right}"
-            except:
+            except Exception as e:  # TODO (2026-03-08): specify exception type
                 return "Any"
         return "Any"
 

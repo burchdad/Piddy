@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Simulation Engine
 Predicts mission outcomes before execution
 
@@ -11,6 +12,7 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import json
+import logging
 
 
 class PredictionConfidence(Enum):

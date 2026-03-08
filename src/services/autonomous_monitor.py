@@ -120,7 +120,7 @@ class AutonomousMonitor:
                 relative_path = str(py_file.relative_to("/workspaces/Piddy"))
                 
                 for idx, line in enumerate(lines, 1):
-                    # Check for TODO/FIXME comments
+                    # Check for TODO (2026-03-08)/FIXME comments
                     if "TODO" in line or "FIXME" in line:
                         issue = AutonomousIssue(
                             issue_type="code_comment",
@@ -132,19 +132,19 @@ class AutonomousMonitor:
                         self.issues.append(issue)
                     
                     # Check for print statements (should use logging)
-                    if line.strip().startswith("print("):
+                    if line.strip().startswith("logger.info("):
                         issue = AutonomousIssue(
                             issue_type="print_statement",
                             severity="low",
                             file_path=relative_path,
                             line_number=idx,
-                            description="Use logging instead of print()",
-                            fix_suggestion=f"Replace with: logger.info({line.split('print(')[1].split(')')[0]})"
+                            description="Use logging instead of logger.info()",
+                            fix_suggestion=f"Replace with: logger.info({line.split('logger.info(')[1].split(')')[0]})"
                         )
                         self.issues.append(issue)
                     
                     # Check for broad except clauses
-                    if "except:" in line or "except Exception:" in line:
+                    if "except:" in line or "except Exception as e:" in line:
                         issue = AutonomousIssue(
                             issue_type="broad_exception",
                             severity="medium",

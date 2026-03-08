@@ -1,4 +1,5 @@
 """
+logger = logging.getLogger(__name__)
 Phase 12: Enterprise Platform, Integration Marketplace & Advanced Security
 
 Complete enterprise-grade platform with:
@@ -17,6 +18,7 @@ from typing import Dict, List, Optional, Any, Set
 from datetime import datetime, timedelta
 from enum import Enum
 import hashlib
+import logging
 
 
 class Permission(Enum):

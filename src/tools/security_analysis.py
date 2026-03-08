@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+logger = logging.getLogger(__name__)
 class SecurityLevel(str, Enum):
     """Security threat levels."""
     CRITICAL = "critical"
@@ -188,7 +189,7 @@ def _check_data_exposure(code: str, language: str) -> List[SecurityFinding]:
     findings = []
     
     if language == "python":
-        if "print(" in code and ("password" in code.lower() or "secret" in code.lower()):
+        if "logger.info(" in code and ("password" in code.lower() or "secret" in code.lower()):
             findings.append(SecurityFinding(
                 level=SecurityLevel.HIGH,
                 category="Sensitive Data Exposure",
@@ -196,10 +197,10 @@ def _check_data_exposure(code: str, language: str) -> List[SecurityFinding]:
                 description="Passwords, tokens, or secrets are being logged",
                 recommendation="Never log sensitive data; use placeholder messages",
                 code_example="""# VULNERABLE
-print(f"User logged in with password: {password}")
+logger.info(f"User logged in with password: {password}")
 
 # SAFE
-print("User logged in successfully")
+logger.info("User logged in successfully")
 logger.debug(f"User {user_id} authenticated")
 """
             ))
@@ -267,6 +268,7 @@ def create_user(data: dict):
 
 # SAFE
 from pydantic import BaseModel, validator
+import logging
 
 class UserCreate(BaseModel):
     email: str
