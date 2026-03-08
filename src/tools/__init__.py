@@ -2,6 +2,8 @@
 
 import json
 import logging
+import asyncio
+import threading
 from langchain.tools import Tool
 from typing import List, Dict, Any
 from src.tools.advanced_codegen import generate_rest_endpoint, Language, APIStyle
@@ -66,9 +68,54 @@ from src.tools.autonomous_tools import (
     autonomous_analyze_now,
     autonomous_get_prs,
 )
-import asyncio
 
 logger = logging.getLogger(__name__)
+
+
+def _run_async_in_thread(coro):
+    """
+    Run an async coroutine safely, handling cases where an event loop is already running.
+    
+    If we're in an async context, run the coroutine in a new thread with its own event loop.
+    Otherwise, run it directly with asyncio.run().
+    """
+    try:
+        # Check if there's already a running event loop
+        loop = asyncio.get_running_loop()
+        # If we get here, we're in an async context
+        logger.debug("Event loop already running, executing async code in thread")
+        
+        # Create a new event loop in a separate thread
+        result_container = {}
+        exception_container = {}
+        
+        def run_in_new_loop():
+            try:
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                result_container['result'] = new_loop.run_until_complete(coro)
+            except Exception as e:
+                exception_container['error'] = e
+            finally:
+                new_loop.close()
+        
+        thread = threading.Thread(target=run_in_new_loop, daemon=True)
+        thread.start()
+        thread.join(timeout=30)  # Wait up to 30 seconds
+        
+        if exception_container:
+            raise exception_container['error']
+        
+        if 'result' not in result_container:
+            logger.warning("Async operation timed out or failed to complete")
+            return None
+            
+        return result_container['result']
+        
+    except RuntimeError:
+        # No event loop is running, use asyncio.run()
+        logger.debug("No event loop running, using asyncio.run()")
+        return asyncio.run(coro)
 
 
 def _tool_generate_rest_endpoint(description: str) -> str:
@@ -498,50 +545,50 @@ def _tool_autonomous_monitor_start(interval_str: str = "3600") -> str:
     """Wrapper for starting autonomous monitoring"""
     try:
         interval = int(interval_str) if interval_str else 3600
-        result = asyncio.run(autonomous_monitor_start(interval))
+        result = _run_async_in_thread(autonomous_monitor_start(interval))
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
-        logger.error(f"Autonomous monitor start error: {e}")
+        logger.error(f"Autonomous monitor start error: {e}", exc_info=True)
         return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
 
 
 def _tool_autonomous_monitor_stop(*args, **kwargs) -> str:
     """Wrapper for stopping autonomous monitoring"""
     try:
-        result = asyncio.run(autonomous_monitor_stop())
+        result = _run_async_in_thread(autonomous_monitor_stop())
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
-        logger.error(f"Autonomous monitor stop error: {e}")
+        logger.error(f"Autonomous monitor stop error: {e}", exc_info=True)
         return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
 
 
 def _tool_autonomous_monitor_status(*args, **kwargs) -> str:
     """Wrapper for getting autonomous monitor status"""
     try:
-        result = asyncio.run(autonomous_monitor_status())
+        result = _run_async_in_thread(autonomous_monitor_status())
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
-        logger.error(f"Autonomous monitor status error: {e}")
+        logger.error(f"Autonomous monitor status error: {e}", exc_info=True)
         return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
 
 
 def _tool_autonomous_analyze_now(*args, **kwargs) -> str:
     """Wrapper for running code analysis immediately"""
     try:
-        result = asyncio.run(autonomous_analyze_now())
+        result = _run_async_in_thread(autonomous_analyze_now())
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
-        logger.error(f"Autonomous analyze error: {e}")
+        logger.error(f"Autonomous analyze error: {e}", exc_info=True)
         return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
 
 
 def _tool_autonomous_get_prs(*args, **kwargs) -> str:
     """Wrapper for getting list of created PRs"""
     try:
-        result = asyncio.run(autonomous_get_prs())
+        result = _run_async_in_thread(autonomous_get_prs())
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
-        logger.error(f"Autonomous get PRs error: {e}")
+        logger.error(f"Autonomous get PRs error: {e}", exc_info=True)
         return json.dumps({"success": False, "message": f"Error: {str(e)}", "error": str(e)})
 
 
