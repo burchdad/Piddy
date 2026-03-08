@@ -173,3 +173,21 @@ async def get_autonomous_status():
         },
         "summary": monitor.get_issue_summary()
     }
+
+
+@router.get("/database/performance")
+async def get_database_performance():
+    """
+    Get database performance analysis and optimization recommendations.
+    
+    Returns:
+        Database metrics including size, tables, row counts, and recommendations
+    """
+    monitor = get_autonomous_monitor()
+    db_metrics = await monitor._analyze_database_performance()
+    
+    return {
+        "status": "success" if db_metrics else "no_database",
+        "database": db_metrics,
+        "last_check": monitor.last_daily_check.isoformat() if monitor.last_daily_check else None
+    }

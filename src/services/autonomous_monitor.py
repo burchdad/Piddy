@@ -214,21 +214,108 @@ class AutonomousMonitor:
             return {"status": "error", "error": str(e)}
     
     async def _performance_check(self) -> Dict[str, Any]:
-        """Check system performance metrics."""
+        """Check system and database performance metrics."""
         logger.debug("📊 Performance checking...")
         
         try:
             import psutil
             
-            return {
+            results = {
                 "cpu_percent": psutil.cpu_percent(interval=1),
                 "memory_percent": psutil.virtual_memory().percent,
                 "disk_usage": psutil.disk_usage("/").percent,
-                "status": "healthy" if psutil.cpu_percent() < 80 and psutil.virtual_memory().percent < 80 else "warn"
+                "status": "healthy" if psutil.cpu_percent() < 80 and psutil.virtual_memory().percent < 80 else "warn",
+                "database": await self._analyze_database_performance()
             }
+            return results
         except Exception as e:
             logger.debug(f"Error getting performance metrics: {e}")
             return {"status": "unavailable"}
+    
+    async def _analyze_database_performance(self) -> Dict[str, Any]:
+        """Analyze database performance and optimization opportunities."""
+        logger.debug("🗄️  Analyzing database performance...")
+        
+        try:
+            from pathlib import Path
+            import os
+            
+            # SQLite database file analysis
+            db_path = Path("./piddy.db")
+            
+            if not db_path.exists():
+                return {
+                    "status": "not_initialized",
+                    "message": "Database not created yet"
+                }
+            
+            # Get database size
+            db_size_bytes = db_path.stat().st_size
+            db_size_mb = db_size_bytes / (1024 * 1024)
+            
+            # Check if database needs optimization
+            needs_optimization = db_size_mb > 100  # Warn if larger than 100MB
+            
+            result = {
+                "status": "analyzed",
+                "database_type": "SQLite",
+                "file_path": str(db_path),
+                "size_bytes": db_size_bytes,
+                "size_mb": round(db_size_mb, 2),
+                "optimization_needed": needs_optimization,
+                "recommendations": []
+            }
+            
+            # Add recommendations based on size
+            if db_size_mb > 100:
+                result["recommendations"].append("⚠️ Database > 100MB: Consider indexing high-query tables")
+            
+            if db_size_mb > 500:
+                result["recommendations"].append("🔴 Database > 500MB: Consider archiving old records or partitioning")
+            
+            if db_size_mb > 1000:
+                result["recommendations"].append("🚨 Database > 1GB: Requires immediate optimization")
+            
+            # Try to get query performance info if SQLAlchemy is available
+            try:
+                from sqlalchemy import inspect
+                from config.settings import get_settings
+                from sqlalchemy import create_engine
+                
+                settings = get_settings()
+                engine = create_engine(settings.database_url)
+                inspector = inspect(engine)
+                
+                result["tables"] = len(inspector.get_table_names())
+                result["table_list"] = inspector.get_table_names()
+                
+                # Analyze table sizes if SQLite
+                if "sqlite" in settings.database_url.lower():
+                    table_stats = {}
+                    with engine.connect() as conn:
+                        try:
+                            for table_name in inspector.get_table_names():
+                                # Get row count
+                                query = f"SELECT COUNT(*) FROM {table_name}"
+                                row_count = conn.execute(query).scalar()
+                                table_stats[table_name] = {"rows": row_count}
+                            
+                            result["table_statistics"] = table_stats
+                        except:
+                            pass
+                
+                engine.dispose()
+            except Exception as e:
+                logger.debug(f"Could not get detailed table stats: {e}")
+            
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Error analyzing database performance: {e}")
+            return {
+                "status": "error",
+                "error": str(e)
+            }
     
     async def _check_error_rates(self) -> Dict[str, Any]:
         """Check error rates in logs."""

@@ -16,6 +16,7 @@ from src.api.autonomous import router as autonomous_router
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application."""
+    """Create and configure FastAPI application."""
     
     # Setup logging
     setup_logging()
@@ -230,6 +231,10 @@ def create_app() -> FastAPI:
         logger.warning(f"⚠️ Frontend dist directory not found at {frontend_static_path}")
     
     return app
+
+
+# Create app instance at module level for uvicorn
+app = create_app()
 
 
 if __name__ == "__main__":
