@@ -18,6 +18,7 @@ function Sidebar({ currentPage, onPageChange }) {
     { id: 'missions', icon: '🎯', label: 'Missions', page: 'missions' },
     { id: 'dependencies', icon: '📊', label: 'Graph', page: 'dependencies' },
     { id: 'replay', icon: '🎬', label: 'Replay', page: 'replay' },
+    { id: 'database', icon: '🗄️', label: 'Database', page: 'database' },
   ];
 
   return (
