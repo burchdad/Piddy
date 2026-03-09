@@ -30,8 +30,9 @@ function App() {
     const fetchStatus = async () => {
       try {
         setError(null);
-        // Use localhost:8001 for backend API
-        const response = await fetch('http://localhost:8001/api/system/overview', {
+        // Use environment variable for API URL, default to relative path for localhost
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/system/overview`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -1,0 +1,9 @@
+src/
+config/
+requirements.txt
+Dockerfile
+docker-compose.yml
+piddy_old_backup/
+*.pyc
+__pycache__/
+.python-version
