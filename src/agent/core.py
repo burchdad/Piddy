@@ -15,6 +15,7 @@ from config.settings import get_settings
 from src.models.command import Command, CommandResponse, CommandType
 from src.tools import get_all_tools
 from src.agent.conversational_prompt import CONVERSATIONAL_SYSTEM_PROMPT
+from src.services.rate_limiter import get_rate_limiter, Provider
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,19 @@ _llm_rate_limits = {
 
 
 def _is_rate_limited(llm_name: str) -> bool:
-    """Check if an LLM is currently in backoff period."""
+    """
+    Check if an LLM is currently in backoff period.
+    Uses both legacy local tracking and new global rate limiter.
+    """
+    # Check global rate limiter
+    limiter = get_rate_limiter()
+    provider = Provider.ANTHROPIC if llm_name == "claude" else Provider.OPENAI
+    
+    if not limiter.can_make_request(provider):
+        logger.warning(f"{llm_name} is rate limited (global limiter)")
+        return True
+    
+    # Fall back to legacy tracking
     if llm_name not in _llm_rate_limits:
         return False
     
@@ -39,7 +52,16 @@ def _is_rate_limited(llm_name: str) -> bool:
 
 
 def _record_rate_limit_error(llm_name: str, error_msg: str = ""):
-    """Record a rate limit error for an LLM."""
+    """
+    Record a rate limit error for an LLM.
+    Reports to both legacy tracking and new global rate limiter.
+    """
+    # Update global rate limiter
+    limiter = get_rate_limiter()
+    provider = Provider.ANTHROPIC if llm_name == "claude" else Provider.OPENAI
+    limiter.record_rate_limit_error(provider, error_msg)
+    
+    # Keep legacy tracking for backward compatibility
     if llm_name not in _llm_rate_limits:
         _llm_rate_limits[llm_name] = {"last_error": None, "error_count": 0, "backoff_until": 0}
     
@@ -58,7 +80,16 @@ def _record_rate_limit_error(llm_name: str, error_msg: str = ""):
 
 
 def _clear_rate_limit(llm_name: str):
-    """Clear rate limit tracking for an LLM."""
+    """
+    Clear rate limit tracking for an LLM.
+    Clears both legacy and new global tracking.
+    """
+    # Clear global rate limiter
+    limiter = get_rate_limiter()
+    provider = Provider.ANTHROPIC if llm_name == "claude" else Provider.OPENAI
+    limiter.reset_metrics(provider)
+    
+    # Clear legacy tracking
     if llm_name in _llm_rate_limits:
         _llm_rate_limits[llm_name] = {"last_error": None, "error_count": 0, "backoff_until": 0}
 

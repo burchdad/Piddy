@@ -13,6 +13,7 @@ function Sidebar({ currentPage, onPageChange }) {
     { id: 'metrics', icon: '📈', label: 'Metrics', page: 'metrics' },
     { id: 'phases', icon: '🚀', label: 'Phases', page: 'phases' },
     { id: 'security', icon: '🔒', label: 'Security', page: 'security' },
+    { id: 'rate-limits', icon: '🚦', label: 'Rate Limits', page: 'rate-limits' },
     { id: 'decisions', icon: '🧠', label: 'Decisions', page: 'decisions' },
     { id: 'missions', icon: '🎯', label: 'Missions', page: 'missions' },
     { id: 'dependencies', icon: '📊', label: 'Graph', page: 'dependencies' },

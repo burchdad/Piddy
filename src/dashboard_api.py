@@ -114,6 +114,32 @@ class TestResult(BaseModel):
     message: str
 
 
+class ProviderRateLimitMetrics(BaseModel):
+    """Rate limit metrics for a provider"""
+    provider: str
+    is_rate_limited: bool
+    is_in_recovery: bool
+    time_until_available: float
+    backoff_count: int
+    total_errors: int
+    last_error: Optional[str]
+    throughput_per_min: float
+    success_rate: float
+    queue_length: int
+    last_request: Optional[str]
+    last_error_time: Optional[str]
+
+
+class RateLimitStatus(BaseModel):
+    """Overall rate limit status"""
+    status: str  # healthy, degraded, critical
+    healthy_providers: int
+    total_providers: int
+    queue_length: int
+    providers: Dict[str, Dict]
+    timestamp: str
+
+
 class DashboardMetrics(BaseModel):
     """Overall dashboard metrics"""
     agents_online: int
@@ -1553,6 +1579,104 @@ async def get_mission_replay(mission_id: str) -> MissionReplayData:
 async def get_dependency_graph() -> DependencyGraph:
     """Get system dependency graph"""
     return MockDataGenerator.get_dependency_graph()
+
+
+# ============================================================================
+# API ENDPOINTS - RATE LIMITING
+# ============================================================================
+
+@app.get("/api/rate-limits/status")
+async def get_rate_limit_status() -> Dict:
+    """Get current rate limit status for all providers"""
+    try:
+        from src.services.rate_limiter import get_rate_limiter
+        limiter = get_rate_limiter()
+        return limiter.get_system_health()
+    except Exception as e:
+        logger.error(f"Error getting rate limit status: {e}")
+        return {
+            "status": "unknown",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+@app.get("/api/rate-limits/metrics")
+async def get_rate_limit_metrics(provider: Optional[str] = None) -> Dict:
+    """Get detailed rate limit metrics"""
+    try:
+        from src.services.rate_limiter import get_rate_limiter
+        limiter = get_rate_limiter()
+        return {
+            "data": limiter.get_metrics(None if not provider else None),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting rate limit metrics: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/api/rate-limits/dashboard")
+async def get_rate_limit_dashboard() -> Dict:
+    """Get comprehensive rate limit dashboard data"""
+    try:
+        from src.services.rate_limiter import get_rate_limiter
+        limiter = get_rate_limiter()
+        
+        metrics = limiter.get_metrics()
+        health = limiter.get_system_health()
+        
+        # Generate recommendations
+        recommendations = []
+        for provider_name, provider_data in metrics.get("providers", {}).items():
+            if provider_data["is_rate_limited"]:
+                recommendations.append({
+                    "provider": provider_name,
+                    "type": "rate_limited",
+                    "message": f"Rate limited - retry in {provider_data['time_until_available']:.0f}s",
+                    "severity": "high"
+                })
+            elif provider_data["is_in_recovery"]:
+                recommendations.append({
+                    "provider": provider_name,
+                    "type": "recovery",
+                    "message": "In recovery mode after errors",
+                    "severity": "medium"
+                })
+            elif provider_data["success_rate"] < 90:
+                recommendations.append({
+                    "provider": provider_name,
+                    "type": "low_success",
+                    "message": f"Low success rate: {provider_data['success_rate']:.1f}%",
+                    "severity": "medium"
+                })
+        
+        return {
+            "health": health,
+            "providers": metrics.get("providers", {}),
+            "queue_length": metrics.get("queue_length", 0),
+            "recommendations": recommendations,
+            "config": {
+                "requests_per_minute": limiter.config.requests_per_minute,
+                "requests_per_hour": limiter.config.requests_per_hour,
+                "initial_backoff_seconds": limiter.config.initial_backoff_seconds,
+                "max_backoff_seconds": limiter.config.max_backoff_seconds,
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting rate limit dashboard: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/api/rate-limits/providers")
+async def get_providers() -> Dict:
+    """Get list of monitored providers"""
+    return {
+        "providers": ["anthropic", "openai", "github", "slack"],
+        "count": 4,
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 
 # ============================================================================

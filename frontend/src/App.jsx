@@ -12,6 +12,7 @@ import Tests from './components/Tests';
 import Metrics from './components/Metrics';
 import Phases from './components/Phases';
 import Security from './components/Security';
+import { RateLimits } from './components/RateLimits';
 import Decisions from './components/Decisions';
 import Missions from './components/Missions';
 import DependencyGraph from './components/DependencyGraph';
@@ -82,6 +83,8 @@ function App() {
         return <Phases />;
       case 'security':
         return <Security />;
+      case 'rate-limits':
+        return <RateLimits />;
       case 'decisions':
         return <Decisions />;
       case 'missions':
