@@ -1,0 +1,187 @@
+#!/bin/bash
+# Dashboard Deployment Guide
+# This script provides step-by-step instructions to deploy and test the Piddy dashboard
+
+set -e
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+echo "============================================================"
+echo "PIDDY DASHBOARD DEPLOYMENT GUIDE"
+echo "============================================================"
+echo ""
+
+echo "📋 PREREQUISITE CHECKS"
+echo "============================================================"
+
+# Check Python
+if command -v python3 &> /dev/null; then
+    PYTHON_VERSION=$(python3 --version 2>&1)
+    echo "✅ Python: $PYTHON_VERSION"
+else
+    echo "❌ Python 3 not found. Please install Python 3.10+"
+    exit 1
+fi
+
+# Check Node.js
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version)
+    echo "✅ Node.js: $NODE_VERSION"
+else
+    echo "⚠️  Node.js not found. Frontend development requires Node.js 16+"
+fi
+
+# Check npm
+if command -v npm &> /dev/null; then
+    NPM_VERSION=$(npm --version)
+    echo "✅ npm: $NPM_VERSION"
+else
+    echo "⚠️  npm not found. Frontend development requires npm 8+"
+fi
+
+echo ""
+echo "🗂️  PROJECT STRUCTURE"
+echo "============================================================"
+echo ""
+echo "Backend (FastAPI):"
+echo "  • Main API: src/dashboard_api.py"
+echo "  • Rate Limiter: src/services/rate_limiter.py"
+echo "  • Port: 8000"
+echo ""
+echo "Frontend (React + Vite):"
+echo "  • Entry Point: frontend/src/main.jsx"
+echo "  • App Component: frontend/src/App.jsx"
+echo "  • Components: frontend/src/components/"
+echo "  • Styles: frontend/src/styles/"
+echo "  • Port: 5173 (dev), 3000 (preview)"
+echo ""
+
+echo "📊 DASHBOARD COMPONENTS"
+echo "============================================================"
+echo ""
+echo "✅ Tests             - Test results with statistics and filtering"
+echo "✅ Metrics           - Real-time performance metrics"
+echo "✅ Phases            - Deployment phases with progress"
+echo "✅ Security          - Security audit results"
+echo "✅ Decisions         - AI decisions with reasoning"
+echo "✅ Logs              - Real-time log streaming"
+echo "✅ Missions          - Mission tracking and analytics"
+echo "✅ Dependencies      - Service dependency graph"
+echo "✅ Replay            - Historical mission replay"
+echo "✅ Rate Limits       - Rate limit monitoring"
+echo ""
+
+echo "🚀 DEPLOYMENT OPTIONS"
+echo "============================================================"
+echo ""
+echo "Option 1: Docker Deployment (Recommended)"
+echo "  $ docker-compose up"
+echo "  Backend will be at: http://localhost:8000"
+echo "  API Docs at: http://localhost:8000/docs"
+echo ""
+echo "Option 2: Local Development"
+echo ""
+echo "  2a. Backend Only (for API testing):"
+echo "    $ python3 -m pip install -r requirements.txt"
+echo "    $ python3 -m src.main"
+echo "    Backend will be at: http://localhost:8000"
+echo ""
+echo "  2b. Frontend Development:"
+echo "    $ cd frontend"
+echo "    $ npm install && npm run dev"
+echo "    Frontend will be at: http://localhost:5173"
+echo ""
+echo "  2c. Both (Terminal 1 + Terminal 2):"
+echo "    Terminal 1:"
+echo "    $ python3 -m src.main"
+echo ""
+echo "    Terminal 2:"
+echo "    $ cd frontend && npm run dev"
+echo ""
+
+echo "🔍 VERIFICATION STEPS"
+echo "============================================================"
+echo ""
+echo "1. Backend Health Check:"
+echo "   $ curl http://localhost:8000/api/health"
+echo ""
+echo "2. API Endpoints (when backend is running):"
+echo "   $ curl http://localhost:8000/api/tests"
+echo "   $ curl http://localhost:8000/api/metrics/performance"
+echo "   $ curl http://localhost:8000/api/rate-limits/dashboard"
+echo ""
+echo "3. OpenAPI Documentation:"
+echo "   http://localhost:8000/docs"
+echo ""
+echo "4. Frontend:"
+echo "   http://localhost:5173 (dev)"
+echo "   http://localhost:3000 (preview)"
+echo ""
+
+echo "📚 IMPORTANT API ENDPOINTS"
+echo "============================================================"
+echo ""
+echo "Tests:"
+echo "  GET /api/tests           - List all tests"
+echo "  GET /api/tests/summary   - Test summary statistics"
+echo ""
+echo "Metrics:"
+echo "  GET /api/metrics/performance  - Performance metrics"
+echo ""
+echo "System:"
+echo "  GET /api/phases          - Deployment phases"
+echo "  GET /api/security/audit  - Security audit results"
+echo "  GET /api/decisions       - AI decisions"
+echo ""
+echo "Monitoring:"
+echo "  GET /api/logs            - System logs"
+echo "  GET /api/missions        - Mission tracking"
+echo "  GET /api/graph/dependencies - Service dependencies"
+echo ""
+echo "Rate Limiting:"
+echo "  GET /api/rate-limits/dashboard - Dashboard data"
+echo "  GET /api/rate-limits/status    - Current status"
+echo "  GET /api/rate-limits/metrics   - Historical metrics"
+echo ""
+
+echo "🛠️  TROUBLESHOOTING"
+echo "============================================================"
+echo ""
+echo "Issue: Backend won't start"
+echo "  Solution:"
+echo "    1. Ensure Python 3.10+ is installed"
+echo "    2. Install dependencies: pip install -r requirements.txt"
+echo "    3. Check if port 8000 is already in use"
+echo "    4. Review error logs for details"
+echo ""
+echo "Issue: Frontend won't start"
+echo "  Solution:"
+echo "    1. Ensure Node.js 16+ is installed"
+echo "    2. Run: cd frontend && npm install"
+echo "    3. Check if port 5173 is already in use"
+echo "    4. Clear node_modules: rm -rf node_modules && npm install"
+echo ""
+echo "Issue: API calls failing from frontend"
+echo "  Solution:"
+echo "    1. Verify backend is running on port 8000"
+echo "    2. Check CORS configuration in src/dashboard_api.py"
+echo "    3. Verify API endpoints exist: curl http://localhost:8000/api/health"
+echo "    4. Check browser console for errors"
+echo ""
+
+echo "📈 NEXT STEPS"
+echo "============================================================"
+echo ""
+echo "1. Choose deployment option above"
+echo "2. Follow the deployment instructions"
+echo "3. Access the dashboard at http://localhost:8000 or http://localhost:5173"
+echo "4. Verify all components are displaying real data"
+echo "5. Monitor rate limits and performance metrics"
+echo "6. Deploy to production using docker-compose"
+echo ""
+
+echo "✅ SETUP COMPLETE!"
+echo "============================================================"
+echo ""
+exit 0
