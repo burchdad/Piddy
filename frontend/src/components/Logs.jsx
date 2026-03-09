@@ -12,7 +12,8 @@ function Logs() {
       try {
         const response = await fetch('/api/logs?limit=100');
         const data = await response.json();
-        setLogs(data);
+        // Handle both array and object responses
+        setLogs(Array.isArray(data) ? data : (data.logs || []));
       } catch (err) {
         console.error('Failed to fetch logs:', err);
       } finally {
