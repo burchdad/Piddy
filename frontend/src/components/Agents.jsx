@@ -12,6 +12,10 @@ function Agents() {
         const data = await fetchApi('/api/agents');
         const agentsArray = Array.isArray(data) ? data : (data.agents || []);
         setAgents(agentsArray);
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+        setAgents([]);
+      } finally {
         setLoading(false);
       }
     };
