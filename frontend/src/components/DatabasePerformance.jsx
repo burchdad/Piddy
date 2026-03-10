@@ -40,7 +40,7 @@ export function DatabasePerformance() {
       <div className="db-status-cards">
         <div className="db-status-card">
           <div className="status-label">Database Size</div>
-          <div className="status-value">{(metrics.backup_size_mb ?? 0).toFixed(2)} MB</div>
+          <div className="status-value">{(metrics.size_mb ?? 0).toFixed(2)} MB</div>
         </div>
         <div className="db-status-card">
           <div className="status-label">Total Tables</div>

@@ -246,7 +246,13 @@ class AutonomousMonitor:
             if not db_path.exists():
                 return {
                     "status": "not_initialized",
-                    "message": "Database not created yet"
+                    "message": "Database not created yet",
+                    "size_mb": 0,
+                    "table_count": 0,
+                    "total_rows": 0,
+                    "health": {"status": "unknown"},
+                    "tables": [],
+                    "recommendations": []
                 }
             
             # Get database size
@@ -262,19 +268,33 @@ class AutonomousMonitor:
                 "file_path": str(db_path),
                 "size_bytes": db_size_bytes,
                 "size_mb": round(db_size_mb, 2),
+                "backup_size_mb": round(db_size_mb, 2),  # Frontend expects backup_size_mb
                 "optimization_needed": needs_optimization,
-                "recommendations": []
+                "health": {"status": "healthy" if db_size_mb < 100 else "warning"},
+                "recommendations": [],
+                "tables": [],
+                "table_count": 0,
+                "total_rows": 0
             }
             
             # Add recommendations based on size
             if db_size_mb > 100:
-                result["recommendations"].append("⚠️ Database > 100MB: Consider indexing high-query tables")
+                result["recommendations"].append({
+                    "title": "⚠️ Database > 100MB: Consider indexing high-query tables",
+                    "priority": "medium"
+                })
             
             if db_size_mb > 500:
-                result["recommendations"].append("🔴 Database > 500MB: Consider archiving old records or partitioning")
+                result["recommendations"].append({
+                    "title": "🔴 Database > 500MB: Consider archiving old records or partitioning",
+                    "priority": "high"
+                })
             
             if db_size_mb > 1000:
-                result["recommendations"].append("🚨 Database > 1GB: Requires immediate optimization")
+                result["recommendations"].append({
+                    "title": "🚨 Database > 1GB: Requires immediate optimization",
+                    "priority": "critical"
+                })
             
             # Try to get query performance info if SQLAlchemy is available
             try:
@@ -286,18 +306,51 @@ class AutonomousMonitor:
                 engine = create_engine(settings.database_url)
                 inspector = inspect(engine)
                 
-                result["tables"] = len(inspector.get_table_names())
-                result["table_list"] = inspector.get_table_names()
+                table_names = inspector.get_table_names()
+                result["table_count"] = len(table_names)
+                total_rows = 0
                 
                 # Analyze table sizes if SQLite
                 if "sqlite" in settings.database_url.lower():
-                    table_stats = {}
+                    table_list = []
                     with engine.connect() as conn:
                         try:
-                            for table_name in inspector.get_table_names():
+                            for table_name in table_names:
                                 # Get row count
                                 query = f"SELECT COUNT(*) FROM {table_name}"
                                 row_count = conn.execute(query).scalar()
+                                total_rows += row_count or 0
+                                
+                                table_list.append({
+                                    "name": table_name,
+                                    "row_count": row_count or 0,
+                                    "size_mb": 0,  # SQLite doesn't easily expose per-table size
+                                    "index_count": len(inspector.get_indexes(table_name))
+                                })
+                        except Exception as e:
+                            logger.debug(f"Error getting table stats: {e}")
+                    
+                    result["tables"] = table_list
+                    result["total_rows"] = total_rows
+                
+                engine.dispose()
+            except Exception as e:
+                logger.debug(f"Could not get detailed table stats: {e}")
+            
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Error analyzing database performance: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "size_mb": 0,
+                "table_count": 0,
+                "total_rows": 0,
+                "health": {"status": "error"},
+                "tables": [],
+                "recommendations": []
+            }
                                 table_stats[table_name] = {"rows": row_count}
                             
                             result["table_statistics"] = table_stats
