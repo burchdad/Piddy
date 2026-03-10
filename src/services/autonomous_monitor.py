@@ -351,24 +351,6 @@ class AutonomousMonitor:
                 "tables": [],
                 "recommendations": []
             }
-                                table_stats[table_name] = {"rows": row_count}
-                            
-                            result["table_statistics"] = table_stats
-                        except:
-                            pass
-                
-                engine.dispose()
-            except Exception as e:
-                logger.debug(f"Could not get detailed table stats: {e}")
-            
-            return result
-            
-        except Exception as e:
-            logger.warning(f"Error analyzing database performance: {e}")
-            return {
-                "status": "error",
-                "error": str(e)
-            }
     
     async def _check_error_rates(self) -> Dict[str, Any]:
         """Check error rates in logs."""
