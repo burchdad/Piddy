@@ -10,7 +10,6 @@ function Agents() {
     const fetchAgents = async () => {
       try {
         const data = await fetchApi('/api/agents');
-        const data = await response.json();
         setAgents(data.agents || []);
         setLoading(false);
       } catch (error) {
