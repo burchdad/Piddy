@@ -30,13 +30,21 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
     
-    # Add CORS middleware
+    # Add CORS middleware FIRST - must be before all other middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            "https://piddy.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:8000",
+            "*"
+        ],
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],
+        max_age=3600,
+        expose_headers=["*"]
     )
     
     # Include routers
