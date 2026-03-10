@@ -12,10 +12,10 @@ function Tests() {
     const fetchTests = async () => {
       try {
         const summaryData = await fetchApi('/api/tests/summary');
-        setSummary(summaryData);
+        setSummary(summaryData.summary || summaryData);
         
         const testsData = await fetchApi('/api/tests');
-        setTests(testsData);
+        setTests(Array.isArray(testsData) ? testsData : (testsData.tests || []));
       } catch (err) {
         console.error('Failed to fetch tests:', err);
       } finally {

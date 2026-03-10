@@ -11,8 +11,9 @@ function Metrics() {
     const fetchMetrics = async () => {
       try {
         const data = await fetchApi('/api/metrics/performance');
-        setMetrics(data);
-        if (data.length > 0) setSelectedMetric(data[0]);
+        const metricsArray = Array.isArray(data) ? data : (data.metrics || []);
+        setMetrics(metricsArray);
+        if (metricsArray.length > 0) setSelectedMetric(metricsArray[0]);
       } catch (err) {
         console.error('Failed to fetch metrics:', err);
       } finally {
