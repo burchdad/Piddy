@@ -1563,6 +1563,70 @@ async def get_decisions() -> List[Decision]:
     return MockDataGenerator.get_decisions()
 
 
+@app.post("/api/decisions/{decision_id}/approve")
+async def approve_decision(decision_id: str, approved_by: str = "user"):
+    """Approve a pending decision"""
+    try:
+        logger.info(f"✅ Decision {decision_id} approved by {approved_by}")
+        
+        # Update decision status in memory
+        decisions = MockDataGenerator.get_decisions()
+        for decision in decisions:
+            if decision.get('id') == decision_id:
+                decision['status'] = 'approved'
+                decision['approved_by'] = approved_by
+                decision['approved_at'] = datetime.utcnow().isoformat()
+                break
+        
+        return {
+            "status": "success",
+            "decision_id": decision_id,
+            "action": "approved",
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": f"Decision {decision_id} has been approved"
+        }
+    except Exception as e:
+        logger.error(f"Error approving decision: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+@app.post("/api/decisions/{decision_id}/reject")
+async def reject_decision(decision_id: str, rejected_by: str = "user", reason: str = ""):
+    """Reject a pending decision"""
+    try:
+        logger.info(f"❌ Decision {decision_id} rejected by {rejected_by}. Reason: {reason}")
+        
+        # Update decision status in memory
+        decisions = MockDataGenerator.get_decisions()
+        for decision in decisions:
+            if decision.get('id') == decision_id:
+                decision['status'] = 'rejected'
+                decision['rejected_by'] = rejected_by
+                decision['rejection_reason'] = reason
+                decision['rejected_at'] = datetime.utcnow().isoformat()
+                break
+        
+        return {
+            "status": "success",
+            "decision_id": decision_id,
+            "action": "rejected",
+            "reason": reason,
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": f"Decision {decision_id} has been rejected"
+        }
+    except Exception as e:
+        logger.error(f"Error rejecting decision: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
 @app.get("/api/missions")
 async def get_missions() -> List[Mission]:
     """Get mission timelines with stage progression"""
