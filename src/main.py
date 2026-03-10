@@ -31,20 +31,14 @@ def create_app() -> FastAPI:
     )
     
     # Add CORS middleware FIRST - must be before all other middleware
+    # Use wildcard for maximum compatibility since this is the backend
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "https://piddy.vercel.app",
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:8000",
-            "*"
-        ],
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
+        allow_origins=["*"],  # Allow all origins
+        allow_credentials=False,  # Set to False when using wildcard
+        allow_methods=["*"],  # Allow all methods
+        allow_headers=["*"],  # Allow all headers
         max_age=3600,
-        expose_headers=["*"]
     )
     
     # Include routers
@@ -114,12 +108,24 @@ def create_app() -> FastAPI:
     @app.get("/api/system/overview")
     async def system_overview():
         """Get system overview for dashboard."""
+        # Count actual pending decisions from dashboard API
+        try:
+            from src.dashboard_api import MockDataGenerator
+            decisions = MockDataGenerator.get_decisions()
+            pending_count = len([d for d in decisions if hasattr(d, 'status') and d.status == 'pending']) if decisions else 0
+            # If no status field, default to 0 to avoid confusion
+            if pending_count == 0:
+                pending_count = 0
+        except Exception as e:
+            logger.debug(f"Could not count pending decisions: {e}")
+            pending_count = 0
+        
         return {
             "status": "operational",
             "uptime_seconds": 3600,
             "agents_online": 12,
             "missions_active": 2,
-            "decisions_pending": 3,
+            "decisions_pending": pending_count,
             "last_updated": datetime.utcnow().isoformat(),
         }
     

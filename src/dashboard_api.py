@@ -166,6 +166,7 @@ class Decision(BaseModel):
     validation: Dict
     outcome: Optional[Dict]
     timestamp: str
+    status: str = "pending"  # pending, approved, rejected, executed
 
 
 class Mission(BaseModel):
@@ -546,123 +547,121 @@ class MockDataGenerator:
         return [
             Decision(
                 id="dec_001",
-                task="Optimize resource allocation",
+                task="Deploy new cache layer for performance",
                 agent_id="analyzer_1",
-                action="increase_pool_size",
-                confidence=0.92,
+                action="deploy_redis_cluster",
+                confidence=0.88,
+                status="pending",  # PENDING - needs approval
                 context={
-                    "goal": "Maximize throughput while minimizing cost",
-                    "constraints": "Budget: $5000/month, Max instances: 50",
-                    "available_options": "scale_up, scale_down, optimize_instances"
+                    "goal": "Reduce API latency by improving cache hit rate",
+                    "constraints": "Budget: $3000/month, Max latency: 100ms",
+                    "available_options": ["deploy_redis", "use_managed_cache", "optimize_existing"]
                 },
                 reasoning_chain=[
                     {
                         "stage": "Analysis",
-                        "thought": "Current load is 85% of capacity. Trend shows 10% increase daily."
+                        "thought": "Current cache hit rate 62%, can improve to 85% with Redis"
                     },
                     {
                         "stage": "Evaluation",
-                        "thought": "Scaling costs $200/month per instance, ROI is 3:1 based on throughput gains"
+                        "thought": "Redis adds $1500/month, ROI: 2.5x improvement in load times"
                     },
                     {
                         "stage": "Decision",
-                        "thought": "Increase pool by 3 instances for next 30 days, monitor performance"
+                        "thought": "Deploy Redis cluster with 3 nodes and auto-failover"
                     }
                 ],
                 factors=[
-                    {"name": "Current Load", "weight": 0.35, "contribution": "High priority signal"},
-                    {"name": "Cost Analysis", "weight": 0.30, "contribution": "ROI positive"},
-                    {"name": "Historical Trend", "weight": 0.25, "contribution": "Growing demand"},
-                    {"name": "Risk Assessment", "weight": 0.10, "contribution": "Low risk"}
+                    {"name": "Performance Impact", "weight": 0.40, "contribution": "2.5x improvement"},
+                    {"name": "Cost Efficiency", "weight": 0.35, "contribution": "Good ROI"},
+                    {"name": "Risk Level", "weight": 0.25, "contribution": "Low operational risk"}
                 ],
                 parameters={
-                    "pool_size_delta": 3,
-                    "instance_type": "t3.large",
-                    "duration_days": 30
+                    "cluster_size": 3,
+                    "memory_per_node": "8GB",
+                    "replication_factor": 2
                 },
-                validation={
-                    "passed": True,
-                    "score": 0.94,
-                    "checks": [
-                        {"name": "Budget Check", "passed": True, "detail": "Within 5K monthly budget"},
-                        {"name": "Capacity Check", "passed": True, "detail": "Below 50 instance limit"},
-                        {"name": "Safety Check", "passed": True, "detail": "No breaking changes"},
-                    ]
-                },
-                outcome={
-                    "success": True,
-                    "result_description": "Successfully scaled to 13 instances. Throughput +12%, Load: 72%",
-                    "learning_point": "Conservative scaling works better than aggressive"
-                },
-                timestamp=(now - timedelta(hours=2)).isoformat()
-            ),
-            Decision(
-                id="dec_002",
-                task="Validate security compliance",
-                agent_id="validator_1",
-                action="approve_deployment",
-                confidence=0.87,
-                context={
-                    "goal": "Ensure security standards met before prod deployment",
-                    "constraints": "Zero critical vulns, <3% medium severity",
-                    "available_options": "approve, block, approve_with_conditions"
-                },
-                reasoning_chain=[
-                    {"stage": "Assessment", "thought": "Scanning report shows 0 critical, 2 medium vulns"},
-                    {"stage": "Evaluation", "thought": "Medium vulns are in dev dependencies, low prod impact"},
-                    {"stage": "Approval", "thought": "Approve with condition: update dependencies in next sprint"}
-                ],
-                factors=[
-                    {"name": "Vulnerability Count", "weight": 0.40, "contribution": "Within thresholds"},
-                    {"name": "Patch Readiness", "weight": 0.35, "contribution": "2-3 day timeline"},
-                    {"name": "Risk Tolerance", "weight": 0.25, "contribution": "Acceptable for prod"}
-                ],
-                parameters={"approval_status": "conditional", "next_review": "7_days"},
                 validation={
                     "passed": True,
                     "score": 0.91,
                     "checks": [
-                        {"name": "CVE Check", "passed": True, "detail": "All CVEs <7.0 severity"},
-                        {"name": "Dependency Audit", "passed": True, "detail": "Licensed compliant"},
-                        {"name": "SAST Scan", "passed": True, "detail": "No insecure patterns"}
+                        {"name": "Budget Check", "passed": True, "detail": "Within 3K monthly budget"},
+                        {"name": "Performance SLA", "passed": True, "detail": "Meets latency goals"},
+                        {"name": "Availability Check", "passed": True, "detail": "99.95% uptime SLA"},
                     ]
                 },
                 outcome=None,
-                timestamp=(now - timedelta(hours=1)).isoformat()
+                timestamp=(now - timedelta(hours=2)).isoformat()
+            ),
+            Decision(
+                id="dec_002",
+                task="Review and approve security patch",
+                agent_id="validator_1",
+                action="approve_security_patch",
+                confidence=0.95,
+                status="pending",  # PENDING - needs approval
+                context={
+                    "goal": "Apply critical security patches to production",
+                    "constraints": "Zero downtime required, maintenance window available",
+                    "available_options": ["apply_now", "schedule_maintenance", "defer_30_days"]
+                },
+                reasoning_chain=[
+                    {"stage": "Assessment", "thought": "OpenSSL CVE-2025-1234 critical, CVSS 9.8"},
+                    {"stage": "Impact Analysis", "thought": "Affects authentication layer, 15min downtime possible"},
+                    {"stage": "Recommendation", "thought": "Apply immediately in scheduled maintenance window"}
+                ],
+                factors=[
+                    {"name": "Security Severity", "weight": 0.50, "contribution": "Critical"},
+                    {"name": "Operational Risk", "weight": 0.35, "contribution": "Low with maintenance window"},
+                    {"name": "Business Impact", "weight": 0.15, "contribution": "Minimal downtime"}
+                ],
+                parameters={"patch_version": "1.1.1w", "rollback_plan": "ready"},
+                validation={
+                    "passed": True,
+                    "score": 0.97,
+                    "checks": [
+                        {"name": "Patch Validation", "passed": True, "detail": "Signed and verified"},
+                        {"name": "Compatibility", "passed": True, "detail": "No breaking changes"},
+                        {"name": "Testing", "passed": True, "detail": "Passed in staging"}
+                    ]
+                },
+                outcome=None,
+                timestamp=(now - timedelta(minutes=30)).isoformat()
             ),
             Decision(
                 id="dec_003",
-                task="Route request to optimal service",
+                task="Optimize database query for reporting",
                 agent_id="executor_1",
-                action="route_to_service_3",
-                confidence=0.78,
+                action="add_db_index",
+                confidence=0.82,
+                status="approved",  # Already approved
                 context={
-                    "goal": "Minimize latency for API request",
-                    "constraints": "Max 200ms response time",
-                    "available_options": ["service_1", "service_2", "service_3", "service_backup"]
+                    "goal": "Reduce daily report generation time from 45min to 5min",
+                    "constraints": "Index size <500MB, query response <2s",
+                    "available_options": ["add_index", "partition_table", "denormalize"]
                 },
                 reasoning_chain=[
-                    {"stage": "Status Check", "thought": "Service latencies: s1=145ms, s2=210ms, s3=89ms, backup=340ms"},
-                    {"stage": "Load Assessment", "thought": "s3 has 40% capacity, can handle load"},
-                    {"stage": "Routing", "thought": "Route to service_3 for lowest latency"}
+                    {"stage": "Profiling", "thought": "Report query takes 45min on 100M rows"},
+                    {"stage": "Analysis", "thought": "Adding composite index on (user_id, date) reduces to 5min"},
+                    {"stage": "Implementation", "thought": "Create index offline, test, then deploy"}
                 ],
                 factors=[
-                    {"name": "Service Latency", "weight": 0.45, "contribution": "s3 is fastest"},
-                    {"name": "Load Capacity", "weight": 0.35, "contribution": "s3 has headroom"},
-                    {"name": "Reliability", "weight": 0.20, "contribution": "All services healthy"}
+                    {"name": "Performance Gain", "weight": 0.45, "contribution": "9x improvement"},
+                    {"name": "Storage Cost", "weight": 0.30, "contribution": "Minimal impact"},
+                    {"name": "Maintenance", "weight": 0.25, "contribution": "Low maintenance"}
                 ],
-                parameters={"target_service": "service_3", "timeout_ms": 200},
+                parameters={"index_name": "idx_reports_user_date", "columns": ["user_id", "date"]},
                 validation={
                     "passed": True,
-                    "score": 0.88,
+                    "score": 0.89,
                     "checks": [
-                        {"name": "Service Health", "passed": True, "detail": "All services up"},
-                        {"name": "Capacity", "passed": True, "detail": "Route has capacity"},
-                        {"name": "SLA", "passed": True, "detail": "Meets <200ms SLA"}
+                        {"name": "Query Plan", "passed": True, "detail": "Uses index optimally"},
+                        {"name": "Storage", "passed": True, "detail": "Index 250MB, acceptable"},
+                        {"name": "Lock Time", "passed": True, "detail": "Offline creation, no locks"}
                     ]
                 },
-                outcome={"success": True, "result_description": "Request completed in 92ms", "learning_point": "s3 consistently performs well"},
-                timestamp=now.isoformat()
+                outcome={"success": True, "result_description": "Report time reduced from 45min to 4min", "learning_point": "Composite indexes very effective for range queries"},
+                timestamp=(now - timedelta(hours=1)).isoformat()
             )
         ]
     
