@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function DependencyGraph() {
@@ -9,8 +10,7 @@ function DependencyGraph() {
   useEffect(() => {
     const fetchGraph = async () => {
       try {
-        const response = await fetch('/api/graph/dependencies');
-        const data = await response.json();
+        const data = await fetchApi('/api/graph/dependencies');
         setGraph(data);
       } catch (err) {
         console.error('Failed to fetch dependency graph:', err);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function MissionReplay() {
@@ -11,8 +12,7 @@ function MissionReplay() {
   useEffect(() => {
     const fetchMissions = async () => {
       try {
-        const response = await fetch('/api/missions');
-        const data = await response.json();
+        const data = await fetchApi('/api/missions');
         setMissions(data);
         if (data.length > 0) {
           setSelectedMission(data[0]);

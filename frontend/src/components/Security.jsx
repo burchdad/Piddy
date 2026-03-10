@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Security() {
@@ -8,8 +9,7 @@ function Security() {
   useEffect(() => {
     const fetchSecurity = async () => {
       try {
-        const response = await fetch('/api/security/audit');
-        const data = await response.json();
+        const data = await fetchApi('/api/security/audit');
         setAudit(data);
       } catch (err) {
         console.error('Failed to fetch security audit:', err);

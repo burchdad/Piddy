@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Decisions() {
@@ -9,8 +10,7 @@ function Decisions() {
   useEffect(() => {
     const fetchDecisions = async () => {
       try {
-        const response = await fetch('/api/decisions');
-        const data = await response.json();
+        const data = await fetchApi('/api/decisions');
         setDecisions(data);
       } catch (err) {
         console.error('Failed to fetch decisions:', err);

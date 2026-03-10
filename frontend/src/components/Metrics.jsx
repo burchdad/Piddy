@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Metrics() {
@@ -9,8 +10,7 @@ function Metrics() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch('/api/metrics/performance');
-        const data = await response.json();
+        const data = await fetchApi('/api/metrics/performance');
         setMetrics(data);
         if (data.length > 0) setSelectedMetric(data[0]);
       } catch (err) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 export function DatabasePerformance() {
@@ -9,9 +10,7 @@ export function DatabasePerformance() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/autonomous/database/performance');
-        if (!response.ok) throw new Error('Failed to fetch database performance');
-        const result = await response.json();
+        const result = await fetchApi('/api/autonomous/database/performance');
         setData(result.database || {});
         setError(null);
       } catch (err) {

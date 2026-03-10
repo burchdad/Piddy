@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Phases() {
@@ -8,8 +9,7 @@ function Phases() {
   useEffect(() => {
     const fetchPhases = async () => {
       try {
-        const response = await fetch('/api/phases');
-        const data = await response.json();
+        const data = await fetchApi('/api/phases');
         setPhases(data);
       } catch (err) {
         console.error('Failed to fetch phases:', err);

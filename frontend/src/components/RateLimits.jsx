@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 
 export function RateLimits() {
   const [data, setData] = useState(null);
@@ -9,9 +10,7 @@ export function RateLimits() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/rate-limits/dashboard');
-        if (!response.ok) throw new Error('Failed to fetch rate limit data');
-        const result = await response.json();
+        const result = await fetchApi('/api/rate-limits/dashboard');
         setData(result);
         setError(null);
       } catch (err) {

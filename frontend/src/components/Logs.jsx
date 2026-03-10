@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Logs() {
@@ -10,8 +11,7 @@ function Logs() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await fetch('/api/logs?limit=100');
-        const data = await response.json();
+        const data = await fetchApi('/api/logs?limit=100');
         // Handle both array and object responses
         setLogs(Array.isArray(data) ? data : (data.logs || []));
       } catch (err) {

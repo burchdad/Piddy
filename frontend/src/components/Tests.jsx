@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Tests() {
@@ -10,12 +11,10 @@ function Tests() {
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        const response = await fetch('/api/tests/summary');
-        const summaryData = await response.json();
+        const summaryData = await fetchApi('/api/tests/summary');
         setSummary(summaryData);
         
-        const testsResponse = await fetch('/api/tests');
-        const testsData = await testsResponse.json();
+        const testsData = await fetchApi('/api/tests');
         setTests(testsData);
       } catch (err) {
         console.error('Failed to fetch tests:', err);
