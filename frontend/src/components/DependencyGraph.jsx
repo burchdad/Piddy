@@ -11,7 +11,8 @@ function DependencyGraph() {
     const fetchGraph = async () => {
       try {
         const data = await fetchApi('/api/graph/dependencies');
-        setGraph(data);
+        const graphData = data.graph || data;
+        setGraph(graphData);
       } catch (err) {
         console.error('Failed to fetch dependency graph:', err);
       } finally {

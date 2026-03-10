@@ -13,9 +13,10 @@ function MissionReplay() {
     const fetchMissions = async () => {
       try {
         const data = await fetchApi('/api/missions');
-        setMissions(data);
-        if (data.length > 0) {
-          setSelectedMission(data[0]);
+        const missionsArray = Array.isArray(data) ? data : (data.missions || []);
+        setMissions(missionsArray);
+        if (missionsArray.length > 0) {
+          setSelectedMission(missionsArray[0]);
         }
       } catch (err) {
         console.error('Failed to fetch missions:', err);
