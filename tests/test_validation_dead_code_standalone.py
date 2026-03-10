@@ -72,7 +72,7 @@ class DeadCodeValidator:
                 timeout=30
             )
             return result.returncode == 0
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             return False
     
     def calculate_metrics(self, mission_result: dict) -> DeadCodeMetrics:
@@ -120,29 +120,29 @@ class DeadCodeValidator:
 
 
 def main():
-    print("=" * 70)
-    print("VALIDATION TEST 1: DEAD CODE REMOVAL")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("VALIDATION TEST 1: DEAD CODE REMOVAL")
+    logger.info("=" * 70)
     
     validator = DeadCodeValidator()
     
     try:
         result = validator.run_dead_code_mission(min_confidence=0.90)
-        print(f"\nMission Result:")
-        print(f"  Status: {result['status']}")
-        print(f"  Confidence: {result['confidence']:.2%}")
-        print(f"  Is Complete: {result['is_complete']}")
-        print(f"  Tasks executed: {result['tasks']}")
+        logger.info(f"\nMission Result:")
+        logger.info(f"  Status: {result['status']}")
+        logger.info(f"  Confidence: {result['confidence']:.2%}")
+        logger.info(f"  Is Complete: {result['is_complete']}")
+        logger.info(f"  Tasks executed: {result['tasks']}")
         
         metrics = validator.calculate_metrics(result)
         report = validator.generate_report(metrics)
         
-        print(f"\nValidation Report:")
-        print(json.dumps(report, indent=2))
+        logger.info(f"\nValidation Report:")
+        logger.info(json.dumps(report, indent=2))
         
-        print("\n" + "=" * 70)
-        print(f"RESULT: {report['pass_fail']}")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info(f"RESULT: {report['pass_fail']}")
+        logger.info("=" * 70)
         
         # Pass if mission completed or confidence is high
         test_passed = result['is_complete'] or result['confidence'] >= 0.80

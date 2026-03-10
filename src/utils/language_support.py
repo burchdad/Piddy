@@ -407,6 +407,7 @@ export class AppController {
 package main
 
 import (
+import asyncio
 \t"github.com/gin-gonic/gin"
 )
 

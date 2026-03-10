@@ -384,8 +384,8 @@ def plan_service_refactoring(input_str: str) -> str:
 
 if __name__ == '__main__':
     # Demonstration
-    print("Phase 32 Production Integration Demo")
-    print("=" * 70)
+    logger.info("Phase 32 Production Integration Demo")
+    logger.info("=" * 70)
     
     integration = Phase32ProductionIntegration()
     
@@ -399,12 +399,12 @@ if __name__ == '__main__':
     
     if result:
         func_id, func_name = result
-        print(f"\nEvaluating refactoring for: {func_name}")
+        logger.info(f"\nEvaluating refactoring for: {func_name}")
         
         # Test refactoring evaluation
         evaluation = integration.evaluate_refactoring_safety(func_id, 'optimize')
-        print(f"Safety: {evaluation['safety_level']}")
-        print(f"Can proceed: {evaluation['can_proceed']}")
-        print(f"Confidence: {evaluation['confidence']:.2f}")
+        logger.info(f"Safety: {evaluation['safety_level']}")
+        logger.info(f"Can proceed: {evaluation['can_proceed']}")
+        logger.info(f"Confidence: {evaluation['confidence']:.2f}")
         
-        print("\n✅ Phase 32 production integration initialized successfully")
+        logger.info("\n✅ Phase 32 production integration initialized successfully")

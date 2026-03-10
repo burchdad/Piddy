@@ -8,6 +8,8 @@ Enables autonomous refactoring, testing prioritization, and code improvement dec
 import sqlite3
 from typing import Dict, List
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 class DecisionConfidence(Enum):
     VERY_LOW = 0.3
@@ -66,7 +68,7 @@ class UnifiedReasoningEngine:
                 'test_count': test_count,
                 'score': min(0.95, 0.2 + (test_count * 0.15))
             }
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             evaluation['factors']['test_coverage'] = {'score': 0.3}
 
         # Factor 2: Type safety
@@ -80,7 +82,7 @@ class UnifiedReasoningEngine:
                 'typed': bool(typed and typed['is_correctly_typed']),
                 'score': 0.9 if typed and typed['is_correctly_typed'] else 0.5
             }
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             evaluation['factors']['type_safety'] = {'score': 0.5}
 
         # Factor 3: API contracts
@@ -94,7 +96,7 @@ class UnifiedReasoningEngine:
                 'has_contract': bool(contract),
                 'score': 0.9 if contract else 0.6
             }
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             evaluation['factors']['api_contracts'] = {'score': 0.6}
 
         # Factor 4: Stable identifier
@@ -108,7 +110,7 @@ class UnifiedReasoningEngine:
                 'has_stable_id': has_stable_id,
                 'score': 0.95 if has_stable_id else 0.5
             }
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             evaluation['factors']['stable_identity'] = {'score': 0.5}
 
         # Factor 5: Confidence in call graph
@@ -123,7 +125,7 @@ class UnifiedReasoningEngine:
                 'avg_confidence': avg_conf,
                 'score': avg_conf
             }
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             evaluation['factors']['call_graph_confidence'] = {'score': 0.95}
 
         conn.close()
@@ -184,7 +186,7 @@ class UnifiedReasoningEngine:
                 priorities.append(priority)
 
         except Exception as e:
-            print(f"Error prioritizing tests: {e}")
+            logger.info(f"Error prioritizing tests: {e}")
 
         conn.close()
         return priorities
@@ -237,7 +239,7 @@ class UnifiedReasoningEngine:
                 })
 
         except Exception as e:
-            print(f"Error identifying hot spots: {e}")
+            logger.info(f"Error identifying hot spots: {e}")
 
         conn.close()
         return hot_spots
@@ -283,8 +285,8 @@ class UnifiedReasoningEngine:
 
 def run_unified_reasoning_demo():
     """Demonstrate unified reasoning engine"""
-    print("Phase 32f: Unified Reasoning Layer")
-    print("=" * 70)
+    logger.info("Phase 32f: Unified Reasoning Layer")
+    logger.info("=" * 70)
 
     engine = UnifiedReasoningEngine('.piddy_callgraph.db')
 
@@ -298,33 +300,33 @@ def run_unified_reasoning_demo():
     if result:
         func_id, func_name = result
 
-        print(f"\n1. Evaluating refactoring safety for: {func_name}")
+        logger.info(f"\n1. Evaluating refactoring safety for: {func_name}")
         evaluation = engine.evaluate_refactoring(func_id, {'action': 'optimize'})
-        print(f"   Overall confidence: {evaluation['confidence']:.2f}")
-        print(f"   Recommendation: {evaluation['recommendation']}")
-        print(f"   Factors:")
+        logger.info(f"   Overall confidence: {evaluation['confidence']:.2f}")
+        logger.info(f"   Recommendation: {evaluation['recommendation']}")
+        logger.info(f"   Factors:")
         for factor, data in evaluation['factors'].items():
-            print(f"      - {factor}: {data.get('score', 'N/A'):.2f}")
+            logger.info(f"      - {factor}: {data.get('score', 'N/A'):.2f}")
 
-        print(f"\n2. Prioritizing testing needs...")
+        logger.info(f"\n2. Prioritizing testing needs...")
         priorities = engine.prioritize_testing()
-        print(f"   High-risk untested functions: {len(priorities)}")
+        logger.info(f"   High-risk untested functions: {len(priorities)}")
         if priorities:
             for p in priorities[:3]:
-                print(f"      {p['func_name']}: complexity={p['complexity']:.2f}, priority={p['priority_score']:.2f}")
+                logger.info(f"      {p['func_name']}: complexity={p['complexity']:.2f}, priority={p['priority_score']:.2f}")
 
-        print(f"\n3. Identifying refactoring hot spots...")
+        logger.info(f"\n3. Identifying refactoring hot spots...")
         hot_spots = engine.identify_refactoring_hot_spots()
-        print(f"   Hot spots found: {len(hot_spots)}")
+        logger.info(f"   Hot spots found: {len(hot_spots)}")
         for spot in hot_spots[:3]:
-            print(f"      {spot['type']}: {spot['recommendation']}")
+            logger.info(f"      {spot['type']}: {spot['recommendation']}")
 
-        print(f"\n4. Generating agent instructions...")
+        logger.info(f"\n4. Generating agent instructions...")
         instructions = engine.generate_agent_instructions(func_id)
-        print(f"   Safety level: {instructions['safety_level']}")
-        print(f"   Steps: {len(instructions['steps'])}")
+        logger.info(f"   Safety level: {instructions['safety_level']}")
+        logger.info(f"   Steps: {len(instructions['steps'])}")
 
-    print("\n✅ Phase 32f unified reasoning complete")
+    logger.info("\n✅ Phase 32f unified reasoning complete")
 
 
 if __name__ == '__main__':

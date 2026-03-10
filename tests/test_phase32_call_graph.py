@@ -20,6 +20,7 @@ import sys
 sys.path.insert(0, '/workspaces/Piddy/src')
 
 from phase32_call_graph_engine import (
+import asyncio
     PythonCallGraphExtractor,
     CallGraphDB,
     ImpactAnalyzer,

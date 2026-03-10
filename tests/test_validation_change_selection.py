@@ -22,6 +22,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Set, List, Tuple
 from dataclasses import dataclass
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class ChangeBasedTestSelector:
                         if line.strip().startswith('def test_'):
                             test_name = line.split('(')[0].replace('def ', '').strip()
                             tests.add(f"{test_file.name}::{test_name}")
-            except:
+            except (ValueError, TypeError, RuntimeError, HTTPError) as e:
                 pass
         
         logger.info(f"Found {len(tests)} total tests")
@@ -370,39 +371,39 @@ def test_overall_selection_performance(selector):
 
 if __name__ == '__main__':
     selector = ChangeBasedTestSelector()
-    print("=" * 70)
-    print("VALIDATION TEST 3: CHANGE-BASED TEST SELECTION")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("VALIDATION TEST 3: CHANGE-BASED TEST SELECTION")
+    logger.info("=" * 70)
     
     all_tests = selector.get_all_tests()
-    print(f"\nTotal tests available: {len(all_tests)}")
+    logger.info(f"\nTotal tests available: {len(all_tests)}")
     
     # Scenario 1: Auth change
-    print("\n--- Scenario 1: Auth Module Change ---")
+    logger.info("\n--- Scenario 1: Auth Module Change ---")
     change_auth = selector.simulate_change('auth')
-    print(f"Change: {change_auth['change']}")
-    print(f"File: {change_auth['changed_file']}")
+    logger.info(f"Change: {change_auth['change']}")
+    logger.info(f"File: {change_auth['changed_file']}")
     
     affected_auth = selector.get_affected_tests_from_change(change_auth['changed_file'])
-    print(f"Tests affected: {len(affected_auth)}")
-    print(f"Reduction: {(1 - len(affected_auth)/len(all_tests))*100:.1f}%")
+    logger.info(f"Tests affected: {len(affected_auth)}")
+    logger.info(f"Reduction: {(1 - len(affected_auth)/len(all_tests))*100:.1f}%")
     
     # Scenario 2: Cache change
-    print("\n--- Scenario 2: Cache Module Change ---")
+    logger.info("\n--- Scenario 2: Cache Module Change ---")
     change_cache = selector.simulate_change('cache')
-    print(f"Change: {change_cache['change']}")
-    print(f"File: {change_cache['changed_file']}")
+    logger.info(f"Change: {change_cache['change']}")
+    logger.info(f"File: {change_cache['changed_file']}")
     
     affected_cache = selector.get_affected_tests_from_change(change_cache['changed_file'])
-    print(f"Tests affected: {len(affected_cache)}")
-    print(f"Reduction: {(1 - len(affected_cache)/len(all_tests))*100:.1f}%")
+    logger.info(f"Tests affected: {len(affected_cache)}")
+    logger.info(f"Reduction: {(1 - len(affected_cache)/len(all_tests))*100:.1f}%")
     
     # Metrics
     metrics = selector.calculate_metrics(all_tests, affected_cache, set())
     report = selector.generate_report(metrics)
     
-    print(f"\nValidation Report:\n{json.dumps(report, indent=2)}")
+    logger.info(f"\nValidation Report:\n{json.dumps(report, indent=2)}")
     
-    print("\n" + "=" * 70)
-    print(f"RESULT: {report['validation']['status']}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"RESULT: {report['validation']['status']}")
+    logger.info("=" * 70)

@@ -115,9 +115,9 @@ class ValidationRunner:
                                         if depth == 0:
                                             metrics = json.loads(json_str[:k+1])
                                             return metrics
-                            except:
+                            except (ValueError, TypeError, RuntimeError, HTTPError) as e:
                                 pass
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             pass
         
         return metrics
@@ -215,48 +215,48 @@ class ValidationRunner:
     
     def print_summary(self, report: Dict):
         """Print summary to console"""
-        print("\n" + "=" * 80)
-        print("PIDDY AUTONOMOUS SYSTEM VALIDATION RESULTS")
-        print("=" * 80)
-        print(f"\nTimestamp: {report['timestamp']}")
-        print(f"Tests Run: {report['critical_metrics']['tests_executed']}")
-        print(f"Tests Passed: {report['critical_metrics']['tests_passed']}")
-        print(f"Pass Rate: {report['critical_metrics']['pass_rate']}")
-        print(f"System Readiness: {report['critical_metrics']['system_readiness']}")
+        logger.info("\n" + "=" * 80)
+        logger.info("PIDDY AUTONOMOUS SYSTEM VALIDATION RESULTS")
+        logger.info("=" * 80)
+        logger.info(f"\nTimestamp: {report['timestamp']}")
+        logger.info(f"Tests Run: {report['critical_metrics']['tests_executed']}")
+        logger.info(f"Tests Passed: {report['critical_metrics']['tests_passed']}")
+        logger.info(f"Pass Rate: {report['critical_metrics']['pass_rate']}")
+        logger.info(f"System Readiness: {report['critical_metrics']['system_readiness']}")
         
-        print("\n" + "-" * 80)
-        print("TEST BREAKDOWN")
-        print("-" * 80)
+        logger.info("\n" + "-" * 80)
+        logger.info("TEST BREAKDOWN")
+        logger.info("-" * 80)
         
         for test_name, result in report['test_results'].items():
             status = result.get('outcome', result['status']).upper()
-            print(f"\n{test_name}:")
-            print(f"  Status: {status}")
+            logger.info(f"\n{test_name}:")
+            logger.info(f"  Status: {status}")
             if result.get('summary'):
-                print(f"  Summary: {result['summary']}")
+                logger.info(f"  Summary: {result['summary']}")
             if result.get('overall'):
-                print(f"  Overall: {json.dumps(result['overall'], indent=4)}")
+                logger.info(f"  Overall: {json.dumps(result['overall'], indent=4)}")
         
-        print("\n" + "-" * 80)
-        print("RECOMMENDATIONS")
-        print("-" * 80)
+        logger.info("\n" + "-" * 80)
+        logger.info("RECOMMENDATIONS")
+        logger.info("-" * 80)
         for rec in report['recommendations']:
-            print(f"• {rec}")
+            logger.info(f"• {rec}")
         
-        print("\n" + "=" * 80)
-        print(f"OVERALL STATUS: {report['overall_status']}")
-        print("=" * 80)
+        logger.info("\n" + "=" * 80)
+        logger.info(f"OVERALL STATUS: {report['overall_status']}")
+        logger.info("=" * 80)
 
 
 def main():
     """Run validation"""
     runner = ValidationRunner()
     
-    print("\n" + "=" * 80)
-    print("STARTING PIDDY AUTONOMOUS SYSTEM VALIDATION")
-    print("=" * 80)
-    print(f"Timestamp: {runner.timestamp}")
-    print(f"Repository: {runner.repo_root}")
+    logger.info("\n" + "=" * 80)
+    logger.info("STARTING PIDDY AUTONOMOUS SYSTEM VALIDATION")
+    logger.info("=" * 80)
+    logger.info(f"Timestamp: {runner.timestamp}")
+    logger.info(f"Repository: {runner.repo_root}")
     
     try:
         # Run all tests
@@ -271,13 +271,13 @@ def main():
         
         # Exit with appropriate code
         if report['overall_status'] == 'PASS':
-            print("\n✓ VALIDATION SUCCESSFUL - SYSTEM READY")
+            logger.info("\n✓ VALIDATION SUCCESSFUL - SYSTEM READY")
             return 0
         elif report['overall_status'] == 'PARTIAL':
-            print("\n⚠ VALIDATION PARTIAL - REVIEW FAILURES")
+            logger.info("\n⚠ VALIDATION PARTIAL - REVIEW FAILURES")
             return 1
         else:
-            print("\n✗ VALIDATION FAILED - SYSTEM NOT READY")
+            logger.info("\n✗ VALIDATION FAILED - SYSTEM NOT READY")
             return 1
     
     except Exception as e:

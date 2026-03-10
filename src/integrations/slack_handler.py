@@ -446,7 +446,7 @@ class SlackMessageProcessor:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"📄 *Output truncated ({len(result_text)} characters)* - <http://localhost:8000/api/responses/{response_id}|View Full Response>"
+                        "text": f"📄 *Output truncated ({len(result_text)} characters)* - <get_config().localhost:8000{response_id}|View Full Response>"
                     }
                 })
             else:

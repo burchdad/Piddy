@@ -14,6 +14,8 @@ from typing import Dict, List, Optional, Set
 from pathlib import Path
 from dataclasses import dataclass
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class TypeInfo:
@@ -62,7 +64,7 @@ class TypeExtractor:
         try:
             cursor.execute('SELECT COUNT(*) FROM function_types WHERE param_types IS NOT NULL OR return_type IS NOT NULL')
             stats['typed_functions'] = cursor.fetchone()[0]
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             pass
         conn.close()
 
@@ -73,7 +75,7 @@ class TypeExtractor:
         try:
             source = Path(file_path).read_text()
             tree = ast.parse(source)
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             return 0
 
         types_found = 0
@@ -92,7 +94,7 @@ class TypeExtractor:
                     FOREIGN KEY (func_id) REFERENCES nodes(node_id)
                 )
             ''')
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             pass
 
         for node in ast.walk(tree):
@@ -200,7 +202,7 @@ class TypeCompatibilityChecker:
                     compatibility['confidence'] = 0.7  # Untyped
                 else:
                     compatibility['confidence'] = 0.95  # Typed
-            except:
+            except (ValueError, TypeError, RuntimeError, HTTPError) as e:
                 compatibility['confidence'] = 0.8
 
             return compatibility
@@ -241,7 +243,7 @@ class TypeCompatibilityChecker:
                         'issue': 'needs_validation',
                         'severity': 'low'
                     })
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             pass
 
         conn.close()
@@ -249,21 +251,21 @@ class TypeCompatibilityChecker:
 
 
 if __name__ == '__main__':
-    print("Phase 32c: Type System Integration")
-    print("=" * 70)
+    logger.info("Phase 32c: Type System Integration")
+    logger.info("=" * 70)
 
     # Extract types
-    print("\n1. Extracting type information...")
+    logger.info("\n1. Extracting type information...")
     extractor = TypeExtractor('.piddy_callgraph.db')
     stats = extractor.extract_types()
-    print(f"   ✅ Functions analyzed: {stats['functions_analyzed']}")
-    print(f"   ✅ Type hints found: {stats['type_hints_found']}")
-    print(f"   ✅ Typed functions: {stats['typed_functions']}")
+    logger.info(f"   ✅ Functions analyzed: {stats['functions_analyzed']}")
+    logger.info(f"   ✅ Type hints found: {stats['type_hints_found']}")
+    logger.info(f"   ✅ Typed functions: {stats['typed_functions']}")
 
     # Check compatibility
-    print("\n2. Checking type compatibility...")
+    logger.info("\n2. Checking type compatibility...")
     checker = TypeCompatibilityChecker('.piddy_callgraph.db')
     mismatches = checker.find_type_mismatches()
-    print(f"   ✅ Type mismatches found: {len(mismatches)}")
+    logger.info(f"   ✅ Type mismatches found: {len(mismatches)}")
     
-    print("\n✅ Phase 32c type system complete")
+    logger.info("\n✅ Phase 32c type system complete")

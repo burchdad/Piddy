@@ -74,7 +74,7 @@ class RefactorSafetyValidator:
                 timeout=30
             )
             return result.returncode == 0
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             return False
     
     def count_passing_tests(self) -> int:
@@ -141,7 +141,7 @@ class RefactorSafetyValidator:
             tracker = APIContractTracker()
             violations = tracker.find_contract_violations()
             return len(violations), [str(v) for v in violations]
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             logger.warning("Could not check contracts")
             return 0, []
     
@@ -162,7 +162,7 @@ class RefactorSafetyValidator:
             checker = TypeCompatibilityChecker()
             violations = checker.find_type_violations()
             return len(violations), [str(v) for v in violations]
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             logger.warning("Could not check types")
             return 0, []
     
@@ -178,7 +178,7 @@ class RefactorSafetyValidator:
                 timeout=10
             )
             return result.returncode == 0
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             return False
     
     def calculate_metrics(self, mission_result: Dict, 
@@ -344,22 +344,22 @@ def test_safety_passes_overall(validator):
 
 if __name__ == '__main__':
     validator = RefactorSafetyValidator()
-    print("=" * 70)
-    print("VALIDATION TEST 2: REFACTOR SAFETY (SERVICE EXTRACTION)")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("VALIDATION TEST 2: REFACTOR SAFETY (SERVICE EXTRACTION)")
+    logger.info("=" * 70)
     
     source, target, funcs = validator.select_extraction_target()
-    print(f"\nExtraction Target: {source} -> {target}")
-    print(f"Functions: {funcs}")
+    logger.info(f"\nExtraction Target: {source} -> {target}")
+    logger.info(f"Functions: {funcs}")
     
     result = validator.run_extraction_mission(source, target, funcs)
-    print(f"\nMission Result: {json.dumps(result, indent=2)}")
+    logger.info(f"\nMission Result: {json.dumps(result, indent=2)}")
     
     tests_before = validator.count_passing_tests()
     metrics = validator.calculate_metrics(result, tests_before)
     report = validator.generate_report(metrics)
-    print(f"\nValidation Report:\n{json.dumps(report, indent=2)}")
+    logger.info(f"\nValidation Report:\n{json.dumps(report, indent=2)}")
     
-    print("\n" + "=" * 70)
-    print(f"RESULT: {report['overall']['status']}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"RESULT: {report['overall']['status']}")
+    logger.info("=" * 70)

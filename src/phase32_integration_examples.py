@@ -17,6 +17,7 @@ from phase32_call_graph_engine import (
     PythonCallGraphExtractor
 )
 from tools.call_graph_tools import (
+import os
     get_function_impact,
     check_breaking_change,
     find_safe_extraction_points,

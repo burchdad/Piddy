@@ -394,19 +394,19 @@ class RiskScorer:
 
 # Testing
 if __name__ == '__main__':
-    print("Phase 32b: Test Coverage Mapping")
-    print("=" * 70)
+    logger.info("Phase 32b: Test Coverage Mapping")
+    logger.info("=" * 70)
 
     # Extract test coverage
-    print("\n1. Extracting test coverage...")
+    logger.info("\n1. Extracting test coverage...")
     extractor = TestCoverageExtractor('/workspaces/Piddy/.piddy_callgraph.db', 'tests')
     stats = extractor.extract_test_coverage()
-    print(f"   ✅ Test files found: {stats['test_files_found']}")
-    print(f"   ✅ Test functions found: {stats['test_functions_found']}")
-    print(f"   ✅ Mappings created: {stats['mappings_created']}")
+    logger.info(f"   ✅ Test files found: {stats['test_files_found']}")
+    logger.info(f"   ✅ Test functions found: {stats['test_functions_found']}")
+    logger.info(f"   ✅ Mappings created: {stats['mappings_created']}")
 
     # Calculate risk scores
-    print("\n2. Calculating risk scores...")
+    logger.info("\n2. Calculating risk scores...")
     scorer = RiskScorer('/workspaces/Piddy/.piddy_callgraph.db')
 
     # Get sample functions
@@ -419,12 +419,12 @@ if __name__ == '__main__':
 
     for func_id, func_name in functions:
         risk = scorer.calculate_function_risk(func_id)
-        print(f"   {func_name}: risk={risk['risk_score']:.2f} ({risk['reason']})")
+        logger.info(f"   {func_name}: risk={risk['risk_score']:.2f} ({risk['reason']})")
 
     # High risk functions
-    print("\n3. High-risk functions (>0.7 risk):")
+    logger.info("\n3. High-risk functions (>0.7 risk):")
     high_risk = scorer.get_high_risk_functions(threshold=0.7)
     for func in high_risk[:5]:
-        print(f"   {func['name']}: {func['risk_score']:.2f} - {func['reason']}")
+        logger.info(f"   {func['name']}: {func['risk_score']:.2f} - {func['reason']}")
 
-    print("\n✅ Phase 32b test coverage mapping complete")
+    logger.info("\n✅ Phase 32b test coverage mapping complete")

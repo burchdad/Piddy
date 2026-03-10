@@ -8,6 +8,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 import logging
+import asyncio
 
 # Configuration (move to config file in production)
 logger = logging.getLogger(__name__)

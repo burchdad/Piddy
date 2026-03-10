@@ -80,7 +80,7 @@ class CodeCleanup:
         """Replace broad exception handlers with specific ones"""
         fixed = 0
         
-        # Fix: except Exception: → except Exception as e:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
         content = re.sub(
             r'except\s+Exception\s*:',
             'except Exception as e:',

@@ -8,6 +8,8 @@ Enables service-aware impact analysis and safe service refactoring.
 import sqlite3
 from typing import Dict, List, Set
 from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
 
 class ServiceBoundaryDetector:
     """Detect and analyze service boundaries"""
@@ -44,7 +46,7 @@ class ServiceBoundaryDetector:
                     services[service].append(node_id)
 
         except Exception as e:
-            print(f"Error identifying services: {e}")
+            logger.info(f"Error identifying services: {e}")
 
         conn.close()
         self.services = dict(services)
@@ -99,7 +101,7 @@ class ServiceBoundaryDetector:
                     })
 
         except Exception as e:
-            print(f"Error finding cross-service calls: {e}")
+            logger.info(f"Error finding cross-service calls: {e}")
 
         conn.close()
         return cross_service
@@ -254,7 +256,7 @@ class ServiceRefactoringPlanner:
 
             affected_callers = set(row[0] for row in cursor.fetchall())
 
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             affected_callers = set()
 
         conn.close()
@@ -277,34 +279,34 @@ class ServiceRefactoringPlanner:
 
 
 if __name__ == '__main__':
-    print("Phase 32e: Service Boundary Analysis")
-    print("=" * 70)
+    logger.info("Phase 32e: Service Boundary Analysis")
+    logger.info("=" * 70)
 
     detector = ServiceBoundaryDetector('.piddy_callgraph.db')
 
     # Identify services
-    print("\n1. Identifying services...")
+    logger.info("\n1. Identifying services...")
     services = detector.identify_services()
-    print(f"   ✅ Services found: {len(services)}")
+    logger.info(f"   ✅ Services found: {len(services)}")
     for service in list(services.keys())[:5]:
-        print(f"      - {service}: {len(services[service])} functions")
+        logger.info(f"      - {service}: {len(services[service])} functions")
 
     # Find cross-service calls
-    print("\n2. Finding cross-service dependencies...")
+    logger.info("\n2. Finding cross-service dependencies...")
     cross_service = detector.find_cross_service_calls()
-    print(f"   ✅ Cross-service calls: {len(cross_service)}")
+    logger.info(f"   ✅ Cross-service calls: {len(cross_service)}")
 
     # Analyze dependencies
-    print("\n3. Analyzing service dependencies...")
+    logger.info("\n3. Analyzing service dependencies...")
     analysis = detector.analyze_service_dependencies()
-    print(f"   ✅ Total services: {analysis['total_services']}")
-    print(f"   ✅ Cross-service calls: {analysis['total_cross_service_calls']}")
-    print(f"   ✅ Max dependency depth: {analysis['dependency_depth']}")
+    logger.info(f"   ✅ Total services: {analysis['total_services']}")
+    logger.info(f"   ✅ Cross-service calls: {analysis['total_cross_service_calls']}")
+    logger.info(f"   ✅ Max dependency depth: {analysis['dependency_depth']}")
 
     # Service health
-    print("\n4. Service health metrics...")
+    logger.info("\n4. Service health metrics...")
     health = detector.get_service_health()
     healthy = sum(1 for s in health.values() if s.get('status') == 'healthy')
-    print(f"   ✅ Healthy services: {healthy}/{len(health)}")
+    logger.info(f"   ✅ Healthy services: {healthy}/{len(health)}")
 
-    print("\n✅ Phase 32e service analysis complete")
+    logger.info("\n✅ Phase 32e service analysis complete")

@@ -6,6 +6,8 @@ import os
 import json
 import sys
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def check_component_file(filepath):
     """Check if a React component file exists and has valid content"""
@@ -43,13 +45,13 @@ def check_api_endpoint(filepath, endpoint):
 
 def main():
     """Run all verification checks"""
-    print("\n" + "="*60)
-    print("PIDDY DASHBOARD SETUP VERIFICATION")
-    print("="*60 + "\n")
+    logger.info("\n" + "="*60)
+    logger.info("PIDDY DASHBOARD SETUP VERIFICATION")
+    logger.info("="*60 + "\n")
     
     # Check React Components
-    print("📋 Checking React Components:")
-    print("-" * 60)
+    logger.info("📋 Checking React Components:")
+    logger.info("-" * 60)
     components = [
         "frontend/src/components/Tests.jsx",
         "frontend/src/components/Metrics.jsx",
@@ -69,28 +71,28 @@ def main():
     for comp in components:
         exists, msg = check_component_file(comp)
         status = "✅" if exists else "❌"
-        print(f"{status} {comp.split('/')[-1]:<25} - {msg}")
+        logger.info(f"{status} {comp.split('/')[-1]:<25} - {msg}")
         if exists:
             components_ok += 1
     
-    print(f"\nComponents: {components_ok}/{len(components)} ✓\n")
+    logger.info(f"\nComponents: {components_ok}/{len(components)} ✓\n")
     
     # Check CSS
-    print("🎨 Checking Stylesheets:")
-    print("-" * 60)
+    logger.info("🎨 Checking Stylesheets:")
+    logger.info("-" * 60)
     css_file = "frontend/src/styles/components.css"
     if os.path.exists(css_file):
         with open(css_file, 'r') as f:
             lines = len(f.readlines())
-        print(f"✅ components.css                  - {lines} lines")
+        logger.info(f"✅ components.css                  - {lines} lines")
     else:
-        print(f"❌ components.css                  - Not found")
+        logger.info(f"❌ components.css                  - Not found")
     
-    print()
+    logger.info()
     
     # Check API Endpoints
-    print("📡 Checking API Endpoints:")
-    print("-" * 60)
+    logger.info("📡 Checking API Endpoints:")
+    logger.info("-" * 60)
     api_endpoints = [
         "/api/tests",
         "/api/tests/summary",
@@ -111,15 +113,15 @@ def main():
     for endpoint in api_endpoints:
         exists, msg = check_api_endpoint(api_file, endpoint)
         status = "✅" if exists else "❌"
-        print(f"{status} {endpoint:<40} - {msg}")
+        logger.info(f"{status} {endpoint:<40} - {msg}")
         if exists:
             endpoints_ok += 1
     
-    print(f"\nEndpoints: {endpoints_ok}/{len(api_endpoints)} ✓\n")
+    logger.info(f"\nEndpoints: {endpoints_ok}/{len(api_endpoints)} ✓\n")
     
     # Check Files
-    print("📁 Checking Key Files:")
-    print("-" * 60)
+    logger.info("📁 Checking Key Files:")
+    logger.info("-" * 60)
     key_files = [
         ("src/services/rate_limiter.py", "Rate Limiter Service"),
         ("src/dashboard_api.py", "Dashboard API"),
@@ -133,27 +135,27 @@ def main():
     for filepath, desc in key_files:
         exists = os.path.exists(filepath)
         status = "✅" if exists else "❌"
-        print(f"{status} {desc:<30} - {filepath}")
+        logger.info(f"{status} {desc:<30} - {filepath}")
         if exists:
             files_ok += 1
     
-    print(f"\nFiles: {files_ok}/{len(key_files)} ✓\n")
+    logger.info(f"\nFiles: {files_ok}/{len(key_files)} ✓\n")
     
     # Summary
-    print("="*60)
-    print("SUMMARY")
-    print("="*60)
+    logger.info("="*60)
+    logger.info("SUMMARY")
+    logger.info("="*60)
     total_checks = len(components) + 1 + len(api_endpoints) + len(key_files)
     total_passed = components_ok + (1 if os.path.exists(css_file) else 0) + endpoints_ok + files_ok
     
-    print(f"\nTotal Checks: {total_passed}/{total_checks}")
-    print(f"Success Rate: {(total_passed/total_checks)*100:.1f}%")
+    logger.info(f"\nTotal Checks: {total_passed}/{total_checks}")
+    logger.info(f"Success Rate: {(total_passed/total_checks)*100:.1f}%")
     
     if total_passed == total_checks:
-        print("\n✅ All checks passed! Dashboard is ready for deployment.\n")
+        logger.info("\n✅ All checks passed! Dashboard is ready for deployment.\n")
         return 0
     else:
-        print("\n⚠️  Some checks failed. Please review above.\n")
+        logger.info("\n⚠️  Some checks failed. Please review above.\n")
         return 1
 
 if __name__ == "__main__":

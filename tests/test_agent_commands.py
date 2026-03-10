@@ -1,6 +1,7 @@
 """Test cases for agent commands."""
 
 import pytest
+import asyncio
 
 
 class TestAgentCommands:

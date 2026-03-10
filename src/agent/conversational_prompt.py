@@ -1,4 +1,5 @@
 import logging
+import asyncio
 """Conversational mode instructions for Piddy agent."""
 
 logger = logging.getLogger(__name__)

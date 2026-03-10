@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from collections import defaultdict, deque
 from enum import Enum
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +203,7 @@ class PythonCallGraphExtractor:
                 left = self._annotation_to_string(annotation.left)
                 right = self._annotation_to_string(annotation.right)
                 return f"{left} | {right}"
-            except:
+            except (ValueError, TypeError, RuntimeError, HTTPError) as e:
                 return "Any"
         return "Any"
 

@@ -1,5 +1,21 @@
 # Piddy Self-Healing: Complete Command Reference
 
+## ⚡ NEW: Tiered Healing System!
+
+Piddy now intelligently heals itself using **three tiers**:
+
+```
+🟢 Tier 1: Local Patterns (FREE - instant)
+    ↓ (if needed)
+🔵 Tier 2: Claude AI (tracked tokens)
+    ↓ (if needed)
+🟠 Tier 3: OpenAI Fallback (emergency)
+```
+
+**See full details:** [TIERED_HEALING_SYSTEM.md](TIERED_HEALING_SYSTEM.md)
+
+---
+
 ## 🎯 Main Commands
 
 ### 1. **Audit System** - Scan everything
@@ -28,25 +44,40 @@ curl -X POST http://localhost:8000/api/self/audit
 
 ---
 
-### 2. **Auto-Fix Everything** - Remove mock data & fix issues (PRIMARY COMMAND)
+### 2. **Auto-Fix Everything** - Tiered healing (LOCAL → CLAUDE → OPENAI)
 ```bash
 curl -X POST http://localhost:8000/api/self/fix-all
 ```
 
-**What it does:**
-- ✅ **Removes ALL mock data** from the system
-- ✅ Connects to live data sources
-- ✅ Fixes code quality issues
-- ✅ Fixes security vulnerabilities
-- ✅ Optimizes database
-- ✅ Runs full test suite
-- ✅ Creates PR with all fixes
+**What it does (TIERED APPROACH):**
+- 🟢 **Tier 1 (Local)**: Tries local patterns first (FREE, instant)
+  - Removes ALL mock data
+  - Fixes print statements → logging
+  - Fixes broad exceptions
+  - Converts hardcoded values to config
+  - Adds missing imports
+- 🔵 **Tier 2 (Claude)**: If needed, escalates to Claude (token tracked)
+  - Deep code analysis
+  - Complex architectural fixes
+  - Context-aware solutions
+- 🟠 **Tier 3 (OpenAI)**: Final fallback if Claude tokens run out
+  - GPT-4o level analysis
+  - Emergency fixes
+  - Guaranteed completion
 
-**Response:**
+**Response shows which tier was used:**
 ```json
 {
   "status": "self-fix_complete",
-  "message": "✅ All systems auto-fixed! Review and merge the PR to go live.",
+  "tier_used": 1,
+  "engine": "local_self_healing",
+  "uses_external_ai": false,
+  "ai_cost": "FREE",
+  "message": "✅ All systems auto-fixed using Tier 1! Review and merge the PR to go live.",
+  "token_status": {
+    "claude": { "used": 0, "remaining": 1000000 },
+    "openai": { "used": 0, "remaining": 500000 }
+  },
   "fixes_applied": {
     "step_1_mock_data": {...},
     "step_2_code_quality": {...},
@@ -94,20 +125,79 @@ curl -X POST http://localhost:8000/api/self/go-live
 curl http://localhost:8000/api/self/status
 ```
 
-**Response:**
+**Response includes:**
 ```json
 {
   "status": "operational",
-  "monitoring_enabled": true,
-  "issues_detected": 521,
-  "issues_fixed": 47,
-  "autonomous_capability": "fully_operational",
-  "endpoints_available": [
-    "POST /api/self/audit - Run comprehensive audit",
-    "POST /api/self/fix-all - Auto-fix all issues and remove mock data",
-    "POST /api/self/go-live - Complete go-live sequence",
-    "GET /api/self/status - Get this status"
-  ]
+  "healing_system": {
+    "tiers": {
+      "tier_1": {
+        "name": "Local Pattern Healing",
+        "status": "always_available",
+        "cost": "zero"
+      },
+      "tier_2": {
+        "name": "Claude Analysis",
+        "status": "available",
+        "tokens": 0
+      },
+      "tier_3": {
+        "name": "OpenAI Fallback",
+        "status": "available",
+        "tokens": 0
+      }
+    },
+    "token_usage": {
+      "claude": { "used": 0, "remaining": 1000000 },
+      "openai": { "used": 0, "remaining": 500000 }
+    }
+  }
+}
+```
+
+---
+
+## 🎯 Force Specific Tiers (Advanced)
+
+### Force Tier 1 (Local Only)
+```bash
+curl -X POST http://localhost:8000/api/self/fix-all-local
+```
+**Use when:** You want guaranteed fast, free fixes with no AI
+
+### Force Tier 2 (Claude Only)
+```bash
+curl -X POST http://localhost:8000/api/self/fix-claude
+```
+**Use when:** You know Claude has enough tokens and you want deep analysis
+
+### Force Tier 3 (OpenAI Only)
+```bash
+curl -X POST http://localhost:8000/api/self/fix-openai
+```
+**Use when:** It's an emergency and you need guaranteed completion (last resort)
+
+---
+
+## 📊 Monitor Token Usage
+
+```bash
+# Check current tier status and token usage
+curl http://localhost:8000/api/self/status | jq '.healing_system'
+```
+
+**Typical output:**
+```json
+{
+  "tiers": {
+    "tier_1": { "status": "always_available", "cost": "zero" },
+    "tier_2": { "status": "available", "tokens": 24500 },
+    "tier_3": { "status": "available", "tokens": 0 }
+  },
+  "token_usage": {
+    "claude": { "used": 24500, "remaining": 975500 },
+    "openai": { "used": 0, "remaining": 500000 }
+  }
 }
 ```
 

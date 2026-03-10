@@ -23,6 +23,8 @@ import sqlite3
 sys.path.insert(0, '/workspaces/Piddy/src')
 
 from phase32_call_graph_engine import (
+import logging
+logger = logging.getLogger(__name__)
     CallGraphDB,
     CallGraphBuilder,
     PythonCallGraphExtractor,
@@ -31,24 +33,24 @@ from phase32_call_graph_engine import (
 
 
 def main():
-    print("\n" + "="*70)
-    print("BUILDING PIDDY'S CALL GRAPH")
-    print("="*70 + "\n")
+    logger.info("\n" + "="*70)
+    logger.info("BUILDING PIDDY'S CALL GRAPH")
+    logger.info("="*70 + "\n")
 
     # Paths
     repo_path = "/workspaces/Piddy/src"
     db_path = "/workspaces/Piddy/.piddy_callgraph.db"
     nodes_db_path = "/workspaces/Piddy/.piddy_nodes.db"
 
-    print(f"Repository path: {repo_path}")
-    print(f"Call graph DB: {db_path}")
-    print(f"Nodes DB: {nodes_db_path}\n")
+    logger.info(f"Repository path: {repo_path}")
+    logger.info(f"Call graph DB: {db_path}")
+    logger.info(f"Nodes DB: {nodes_db_path}\n")
 
     # Initialize database
-    print("Step 1: Initializing database...")
+    logger.info("Step 1: Initializing database...")
     try:
         call_db = CallGraphDB(db_path)
-        print("✓ Call graph database initialized")
+        logger.info("✓ Call graph database initialized")
         
         # Create nodes table if it doesn't exist
         node_db = sqlite3.connect(nodes_db_path)
@@ -67,14 +69,14 @@ def main():
             )
         ''')
         node_db.commit()
-        print("✓ Nodes database initialized\n")
+        logger.info("✓ Nodes database initialized\n")
     except Exception as e:
-        print(f"✗ Database initialization failed: {e}")
+        logger.info(f"✗ Database initialization failed: {e}")
         return 1
 
     # Build call graph
-    print("Step 2: Building call graph from repository...")
-    print(f"  Scanning: {repo_path}\n")
+    logger.info("Step 2: Building call graph from repository...")
+    logger.info(f"  Scanning: {repo_path}\n")
     
     start_time = time.time()
     
@@ -84,98 +86,98 @@ def main():
         
         elapsed = time.time() - start_time
         
-        print(f"✓ Call graph built in {elapsed:.1f} seconds")
-        print(f"  Files processed: {stats['files_processed']}")
-        print(f"  Functions found: {stats['functions_found']}")
-        print(f"  Calls extracted: {stats['calls_found']}")
+        logger.info(f"✓ Call graph built in {elapsed:.1f} seconds")
+        logger.info(f"  Files processed: {stats['files_processed']}")
+        logger.info(f"  Functions found: {stats['functions_found']}")
+        logger.info(f"  Calls extracted: {stats['calls_found']}")
         
         if stats['errors']:
-            print(f"  Warnings: {len(stats['errors'])} (non-fatal)")
-        print()
+            logger.info(f"  Warnings: {len(stats['errors'])} (non-fatal)")
+        logger.info()
         
     except Exception as e:
-        print(f"✗ Build failed: {e}")
+        logger.info(f"✗ Build failed: {e}")
         import traceback
         traceback.print_exc()
         return 1
 
     # Analyze results
-    print("Step 3: Analyzing call graph...")
+    logger.info("Step 3: Analyzing call graph...")
     
     try:
         analyzer = ImpactAnalyzer(call_db)
         
         # Find circular dependencies
         cycles = analyzer.find_cycles()
-        print(f"\n  Circular dependencies found: {len(cycles)}")
+        logger.info(f"\n  Circular dependencies found: {len(cycles)}")
         for i, cycle in enumerate(cycles[:3], 1):
-            print(f"    Cycle {i}: {' → '.join(cycle[:3])}...")
+            logger.info(f"    Cycle {i}: {' → '.join(cycle[:3])}...")
         
         # Find dead code
-        print(f"\n  Checking for dead code...")
+        logger.info(f"\n  Checking for dead code...")
         # Dead code functions would be those with in_degree=0 and not entry points
         
-        print(f"\n  Calculating statistics...")
+        logger.info(f"\n  Calculating statistics...")
         updated = call_db.update_statistics()
-        print(f"  Statistics updated for {updated} functions")
+        logger.info(f"  Statistics updated for {updated} functions")
         
     except Exception as e:
-        print(f"✗ Analysis failed: {e}")
+        logger.info(f"✗ Analysis failed: {e}")
         import traceback
         traceback.print_exc()
         return 1
 
     # Show example queries
-    print("\nStep 4: Example queries you can run:\n")
+    logger.info("\nStep 4: Example queries you can run:\n")
     
-    print("  # Find all callers of a specific function:")
-    print("  callers = call_db.get_callers('func_id')")
-    print("  for caller in callers:")
-    print("      print(caller['caller_name'], 'calls this function')\n")
+    logger.info("  # Find all callers of a specific function:")
+    logger.info("  callers = call_db.get_callers('func_id')")
+    logger.info("  for caller in callers:")
+    logger.info("      print(caller['caller_name'], 'calls this function')\n")
     
-    print("  # Calculate impact of changing a function:")
-    print("  impact = analyzer.calculate_impact_radius('func_id')")
-    print(f"      print(f'Risk level: {{impact.risk_level}}')")
-    print(f"      print(f'Affected: {{impact.total_affected}} functions')\n")
+    logger.info("  # Calculate impact of changing a function:")
+    logger.info("  impact = analyzer.calculate_impact_radius('func_id')")
+    logger.info(f"      print(f'Risk level: {{impact.risk_level}}')")
+    logger.info(f"      print(f'Affected: {{impact.total_affected}} functions')\n")
     
-    print("  # Find functions that are never called:")
-    print("  conn = sqlite3.connect(db_path)")
-    print("  cursor = conn.cursor()")
-    print("  cursor.execute('''")
-    print("      SELECT n.node_id, n.name FROM nodes n")
-    print("      LEFT JOIN call_graphs cg ON n.node_id = cg.target_node_id")
-    print("      WHERE cg.call_graph_id IS NULL")
-    print("  ''')\n")
+    logger.info("  # Find functions that are never called:")
+    logger.info("  conn = sqlite3.connect(db_path)")
+    logger.info("  cursor = conn.cursor()")
+    logger.info("  cursor.execute('''")
+    logger.info("      SELECT n.node_id, n.name FROM nodes n")
+    logger.info("      LEFT JOIN call_graphs cg ON n.node_id = cg.target_node_id")
+    logger.info("      WHERE cg.call_graph_id IS NULL")
+    logger.info("  ''')\n")
     
-    print("  # Find hot spots (frequently called functions):")
-    print("  conn.execute('''")
-    print("      SELECT target_node_id, COUNT(*) as count")
-    print("      FROM call_graphs")
-    print("      GROUP BY target_node_id")
-    print("      ORDER BY count DESC LIMIT 10")
-    print("  ''')\n")
+    logger.info("  # Find hot spots (frequently called functions):")
+    logger.info("  conn.execute('''")
+    logger.info("      SELECT target_node_id, COUNT(*) as count")
+    logger.info("      FROM call_graphs")
+    logger.info("      GROUP BY target_node_id")
+    logger.info("      ORDER BY count DESC LIMIT 10")
+    logger.info("  ''')\n")
     
     # Summary
-    print("="*70)
-    print("✅ PIDDY CALL GRAPH BUILT SUCCESSFULLY")
-    print("="*70 + "\n")
+    logger.info("="*70)
+    logger.info("✅ PIDDY CALL GRAPH BUILT SUCCESSFULLY")
+    logger.info("="*70 + "\n")
     
-    print("Database files created:")
-    print(f"  • {db_path}")
-    print(f"  • {nodes_db_path}\n")
+    logger.info("Database files created:")
+    logger.info(f"  • {db_path}")
+    logger.info(f"  • {nodes_db_path}\n")
     
-    print("You can now use the call graph for:")
-    print("  ✓ Safe deletion analysis")
-    print("  ✓ Impact radius calculations")
-    print("  ✓ Circular dependency detection")
-    print("  ✓ Architecture analysis")
-    print("  ✓ Code refactoring validation\n")
+    logger.info("You can now use the call graph for:")
+    logger.info("  ✓ Safe deletion analysis")
+    logger.info("  ✓ Impact radius calculations")
+    logger.info("  ✓ Circular dependency detection")
+    logger.info("  ✓ Architecture analysis")
+    logger.info("  ✓ Code refactoring validation\n")
     
-    print("To use in Python:")
-    print("  from src.phase32_call_graph_engine import CallGraphDB, ImpactAnalyzer")
-    print("  db = CallGraphDB('/workspaces/Piddy/.piddy_callgraph.db')")
-    print("  analyzer = ImpactAnalyzer(db)")
-    print("  impact = analyzer.calculate_impact_radius('function_id')\n")
+    logger.info("To use in Python:")
+    logger.info("  from src.phase32_call_graph_engine import CallGraphDB, ImpactAnalyzer")
+    logger.info("  db = CallGraphDB('/workspaces/Piddy/.piddy_callgraph.db')")
+    logger.info("  analyzer = ImpactAnalyzer(db)")
+    logger.info("  impact = analyzer.calculate_impact_radius('function_id')\n")
     
     node_db.close()
     return 0

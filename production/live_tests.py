@@ -11,6 +11,8 @@ import time
 import json
 import sqlite3
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Add production path to Python path
 prod_path = Path(__file__).parent
@@ -30,7 +32,7 @@ class Phase32LiveTests:
     
     def test_database_connectivity(self):
         """Test 1: Database connectivity"""
-        print("\n[TEST 1] Database Connectivity...")
+        logger.info("\n[TEST 1] Database Connectivity...")
         try:
             conn = sqlite3.connect(str(self.db_path))
             cursor = conn.cursor()
@@ -40,20 +42,20 @@ class Phase32LiveTests:
             
             if count > 0:
                 self.passed += 1
-                print(f"  ✅ PASS: Database connected ({count} nodes)")
+                logger.info(f"  ✅ PASS: Database connected ({count} nodes)")
                 return True
             else:
                 self.failed += 1
-                print("  ❌ FAIL: Database empty")
+                logger.info("  ❌ FAIL: Database empty")
                 return False
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_call_graph_integrity(self):
         """Test 2: Call graph integrity"""
-        print("\n[TEST 2] Call Graph Integrity...")
+        logger.info("\n[TEST 2] Call Graph Integrity...")
         try:
             conn = sqlite3.connect(str(self.db_path))
             cursor = conn.cursor()
@@ -70,20 +72,20 @@ class Phase32LiveTests:
             
             if confident_edges > 0 and stable_nodes > 0:
                 self.passed += 1
-                print(f"  ✅ PASS: {confident_edges} confident edges, {stable_nodes} stable nodes")
+                logger.info(f"  ✅ PASS: {confident_edges} confident edges, {stable_nodes} stable nodes")
                 return True
             else:
                 self.failed += 1
-                print(f"  ❌ FAIL: No confident edges or stable nodes")
+                logger.info(f"  ❌ FAIL: No confident edges or stable nodes")
                 return False
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_phase32_imports(self):
         """Test 3: Phase 32 module imports"""
-        print("\n[TEST 3] Phase 32 Module Imports...")
+        logger.info("\n[TEST 3] Phase 32 Module Imports...")
         try:
             from phase32_unified_reasoning import UnifiedReasoningEngine
             from phase32_type_system import TypeExtractor
@@ -91,16 +93,16 @@ class Phase32LiveTests:
             from phase32_service_boundaries import ServiceBoundaryDetector
             
             self.passed += 1
-            print("  ✅ PASS: All Phase 32 modules imported successfully")
+            logger.info("  ✅ PASS: All Phase 32 modules imported successfully")
             return True
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: Import error: {e}")
+            logger.info(f"  ❌ FAIL: Import error: {e}")
             return False
     
     def test_unified_reasoning_engine(self):
         """Test 4: Unified Reasoning Engine"""
-        print("\n[TEST 4] Unified Reasoning Engine...")
+        logger.info("\n[TEST 4] Unified Reasoning Engine...")
         try:
             from phase32_unified_reasoning import UnifiedReasoningEngine
             
@@ -119,20 +121,20 @@ class Phase32LiveTests:
                 
                 if 'confidence' in evaluation and evaluation['confidence'] > 0:
                     self.passed += 1
-                    print(f"  ✅ PASS: Engine evaluated with confidence {evaluation['confidence']:.2f}")
+                    logger.info(f"  ✅ PASS: Engine evaluated with confidence {evaluation['confidence']:.2f}")
                     return True
             
             self.failed += 1
-            print("  ❌ FAIL: Engine evaluation failed")
+            logger.info("  ❌ FAIL: Engine evaluation failed")
             return False
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_type_system(self):
         """Test 5: Type System"""
-        print("\n[TEST 5] Type System...")
+        logger.info("\n[TEST 5] Type System...")
         try:
             from phase32_type_system import TypeExtractor
             
@@ -142,68 +144,68 @@ class Phase32LiveTests:
             # extract_types() returns a dict with 'type_hints_found' key
             if isinstance(result, dict) and result.get('type_hints_found', 0) > 0:
                 self.passed += 1
-                print(f"  ✅ PASS: Extracted {result['type_hints_found']} type hints from {result['functions_analyzed']} functions")
+                logger.info(f"  ✅ PASS: Extracted {result['type_hints_found']} type hints from {result['functions_analyzed']} functions")
                 return True
             else:
                 self.failed += 1
-                print("  ❌ FAIL: No type hints extracted")
+                logger.info("  ❌ FAIL: No type hints extracted")
                 return False
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_api_contracts(self):
         """Test 6: API Contracts"""
-        print("\n[TEST 6] API Contracts...")
+        logger.info("\n[TEST 6] API Contracts...")
         try:
             from phase32_api_contracts import APIContractTracker
             
             tracker = APIContractTracker(str(self.db_path))
             
             self.passed += 1
-            print("  ✅ PASS: API Contract tracker initialized")
+            logger.info("  ✅ PASS: API Contract tracker initialized")
             return True
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_service_boundaries(self):
         """Test 7: Service Boundaries"""
-        print("\n[TEST 7] Service Boundaries...")
+        logger.info("\n[TEST 7] Service Boundaries...")
         try:
             from phase32_service_boundaries import ServiceBoundaryDetector
             
             detector = ServiceBoundaryDetector(str(self.db_path))
             
             self.passed += 1
-            print("  ✅ PASS: Service Boundary detector initialized")
+            logger.info("  ✅ PASS: Service Boundary detector initialized")
             return True
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_production_integration(self):
         """Test 8: Production Integration"""
-        print("\n[TEST 8] Production Integration...")
+        logger.info("\n[TEST 8] Production Integration...")
         try:
             from phase32_production import Phase32ProductionIntegration
             
             integration = Phase32ProductionIntegration(str(self.db_path))
             
             self.passed += 1
-            print("  ✅ PASS: Production integration layer initialized")
+            logger.info("  ✅ PASS: Production integration layer initialized")
             return True
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def test_performance(self):
         """Test 9: Performance (all operations < 100ms)"""
-        print("\n[TEST 9] Performance...")
+        logger.info("\n[TEST 9] Performance...")
         try:
             from phase32_unified_reasoning import UnifiedReasoningEngine
             
@@ -226,26 +228,26 @@ class Phase32LiveTests:
                 
                 if elapsed < 100:
                     self.passed += 1
-                    print(f"  ✅ PASS: Evaluation completed in {elapsed:.1f}ms (target <100ms)")
+                    logger.info(f"  ✅ PASS: Evaluation completed in {elapsed:.1f}ms (target <100ms)")
                     return True
                 else:
                     self.failed += 1
-                    print(f"  ⚠️  WARN: Evaluation took {elapsed:.1f}ms (target <100ms)")
+                    logger.info(f"  ⚠️  WARN: Evaluation took {elapsed:.1f}ms (target <100ms)")
                     return False
             
             self.failed += 1
-            print("  ❌ FAIL: Performance test inconclusive")
+            logger.info("  ❌ FAIL: Performance test inconclusive")
             return False
         except Exception as e:
             self.failed += 1
-            print(f"  ❌ FAIL: {e}")
+            logger.info(f"  ❌ FAIL: {e}")
             return False
     
     def run_all_tests(self):
         """Run complete test suite"""
-        print("\n" + "=" * 70)
-        print("PHASE 32 LIVE TESTING SUITE")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("PHASE 32 LIVE TESTING SUITE")
+        logger.info("=" * 70)
         
         self.test_database_connectivity()
         self.test_call_graph_integrity()
@@ -261,9 +263,9 @@ class Phase32LiveTests:
         total = self.passed + self.failed
         pass_rate = (self.passed / total * 100) if total > 0 else 0
         
-        print("\n" + "=" * 70)
-        print(f"TEST SUMMARY: {self.passed} passed, {self.failed} failed ({pass_rate:.1f}%)")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info(f"TEST SUMMARY: {self.passed} passed, {self.failed} failed ({pass_rate:.1f}%)")
+        logger.info("=" * 70)
         
         return self.failed == 0
 

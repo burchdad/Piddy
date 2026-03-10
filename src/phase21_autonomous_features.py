@@ -522,7 +522,7 @@ async def login(request: LoginRequest):
     """Login endpoint"""
     # Implementation would integrate with AuthService
     return LoginResponse(
-        access_token="token_here",
+        access_token = get_config().token,
         token_type="bearer",
         user_id="user_id"
     )
@@ -599,14 +599,14 @@ class TestAuthService:
     
     def test_hash_password(self):
         """Test password hashing"""
-        password = "test_password"
+        password = get_config().password
         hash1 = self.auth.hash_password(password)
         hash2 = self.auth.hash_password(password)
         assert hash1 == hash2
     
     def test_verify_password(self):
         """Test password verification"""
-        password = "test_password"
+        password = get_config().password
         hash_val = self.auth.hash_password(password)
         assert self.auth.verify_password(password, hash_val)
         assert not self.auth.verify_password("wrong_password", hash_val)
@@ -630,6 +630,7 @@ class TestAuthService:
 import pytest
 from unittest.mock import patch, MagicMock
 from src.services.webhook_service import WebhookService
+import asyncio
 
 
 class TestWebhookService:

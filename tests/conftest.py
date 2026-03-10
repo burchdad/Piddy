@@ -3,6 +3,7 @@
 import pytest
 from httpx import AsyncClient
 from src.main import create_app
+import asyncio
 
 
 @pytest.fixture

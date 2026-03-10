@@ -3,6 +3,7 @@
 import logging
 import httpx
 from typing import Dict, Any, Optional
+import asyncio
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ async def autonomous_monitor_start(interval_seconds: int = 3600) -> Dict[str, An
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "http://localhost:8000/api/autonomous/monitor/start",
+                "get_config().localhost:8000",
                 params={"interval_seconds": interval_seconds}
             )
             result = response.json()
@@ -45,7 +46,7 @@ async def autonomous_monitor_stop() -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "http://localhost:8000/api/autonomous/monitor/stop"
+                "get_config().localhost:8000"
             )
             result = response.json()
             logger.info("✅ Autonomous monitoring stopped")
@@ -68,7 +69,7 @@ async def autonomous_monitor_status() -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "http://localhost:8000/api/autonomous/status"
+                "get_config().localhost:8000"
             )
             result = response.json()
             
@@ -115,7 +116,7 @@ async def autonomous_analyze_now() -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "http://localhost:8000/api/autonomous/monitor/analyze-now",
+                "get_config().localhost:8000",
                 timeout=30.0
             )
             result = response.json()
@@ -163,7 +164,7 @@ async def autonomous_get_prs() -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "http://localhost:8000/api/autonomous/prs/created"
+                "get_config().localhost:8000"
             )
             result = response.json()
             

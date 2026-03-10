@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from phase32_migrations import Phase32Migrations, NodeIdentityBuilder, run_migration
 from phase32_call_graph_engine import CallGraphDB
+import asyncio
 
 
 class TestMigration1NodeIdentity(unittest.TestCase):

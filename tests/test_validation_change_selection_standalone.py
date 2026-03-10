@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Set, Tuple
 from dataclasses import dataclass
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class ChangeBasedTestSelector:
                         if line.strip().startswith('def test_'):
                             test_name = line.split('(')[0].replace('def ', '').strip()
                             tests.add(f"{test_file.name}::{test_name}")
-            except:
+            except (ValueError, TypeError, RuntimeError, HTTPError) as e:
                 pass
         
         logger.info(f"Found {len(tests)} total tests")
@@ -75,7 +76,7 @@ class ChangeBasedTestSelector:
             logger.info(f"Tests affected: {len(affected_tests)}")
             
             return set(affected_tests)
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             logger.warning("Reasoning engine not available - using heuristic")
             # Heuristic: 30-50% of tests are typically affected by a module change
             all_tests = self.get_all_tests()
@@ -144,35 +145,35 @@ class ChangeBasedTestSelector:
 
 
 def main():
-    print("=" * 70)
-    print("VALIDATION TEST 3: CHANGE-BASED TEST SELECTION")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("VALIDATION TEST 3: CHANGE-BASED TEST SELECTION")
+    logger.info("=" * 70)
     
     selector = ChangeBasedTestSelector()
     all_tests = selector.get_all_tests()
     
-    print(f"\nTotal tests available: {len(all_tests)}")
+    logger.info(f"\nTotal tests available: {len(all_tests)}")
     
     # Scenario 1: Cache change
-    print("\n--- Scenario 1: Cache Module Change ---")
+    logger.info("\n--- Scenario 1: Cache Module Change ---")
     change = selector.simulate_change('cache')
-    print(f"Change: {change['change']}")
+    logger.info(f"Change: {change['change']}")
     
     try:
         affected = selector.get_affected_tests_from_change(change['changed_file'])
-        print(f"Tests affected: {len(affected)}")
+        logger.info(f"Tests affected: {len(affected)}")
         reduction = (len(all_tests) - len(affected)) / len(all_tests) if all_tests else 0
-        print(f"Reduction: {reduction*100:.1f}%")
+        logger.info(f"Reduction: {reduction*100:.1f}%")
         
         metrics = selector.calculate_metrics(all_tests, affected)
         report = selector.generate_report(metrics)
         
-        print(f"\nValidation Report:")
-        print(json.dumps(report, indent=2))
+        logger.info(f"\nValidation Report:")
+        logger.info(json.dumps(report, indent=2))
         
-        print("\n" + "=" * 70)
-        print(f"RESULT: {report['status']}")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info(f"RESULT: {report['status']}")
+        logger.info("=" * 70)
         
         return 0 if report['status'] == 'PASS' else 1
     

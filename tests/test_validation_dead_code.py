@@ -83,7 +83,7 @@ class DeadCodeValidator:
                     # Simple heuristic: count 'def ' at line start
                     count += len([line for line in content.split('\n') 
                                  if line.strip().startswith('def ')])
-            except:
+            except (ValueError, TypeError, RuntimeError, HTTPError) as e:
                 pass
         return count
     
@@ -114,7 +114,7 @@ class DeadCodeValidator:
                 timeout=30
             )
             return result.returncode == 0
-        except:
+        except (ValueError, TypeError, RuntimeError, HTTPError) as e:
             return False
     
     def validate_false_positives(self) -> Tuple[int, float]:
@@ -253,17 +253,17 @@ def test_reviewer_acceptance(validator):
 
 if __name__ == '__main__':
     validator = DeadCodeValidator()
-    print("=" * 70)
-    print("VALIDATION TEST 1: DEAD CODE REMOVAL")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("VALIDATION TEST 1: DEAD CODE REMOVAL")
+    logger.info("=" * 70)
     
     result = validator.run_dead_code_mission(min_confidence=0.90)
-    print(f"\nMission Result: {json.dumps(result, indent=2)}")
+    logger.info(f"\nMission Result: {json.dumps(result, indent=2)}")
     
     metrics = validator.calculate_metrics(result)
     report = validator.generate_report(metrics)
-    print(f"\nValidation Report:\n{json.dumps(report, indent=2)}")
+    logger.info(f"\nValidation Report:\n{json.dumps(report, indent=2)}")
     
-    print("\n" + "=" * 70)
-    print(f"RESULT: {report['pass_fail']}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"RESULT: {report['pass_fail']}")
+    logger.info("=" * 70)
