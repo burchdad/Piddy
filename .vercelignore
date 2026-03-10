@@ -1,9 +1,33 @@
+# Exclude all Python backend files
 src/
 config/
+*.py
 requirements.txt
+Pipfile*
+setup.py
+pyproject.toml
+poetry.lock
+
+# Exclude Docker files
 Dockerfile
 docker-compose.yml
+.dockerignore
+
+# Exclude development/backup directories
 piddy_old_backup/
+.git/
+.github/
+
+# Exclude Python cache
 *.pyc
 __pycache__/
 .python-version
+.venv/
+venv/
+
+# Exclude environment and config
+.env
+.env.local
+.env.*.local
+piddy.db
+*.db

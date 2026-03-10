@@ -2,6 +2,12 @@
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
+  "regions": ["iad1"],
+  "functions": {
+    "api/**": {
+      "runtime": "nodejs@20"
+    }
+  },
   "env": {
     "VITE_API_URL": "@api_url"
   }
