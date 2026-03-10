@@ -10,7 +10,8 @@ function Phases() {
     const fetchPhases = async () => {
       try {
         const data = await fetchApi('/api/phases');
-        setPhases(data);
+        // Handle both array and object responses
+        setPhases(Array.isArray(data) ? data : (data.phases || []));
       } catch (err) {
         console.error('Failed to fetch phases:', err);
       } finally {
