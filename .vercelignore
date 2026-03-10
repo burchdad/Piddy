@@ -1,6 +1,6 @@
 # Exclude all Python backend files
-src/
-config/
+/src/
+/config/
 *.py
 requirements.txt
 Pipfile*
