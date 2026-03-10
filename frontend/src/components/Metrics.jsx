@@ -50,9 +50,9 @@ function Metrics() {
               <div className="metric-name">{metric.metric_name}</div>
               <div className={`metric-status ${metric.status}`}>{metric.status.toUpperCase()}</div>
             </div>
-            <div className="metric-value">{metric.value.toFixed(2)} {metric.unit}</div>
+            <div className="metric-value">{(metric.value ?? 0).toFixed(2)} {metric.unit}</div>
             {metric.threshold && (
-              <div className="metric-threshold">Threshold: {metric.threshold.toFixed(2)}</div>
+              <div className="metric-threshold">Threshold: {(metric.threshold ?? 0).toFixed(2)}</div>
             )}
           </div>
         ))}

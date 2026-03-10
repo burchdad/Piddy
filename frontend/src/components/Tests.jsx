@@ -75,7 +75,7 @@ function Tests() {
             <div className="progress-fill failed" style={{width: `${(summary.failed / summary.total) * 100}%`}}></div>
             <div className="progress-fill skipped" style={{width: `${(summary.skipped / summary.total) * 100}%`}}></div>
           </div>
-          <div className="progress-label">Pass Rate: {summary.pass_rate.toFixed(1)}%</div>
+          <div className="progress-label">Pass Rate: {(summary.pass_rate ?? 0).toFixed(1)}%</div>
         </div>
       )}
 
@@ -94,7 +94,7 @@ function Tests() {
             </div>
             <div className="test-info">
               <div className="test-name">{test.test_name}</div>
-              <div className="test-duration">{test.duration_seconds.toFixed(3)}s</div>
+              <div className="test-duration">{(test.duration_seconds ?? 0).toFixed(3)}s</div>
             </div>
             <div className="test-message">{test.message}</div>
           </div>

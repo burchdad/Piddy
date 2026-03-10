@@ -41,7 +41,7 @@ function Agents() {
                 <span className={`agent-status ${agent.status}`}>● {agent.status}</span>
               </div>
               <div className="agent-details">
-                <div><strong>Reputation:</strong> {(agent.reputation * 100).toFixed(0)}%</div>
+                <div><strong>Reputation:</strong> {((agent.reputation ?? 0) * 100).toFixed(0)}%</div>
                 <div><strong>ID:</strong> {agent.id}</div>
               </div>
             </div>

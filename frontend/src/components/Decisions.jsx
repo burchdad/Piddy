@@ -38,7 +38,7 @@ function Decisions() {
             <div className="decision-header">
               <div className="decision-task">{decision.task}</div>
               <div className="decision-confidence">
-                <span className="confidence-value">{(decision.confidence * 100).toFixed(0)}%</span>
+                <span className="confidence-value">{((decision.confidence ?? 0) * 100).toFixed(0)}%</span>
                 <div className="confidence-bar">
                   <div className="confidence-fill" style={{width: `${decision.confidence * 100}%`}}></div>
                 </div>

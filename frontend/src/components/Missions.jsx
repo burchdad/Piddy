@@ -59,17 +59,17 @@ function Missions() {
               <div className="metric">
                 <span className="label">Progress:</span>
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{width: `${mission.progress_percent}%`}}></div>
+                  <div className="progress-fill" style={{width: `${mission.progress_percent || 0}%`}}></div>
                 </div>
-                <span className="value">{mission.progress_percent}%</span>
+                <span className="value">{mission.progress_percent || 0}%</span>
               </div>
               <div className="metric">
                 <span className="label">Quality Score:</span>
-                <span className="value">{mission.quality_score.toFixed(2)}</span>
+                <span className="value">{(mission.quality_score ?? 0).toFixed(2)}</span>
               </div>
               <div className="metric">
                 <span className="label">Efficiency Score:</span>
-                <span className="value">{mission.efficiency_score.toFixed(2)}</span>
+                <span className="value">{(mission.efficiency_score ?? 0).toFixed(2)}</span>
               </div>
             </div>
 

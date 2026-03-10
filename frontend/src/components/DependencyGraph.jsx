@@ -61,7 +61,7 @@ function DependencyGraph() {
                     <span>튱 {node.inbound_count}</span>
                     <span>튰 {node.outbound_count}</span>
                   </div>
-                  <div className="node-metric">{node.avg_response_time.toFixed(0)}ms</div>
+                  <div className="node-metric">{(node.avg_response_time ?? 0).toFixed(0)}ms</div>
                 </div>
               ))}
             </div>
@@ -85,11 +85,11 @@ function DependencyGraph() {
                 </div>
                 <div className="detail">
                   <span className="label">Avg Response Time:</span>
-                  <span className="value">{selectedNode.avg_response_time.toFixed(2)}ms</span>
+                  <span className="value">{(selectedNode.avg_response_time ?? 0).toFixed(2)}ms</span>
                 </div>
                 <div className="detail">
                   <span className="label">Error Rate:</span>
-                  <span className="value">{(selectedNode.error_rate * 100).toFixed(2)}%</span>
+                  <span className="value">{((selectedNode.error_rate ?? 0) * 100).toFixed(2)}%</span>
                 </div>
               </div>
             </div>
