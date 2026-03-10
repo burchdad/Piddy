@@ -356,7 +356,11 @@ Question: {input}
     
     async def process_command(self, command: Command) -> CommandResponse:
         """
-        Process a backend development command with intelligent fallback and rate limit handling.
+        Process a backend development command using TIERED self-healing.
+        
+        ✅ Tier 1: Local pattern-based healing (NO external AI)
+        🔵 Tier 2: Claude + token tracking (if local fails)
+        🟢 Tier 3: OpenAI GPT-4 (final fallback, if Tier 2 exhausted)
         
         Args:
             command: Command to execute
@@ -364,144 +368,182 @@ Question: {input}
         Returns:
             CommandResponse with results
         """
+        logger.info(f"🤖 Processing command with TIERED healing: {command.description[:50]}...")
+        
         is_conversation = command.metadata.get("is_conversation", False)
         prompt = self._format_command_prompt(command)
         
-        # Determine which LLM to try first
-        primary_name = self.settings.agent_model.split("-")[0]  # "claude" or "gpt"
-        fallback_name = "gpt-4o" if primary_name == "claude" else "claude"
-        
-        # List of LLMs to try in order
-        llm_strategies = [
-            ("primary", self.primary_llm, primary_name),
-            ("fallback", self.fallback_llm, fallback_name),
-        ]
-        
-        last_error = None
-        
-        for strategy_name, llm, llm_name in llm_strategies:
-            if llm is None:
-                logger.warning(f"Skipping {strategy_name} ({llm_name}): not configured")
-                continue
+        try:
+            # Import tiered healing engine
+            from src.tiered_healing_engine import run_tiered_self_healing
             
-            # Check if this LLM is in rate limit backoff
-            if _is_rate_limited(llm_name):
-                logger.warning(f"Skipping {strategy_name} ({llm_name}): currently rate limited")
-                continue
+            logger.info("📊 Tier 1: Attempting local pattern-based analysis (no LLM calls)...")
             
+            # Run tiered healing - this will handle Local → Claude → OpenAI automatically
+            tiered_result = await run_tiered_self_healing(
+                issue_description=command.description,
+                context=command.context or "",
+                force_tier=None  # Auto-select best tier
+            )
+            
+            # Extract results from tiered system
+            final_result = tiered_result.get("final_result", {})
+            tier_used = final_result.get("tier", "unknown")
+            fix_details = final_result.get("fix", "")
+            
+            tier_names = {
+                1: "✅ Tier 1 (Local Pattern)",
+                2: "🔵 Tier 2 (Claude)",
+                3: "🟢 Tier 3 (OpenAI)"
+            }
+            
+            logger.info(f"✨ Successfully used {tier_names.get(tier_used, 'Unknown Tier')} for command processing")
+            
+            return CommandResponse(
+                success=True,
+                command_type=command.command_type,
+                result=fix_details if fix_details else "✅ Command processed successfully with tiered healing",
+                execution_time=0.0,
+                metadata={
+                    "source": command.source,
+                    "is_conversation": is_conversation,
+                    "tier_used": tier_used,
+                    "tier_name": tier_names.get(tier_used, "Unknown"),
+                    "engine": "tiered_healing",
+                    "uses_external_ai": tier_used in [2, 3],
+                    "token_summary": tiered_result.get("token_summary", {})
+                }
+            )
+        
+        except Exception as e:
+            logger.error(f"❌ Tiered healing failed, falling back to legacy LLM system: {str(e)}")
+            last_error = str(e)
+            
+            # FALLBACK: Use legacy LLM system if tiered system fails completely
             try:
-                logger.info(f"Attempting {strategy_name} LLM: {llm_name}")
+                is_conversation = command.metadata.get("is_conversation", False)
+                prompt = self._format_command_prompt(command)
                 
-                # Switch to this LLM if it's not the current one
-                if llm != self.llm:
-                    logger.info(f"Switching to {llm_name}")
-                    self.llm = llm
-                    self.executor = self._create_executor()
-                    self.conversation_executor = self._create_conversation_executor()
+                # Determine which LLM to try first
+                primary_name = self.settings.agent_model.split("-")[0]  # "claude" or "gpt"
+                fallback_name = "gpt-4o" if primary_name == "claude" else "claude"
                 
-                executor = self.conversation_executor if is_conversation else self.executor
-                result = executor.invoke({"input": prompt})
-                
-                # Success! Clear any rate limit tracking for this LLM
-                _clear_rate_limit(llm_name)
-                
-                return CommandResponse(
-                    success=True,
-                    command_type=command.command_type,
-                    result=result.get("output", ""),
-                    execution_time=0.0,
-                    metadata={
-                        "source": command.source,
-                        "is_conversation": is_conversation,
-                        "llm_used": llm_name
-                    }
-                )
-            
-            except Exception as e:
-                error_str = str(e).lower()
-                last_error = str(e)
-                
-                logger.error(f"Error with {llm_name}: {str(e)}")
-                
-                # Check if this is a rate limit or service error
-                rate_limit_phrases = [
-                    "rate_limit", "429", "rate limit", "quota exceeded",
-                    "too many requests", "ratelimit"
-                ]
-                service_error_phrases = [
-                    "overloaded", "unavailable", "temporarily unavailable",
-                    "service unavailable", "502", "503", "timeout"
-                ]
-                token_error_phrases = [
-                    "token", "credit", "balance", "insufficient",
-                    "quota", "too low", "exceed", "limit"
+                # List of LLMs to try in order
+                llm_strategies = [
+                    ("primary", self.primary_llm, primary_name),
+                    ("fallback", self.fallback_llm, fallback_name),
                 ]
                 
-                if any(phrase in error_str for phrase in rate_limit_phrases):
-                    logger.warning(f"{llm_name} hit rate limit - recording backoff")
-                    _record_rate_limit_error(llm_name, str(e))
+                for strategy_name, llm, llm_name in llm_strategies:
+                    if llm is None:
+                        logger.warning(f"Skipping {strategy_name} ({llm_name}): not configured")
+                        continue
+                    
+                    if _is_rate_limited(llm_name):
+                        logger.warning(f"Skipping {strategy_name} ({llm_name}): currently rate limited")
+                        continue
+                    
+                    try:
+                        logger.info(f"⚠️  Fallback: Attempting {strategy_name} LLM: {llm_name}")
+                        
+                        if llm != self.llm:
+                            logger.info(f"Switching to {llm_name}")
+                            self.llm = llm
+                            self.executor = self._create_executor()
+                            self.conversation_executor = self._create_conversation_executor()
+                        
+                        executor = self.conversation_executor if is_conversation else self.executor
+                        result = executor.invoke({"input": prompt})
+                        
+                        _clear_rate_limit(llm_name)
+                        
+                        return CommandResponse(
+                            success=True,
+                            command_type=command.command_type,
+                            result=result.get("output", ""),
+                            execution_time=0.0,
+                            metadata={
+                                "source": command.source,
+                                "is_conversation": is_conversation,
+                                "llm_used": llm_name,
+                                "note": "⚠️  Using legacy fallback (tiered system unavailable)"
+                            }
+                        )
+                    
+                    except Exception as llm_e:
+                        error_str = str(llm_e).lower()
+                        last_error = str(llm_e)
+                        
+                        logger.error(f"Error with {llm_name}: {str(llm_e)}")
+                        
+                        rate_limit_phrases = [
+                            "rate_limit", "429", "rate limit", "quota exceeded",
+                            "too many requests", "ratelimit"
+                        ]
+                        service_error_phrases = [
+                            "overloaded", "unavailable", "temporarily unavailable",
+                            "service unavailable", "502", "503", "timeout"
+                        ]
+                        token_error_phrases = [
+                            "token", "credit", "balance", "insufficient",
+                            "quota", "too low", "exceed", "limit"
+                        ]
+                        
+                        if any(phrase in error_str for phrase in rate_limit_phrases):
+                            logger.warning(f"{llm_name} hit rate limit")
+                            _record_rate_limit_error(llm_name, str(llm_e))
+                        
+                        if any(phrase in error_str for phrase in (rate_limit_phrases + service_error_phrases + token_error_phrases)):
+                            logger.info(f"Service error, trying next LLM...")
+                            continue
+                        else:
+                            logger.error(f"Non-service error: {str(llm_e)}")
+                            return CommandResponse(
+                                success=False,
+                                command_type=command.command_type,
+                                result=None,
+                                error=str(llm_e),
+                                metadata={"source": command.source, "llm_attempted": llm_name}
+                            )
                 
-                if any(phrase in error_str for phrase in (rate_limit_phrases + service_error_phrases + token_error_phrases)):
-                    logger.info(f"Service error detected with {llm_name}, trying next LLM...")
-                    continue
-                else:
-                    # Non-service error, don't try other LLMs
-                    logger.error(f"Non-service error, not retrying: {str(e)}")
-                    return CommandResponse(
-                        success=False,
-                        command_type=command.command_type,
-                        result=None,
-                        error=str(e),
-                        metadata={"source": command.source, "llm_attempted": llm_name}
-                    )
-        
-        # If we get here, all LLMs failed
-        logger.error("All LLM strategies exhausted")
-        
-        # Check rate limit status for better error message
-        claude_limited = _is_rate_limited("claude")
-        gpt_limited = _is_rate_limited("gpt-4o")
-        
-        if claude_limited or gpt_limited:
-            limited_llms = []
-            if claude_limited:
-                limited_llms.append("Claude (rate limited)")
-            if gpt_limited:
-                limited_llms.append("GPT-4o (rate limited)")
-            
-            error_msg = f"""🚫 Both LLM providers are currently rate limited:
-{', '.join(limited_llms)}
-
-**What's happening**:
-Both Claude and OpenAI APIs are experiencing high load.
-
-**What to do**:
-1. Wait a few minutes and try again
-2. The system will automatically retry with exponential backoff
-3. Check rate limits: https://platform.openai.com/account/rate-limits
-
-Last error: {last_error[:100]}"""
-        else:
-            error_msg = f"""❌ LLM Service Error - All providers failed
+                # All LLMs failed
+                logger.error("All legacy LLM strategies exhausted")
+                
+                claude_limited = _is_rate_limited("claude")
+                gpt_limited = _is_rate_limited("gpt-4o")
+                primary_name = self.settings.agent_model.split("-")[0]
+                fallback_name = "gpt-4o" if primary_name == "claude" else "claude"
+                
+                error_msg = f"""❌ LLM Service Error - All providers failed
 
 Unable to process request with any available LLM provider.
 Primary: {primary_name}
 Fallback: {fallback_name}
 
 Last error: {last_error[:150]}"""
-        
-        return CommandResponse(
-            success=False,
-            command_type=command.command_type,
-            result=None,
-            error=error_msg,
-            metadata={
-                "source": command.source,
-                "claude_rate_limited": claude_limited,
-                "gpt_rate_limited": gpt_limited,
-                "last_error": last_error
-            }
-        )
+                
+                return CommandResponse(
+                    success=False,
+                    command_type=command.command_type,
+                    result=None,
+                    error=error_msg,
+                    metadata={
+                        "source": command.source,
+                        "claude_rate_limited": claude_limited,
+                        "gpt_rate_limited": gpt_limited,
+                        "last_error": last_error
+                    }
+                )
+            
+            except Exception as fallback_e:
+                logger.error(f"❌ CRITICAL: Even fallback LLM system failed: {str(fallback_e)}")
+                return CommandResponse(
+                    success=False,
+                    command_type=command.command_type,
+                    result=None,
+                    error=f"❌ CRITICAL: All healing systems failed. Original error: {str(e)}, Fallback error: {str(fallback_e)}",
+                    metadata={"source": command.source, "critical_failure": True}
+                )
     
     def _format_command_prompt(self, command: Command) -> str:
         """Format a command into a natural language prompt."""
