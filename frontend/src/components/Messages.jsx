@@ -7,8 +7,7 @@ function Messages() {
 
   useEffect(() => {
     fetchApi('/api/messages')
-      .then(r => r.json())
-      .then(data => setMessages(data.messages || []))
+      .then(data => setMessages(Array.isArray(data) ? data : (data.messages || [])))
       .catch(e => console.error(e));
   }, []);
 
