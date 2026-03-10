@@ -33,7 +33,7 @@ function Decisions() {
       </div>
 
       <div className="decisions-list">
-        {decisions.map((decision) => (
+        {Array.isArray(decisions) && decisions.map((decision) => (
           <div key={decision.id} className="decision-card" onClick={() => setExpandedId(expandedId === decision.id ? null : decision.id)}>
             <div className="decision-header">
               <div className="decision-task">{decision.task}</div>

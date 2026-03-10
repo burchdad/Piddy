@@ -11,7 +11,7 @@ function Missions() {
     const fetchMissions = async () => {
       try {
         const data = await fetchApi('/api/missions');
-        setMissions(data);
+        setMissions(Array.isArray(data) ? data : (data.missions || []));
       } catch (err) {
         console.error('Failed to fetch missions:', err);
       } finally {
@@ -43,7 +43,7 @@ function Missions() {
       </div>
 
       <div className="missions-list">
-        {missions.map((mission) => (
+        {Array.isArray(missions) && missions.map((mission) => (
           <div key={mission.id} className="mission-card" onClick={() => setExpandedId(expandedId === mission.id ? null : mission.id)}>
             <div className="mission-header">
               <div className="mission-info">

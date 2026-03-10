@@ -43,7 +43,7 @@ function Phases() {
       </div>
 
       <div className="phases-timeline">
-        {phases.map((phase, idx) => (
+        {Array.isArray(phases) && phases.map((phase, idx) => (
           <div key={phase.phase_id} className="phase-item">
             <div className="phase-connector" style={{backgroundColor: getStatusColor(phase.status)}}></div>
             <div className="phase-content">

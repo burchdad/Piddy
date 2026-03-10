@@ -44,7 +44,7 @@ function Metrics() {
       </div>
 
       <div className="metrics-grid">
-        {metrics.map((metric) => (
+        {Array.isArray(metrics) && metrics.map((metric) => (
           <div key={metric.metric_name} className="metric-card" style={{ borderLeftColor: getStatusColor(metric.status) }}>
             <div className="metric-header">
               <div className="metric-name">{metric.metric_name}</div>

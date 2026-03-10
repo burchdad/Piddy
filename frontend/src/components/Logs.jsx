@@ -26,7 +26,7 @@ function Logs() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredLogs = logs
+  const filteredLogs = (Array.isArray(logs) ? logs : [])
     .filter(log => filter === 'all' || log.level === filter)
     .filter(log => searchTerm === '' || log.message.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -76,7 +76,7 @@ function Logs() {
       </div>
 
       <div className="logs-container">
-        {filteredLogs.map((log, idx) => (
+        {Array.isArray(filteredLogs) && filteredLogs.map((log, idx) => (
           <div key={idx} className="log-entry" style={{borderLeftColor: getLevelColor(log.level)}}>
             <div className="log-level" style={{backgroundColor: getLevelColor(log.level)}}>
               {getLevelIcon(log.level)}

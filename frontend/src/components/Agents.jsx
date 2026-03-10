@@ -27,7 +27,7 @@ function Agents() {
     <div className="page">
       <h2>Agents</h2>
       <div className="agents-grid">
-        {agents.length === 0 ? (
+        {!Array.isArray(agents) || agents.length === 0 ? (
           <p>No agents found</p>
         ) : (
           agents.map(agent => (

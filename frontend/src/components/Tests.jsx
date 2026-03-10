@@ -28,7 +28,7 @@ function Tests() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredTests = filter === 'all' ? tests : tests.filter(t => t.status === filter);
+  const filteredTests = filter === 'all' ? (Array.isArray(tests) ? tests : []) : (Array.isArray(tests) ? tests.filter(t => t.status === filter) : []);
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -87,7 +87,7 @@ function Tests() {
       </div>
 
       <div className="tests-list">
-        {filteredTests.map((test) => (
+        {Array.isArray(filteredTests) && filteredTests.map((test) => (
           <div key={test.test_id} className={`test-item ${test.status}`}>
             <div className="test-status" style={{backgroundColor: getStatusColor(test.status)}}>
               {test.status === 'passed' ? '✓' : test.status === 'failed' ? '✗' : '⊘'}
