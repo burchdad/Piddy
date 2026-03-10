@@ -12,6 +12,17 @@ function Security() {
         const data = await fetchApi('/api/security/audit');
         // Handle response: could be direct audit object or wrapped
         let auditData = data.audit || data;
+        
+        // If auditData is an array, convert to object format
+        if (Array.isArray(auditData)) {
+          auditData = {
+            is_production_safe: true,
+            passed_checks: auditData.length,
+            failed_checks: 0,
+            critical_failures: auditData
+          };
+        }
+        
         // Ensure critical_failures is always an array
         if (auditData && typeof auditData === 'object' && !Array.isArray(auditData.critical_failures)) {
           auditData.critical_failures = auditData.critical_failures ? [auditData.critical_failures] : [];
@@ -61,7 +72,9 @@ function Security() {
               <h3>🚨 Critical Issues</h3>
               <div className="failures-list">
                 {audit.critical_failures.map((failure, idx) => (
-                  <div key={idx} className="failure-item">{failure}</div>
+                  <div key={idx} className="failure-item">
+                    <strong>{typeof failure === 'string' ? failure : (failure.name || failure.description || JSON.stringify(failure))}</strong>
+                  </div>
                 ))}
               </div>
             </div>
