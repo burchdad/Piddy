@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { fetchApi } from '../utils/api';
 import '../styles/components.css';
 
 function Messages() {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:8001/api/messages')
+    fetchApi('/api/messages')
       .then(r => r.json())
       .then(data => setMessages(data.messages || []))
       .catch(e => console.error(e));
