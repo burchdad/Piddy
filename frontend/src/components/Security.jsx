@@ -10,9 +10,13 @@ function Security() {
     const fetchSecurity = async () => {
       try {
         const data = await fetchApi('/api/security/audit');
-        // Handle both direct object and wrapped response
-        const auditData = data.audit || data;
-        setAudit(auditData);
+        // Handle response: could be direct audit object or wrapped
+        let auditData = data.audit || data;
+        // Ensure critical_failures is always an array
+        if (auditData && typeof auditData === 'object' && !Array.isArray(auditData.critical_failures)) {
+          auditData.critical_failures = auditData.critical_failures ? [auditData.critical_failures] : [];
+        }
+        setAudit(auditData || {});
       } catch (err) {
         console.error('Failed to fetch security audit:', err);
       } finally {
