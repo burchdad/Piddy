@@ -12,6 +12,7 @@ from src.api.agent_commands import router as agent_router
 from src.api.slack_commands import router as slack_router
 from src.api.responses import router as responses_router
 from src.api.autonomous import router as autonomous_router
+from src.api.self_healing import router as self_healing_router
 
 
 def create_app() -> FastAPI:
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(slack_router)
     app.include_router(responses_router)
     app.include_router(autonomous_router)
+    app.include_router(self_healing_router)
     
     @app.on_event("startup")
     async def startup_event():
