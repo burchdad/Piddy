@@ -118,17 +118,14 @@ def create_app() -> FastAPI:
     @app.get("/api/agents")
     async def get_agents():
         """Get all agents."""
-        return {
-            "agents": [
-                {"id": "agent-1", "name": "Guardian", "status": "online", "reputation": 0.95},
-                {"id": "agent-2", "name": "Validator", "status": "online", "reputation": 0.87},
-                {"id": "agent-3", "name": "Performance Analyst", "status": "online", "reputation": 0.82},
-                {"id": "agent-4", "name": "Tech Debt Hunter", "status": "idle", "reputation": 0.79},
-                {"id": "agent-5", "name": "Architecture Reviewer", "status": "online", "reputation": 0.88},
-                {"id": "agent-6", "name": "Cost Optimizer", "status": "online", "reputation": 0.84},
-            ],
-            "total": 12,
-        }
+        return [
+            {"id": "agent-1", "name": "Guardian", "status": "online", "reputation": 0.95},
+            {"id": "agent-2", "name": "Validator", "status": "online", "reputation": 0.87},
+            {"id": "agent-3", "name": "Performance Analyst", "status": "online", "reputation": 0.82},
+            {"id": "agent-4", "name": "Tech Debt Hunter", "status": "idle", "reputation": 0.79},
+            {"id": "agent-5", "name": "Architecture Reviewer", "status": "online", "reputation": 0.88},
+            {"id": "agent-6", "name": "Cost Optimizer", "status": "online", "reputation": 0.84},
+        ]
     
     @app.get("/api/messages")
     async def get_messages():
@@ -144,83 +141,254 @@ def create_app() -> FastAPI:
     @app.get("/api/decisions")
     async def get_decisions():
         """Get recent decisions."""
-        return {
-            "decisions": [
-                {"id": "dec-1", "agent": "Guardian", "confidence": 0.98, "status": "approved"},
-                {"id": "dec-2", "agent": "Validator", "confidence": 0.85, "status": "approved"},
-            ],
-            "total": 2,
-        }
+        return [
+            {
+                "id": "dec-1",
+                "task": "Analyze code quality",
+                "agent": "Guardian",
+                "confidence": 0.98,
+                "action": "Approved for production",
+                "reasoning_chain": [
+                    {"thought": "Code follows all security standards"},
+                    {"thought": "Performance metrics within acceptable range"},
+                    {"thought": "No critical issues found"}
+                ]
+            },
+            {
+                "id": "dec-2",
+                "task": "Review PR changes",
+                "agent": "Validator",
+                "confidence": 0.85,
+                "action": "Approved with minor suggestions",
+                "reasoning_chain": [
+                    {"thought": "Most code standards followed"},
+                    {"thought": "One performance optimization suggested"},
+                    {"thought": "Documentation could be improved"}
+                ]
+            }
+        ]
     
     @app.get("/api/missions")
     async def get_missions():
         """Get active missions."""
-        return {
-            "missions": [
-                {"id": "mission-1", "name": "Deploy Service", "progress": 75, "status": "in_progress"},
-                {"id": "mission-2", "name": "Code Review", "progress": 100, "status": "completed"},
-            ],
-            "total": 2,
-        }
+        return [
+            {
+                "id": "mission-1",
+                "name": "Deploy Service",
+                "description": "Deploy latest version of core service",
+                "goal": "Successfully deploy v2.0 to production",
+                "progress_percent": 75,
+                "status": "in_progress",
+                "quality_score": 94.2,
+                "efficiency_score": 87.5,
+                "agents_involved": [
+                    {"name": "Guardian"},
+                    {"name": "Validator"},
+                    {"name": "Performance Analyst"}
+                ],
+                "success_criteria": [
+                    "All tests passing",
+                    "Performance benchmarks met",
+                    "Zero security issues",
+                    "Code review approved"
+                ]
+            },
+            {
+                "id": "mission-2",
+                "name": "Code Review",
+                "description": "Review and approve recent PRs",
+                "goal": "Complete review of 5 pending PRs",
+                "progress_percent": 100,
+                "status": "completed",
+                "quality_score": 96.8,
+                "efficiency_score": 92.1,
+                "agents_involved": [
+                    {"name": "Architecture Reviewer"},
+                    {"name": "Tech Debt Hunter"}
+                ],
+                "success_criteria": [
+                    "All PRs reviewed",
+                    "Feedback provided",
+                    "Issues documented"
+                ]
+            }
+        ]
     
     @app.get("/api/graph/dependencies")
     async def get_dependencies():
         """Get dependency graph."""
         return {
             "nodes": [
-                {"id": "svc-1", "label": "API Gateway", "type": "service"},
-                {"id": "svc-2", "label": "Auth Service", "type": "service"},
-                {"id": "svc-3", "label": "DB", "type": "external"},
+                {
+                    "id": "svc-1",
+                    "name": "API Gateway",
+                    "type": "service",
+                    "inbound_count": 0,
+                    "outbound_count": 2,
+                    "avg_response_time": 142,
+                    "error_rate": 0.01
+                },
+                {
+                    "id": "svc-2",
+                    "name": "Auth Service",
+                    "type": "service",
+                    "inbound_count": 1,
+                    "outbound_count": 1,
+                    "avg_response_time": 89,
+                    "error_rate": 0.005
+                },
+                {
+                    "id": "svc-3",
+                    "name": "Database",
+                    "type": "external",
+                    "inbound_count": 3,
+                    "outbound_count": 0,
+                    "avg_response_time": 234,
+                    "error_rate": 0.002
+                }
             ],
             "edges": [
-                {"source": "svc-1", "target": "svc-2"},
-                {"source": "svc-2", "target": "svc-3"},
-            ],
+                {"source": "svc-1", "target": "svc-2", "weight": 1},
+                {"source": "svc-2", "target": "svc-3", "weight": 1},
+                {"source": "svc-1", "target": "svc-3", "weight": 1}
+            ]
         }
     
     @app.get("/api/missions/{mission_id}/replay")
     async def get_mission_replay(mission_id: str):
         """Get mission replay data."""
         return {
-            "mission_id": mission_id,
-            "steps": [
-                {"step": 1, "action": "agent_action", "description": "Analyzing code", "timestamp": datetime.utcnow().isoformat()},
-                {"step": 2, "action": "decision", "description": "Approved", "timestamp": datetime.utcnow().isoformat()},
-            ],
-            "total_steps": 2,
+            "id": mission_id,
+            "name": "Code Review Session",
+            "stages": [
+                {
+                    "type": "agent_action",
+                    "title": "Initialize review process",
+                    "description": "Preparing to analyze code changes",
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                {
+                    "type": "service_call",
+                    "title": "Fetch repository data",
+                    "description": "Retrieving code from Git repository",
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                {
+                    "type": "decision",
+                    "title": "Review decision",
+                    "description": "Code review approved with suggestions",
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                {
+                    "type": "deployment",
+                    "title": "Deploy changes",
+                    "description": "Deploying approved changes to staging",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            ]
         }
     
     @app.get("/api/metrics/performance")
     async def get_metrics():
         """Get performance metrics."""
-        return {
-            "cpu_usage": 45.2,
-            "memory_usage": 62.1,
-            "response_time": 124,
-            "requests_per_second": 234,
-        }
+        return [
+            {
+                "metric_name": "CPU Usage",
+                "value": 45.2,
+                "unit": "%",
+                "status": "ok",
+                "threshold": 80
+            },
+            {
+                "metric_name": "Memory Usage",
+                "value": 62.1,
+                "unit": "%",
+                "status": "ok",
+                "threshold": 85
+            },
+            {
+                "metric_name": "Response Time",
+                "value": 124,
+                "unit": "ms",
+                "status": "ok",
+                "threshold": 500
+            },
+            {
+                "metric_name": "Requests/sec",
+                "value": 234,
+                "unit": "req/s",
+                "status": "ok",
+                "threshold": 10000
+            }
+        ]
     
     @app.get("/api/logs")
     async def get_logs():
         """Get recent logs."""
-        return {
-            "logs": [
-                {"timestamp": datetime.utcnow().isoformat(), "level": "info", "message": "System operational"},
-                {"timestamp": datetime.utcnow().isoformat(), "level": "info", "message": "Agent online"},
-            ],
-            "total": 2,
-        }
+        return [
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "level": "INFO",
+                "source": "System",
+                "message": "System operational and ready for deployments",
+                "details": None
+            },
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "level": "INFO",
+                "source": "Agents",
+                "message": "Guardian agent came online",
+                "details": None
+            },
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "level": "INFO",
+                "source": "Database",
+                "message": "Database connection pool initialized",
+                "details": None
+            }
+        ]
     
     @app.get("/api/phases")
     async def get_phases():
         """Get phase information."""
-        return {
-            "current_phase": 5,
-            "phases": [
-                {"id": 1, "name": "Core Agent", "status": "completed"},
-                {"id": 5, "name": "Dashboard", "status": "in_progress"},
-            ],
-        }
+        return [
+            {
+                "phase_id": 1,
+                "phase_name": "Core Agent",
+                "status": "completed",
+                "progress_percent": 100,
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            {
+                "phase_id": 2,
+                "phase_name": "Slack Integration",
+                "status": "completed",
+                "progress_percent": 100,
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            {
+                "phase_id": 3,
+                "phase_name": "Rate Limiting",
+                "status": "completed",
+                "progress_percent": 100,
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            {
+                "phase_id": 4,
+                "phase_name": "Autonomous Monitoring",
+                "status": "completed",
+                "progress_percent": 100,
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            {
+                "phase_id": 5,
+                "phase_name": "Dashboard",
+                "status": "in_progress",
+                "progress_percent": 75,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        ]
     
     @app.get("/api/tests")
     async def get_tests():
