@@ -11,7 +11,7 @@ function Decisions() {
     const fetchDecisions = async () => {
       try {
         const data = await fetchApi('/api/decisions');
-        setDecisions(data);
+        setDecisions(Array.isArray(data) ? data : (data.decisions || []));
       } catch (err) {
         console.error('Failed to fetch decisions:', err);
       } finally {
@@ -49,10 +49,10 @@ function Decisions() {
               <div className="decision-expanded">
                 <div className="reasoning-chain">
                   <h4>Reasoning Chain:</h4>
-                  {decision.reasoning_chain.map((step, idx) => (
+                  {decision.reasoning_chain && Array.isArray(decision.reasoning_chain) && decision.reasoning_chain.map((step, idx) => (
                     <div key={idx} className="reasoning-step">
                       <span className="step-num">{idx + 1}</span>
-                      <span className="step-text">{step.thought}</span>
+                      <span className="step-text">{step.thought || step}</span>
                     </div>
                   ))}
                 </div>

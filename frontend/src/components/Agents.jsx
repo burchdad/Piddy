@@ -10,11 +10,8 @@ function Agents() {
     const fetchAgents = async () => {
       try {
         const data = await fetchApi('/api/agents');
-        setAgents(data.agents || []);
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch agents:', error);
-        setAgents([]);
+        const agentsArray = Array.isArray(data) ? data : (data.agents || []);
+        setAgents(agentsArray);
         setLoading(false);
       }
     };

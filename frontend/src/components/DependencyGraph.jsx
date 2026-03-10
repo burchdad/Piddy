@@ -38,18 +38,18 @@ function DependencyGraph() {
           <div className="graph-stats">
             <div className="stat-card">
               <div className="stat-label">Total Nodes</div>
-              <div className="stat-value">{graph.nodes?.length || 0}</div>
+              <div className="stat-value">{(Array.isArray(graph.nodes) ? graph.nodes : [])?.length || 0}</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">Total Edges</div>
-              <div className="stat-value">{graph.edges?.length || 0}</div>
+              <div className="stat-value">{(Array.isArray(graph.edges) ? graph.edges : [])?.length || 0}</div>
             </div>
           </div>
 
           <div className="nodes-list">
             <h3>Services & Dependencies</h3>
             <div className="nodes-grid">
-              {graph.nodes?.map((node) => (
+              {Array.isArray(graph.nodes) && graph.nodes?.map((node) => (
                 <div
                   key={node.id}
                   className="node-item"
