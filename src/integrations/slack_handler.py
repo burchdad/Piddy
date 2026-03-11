@@ -111,7 +111,7 @@ class SlackMessageProcessor:
             "kubernetes", "infra", "deploy", "document", "docs", "comment",
             "migrate", "migration", "commit", "push", "commit changes", "git status",
             "git", "status", "what's changed", "remember", "save context", "memory",
-            "advanced review"
+            "advanced review", "self"  # ← Added: self commands (go-live, audit, fix)
         ]
         
         return any(keyword in text_lower for keyword in command_keywords)
