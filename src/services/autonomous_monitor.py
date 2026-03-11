@@ -167,7 +167,7 @@ class AutonomousMonitor:
         logger.info("📈 Running code quality analysis...")
         
         self.issues = []
-        await self.analyze_codebase()
+        # Note: analyze_codebase() doesn't exist, so we skip it and use available methods
         
         results = {
             "timestamp": datetime.now().isoformat(),
