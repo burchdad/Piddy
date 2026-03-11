@@ -149,6 +149,11 @@ class SlackMessageProcessor:
             await self._handle_save_memory(channel_id, thread_ts or ts, text, user_id)
             return
         
+        # Handle "self" commands (autonomous self-healing) - skip LLM, call API directly
+        if any(word in text.lower() for word in ["self fix", "self go live", "self audit"]):
+            await self._handle_self_command(channel_id, thread_ts or ts, text)
+            return
+        
         # Process with agent
         logger.info(f"Processing Slack command: {text[:50]}...")
         response = await self.agent.process_command(command)
@@ -606,6 +611,107 @@ class SlackMessageProcessor:
             await self.slack.send_message(
                 channel=channel_id,
                 text=f"❌ Error: {str(e)}",
+                thread_ts=ts
+            )
+    
+    async def _handle_self_command(self, channel_id: str, ts: str, text: str) -> None:
+        """
+        Handle self-healing commands (self fix, self go live, self audit).
+        
+        These bypass the LLM and call the tiered healing API directly.
+        """
+        try:
+            import httpx
+            
+            # Determine which endpoint to call
+            text_lower = text.lower()
+            
+            if "go live" in text_lower:
+                endpoint = "go-live"
+                action = "🚀 Go-Live Sequence"
+            elif "fix-all" in text_lower or "fix all" in text_lower:
+                endpoint = "fix-all"
+                action = "🔧 Auto-Fix All Issues"
+            elif "fix-claude" in text_lower:
+                endpoint = "fix-claude"
+                action = "🔵 Claude Fix"
+            elif "fix-openai" in text_lower or "fix openai" in text_lower:
+                endpoint = "fix-openai"
+                action = "🟢 OpenAI Fix"
+            elif "fix-local" in text_lower or "fix local" in text_lower:
+                endpoint = "fix-all-local"
+                action = "✅ Local Pattern Fix"
+            elif "audit" in text_lower:
+                endpoint = "audit"
+                action = "🔍 System Audit"
+            else:
+                endpoint = "fix-all"
+                action = "🔧 Auto-Fix All Issues"
+            
+            logger.info(f"Handling self command: {action} → /api/self/{endpoint}")
+            
+            # Get the backend URL (use Railway in production, localhost in dev)
+            from config.settings import get_settings
+            settings = get_settings()
+            backend_url = getattr(settings, 'backend_url', 'http://localhost:8000')
+            
+            # Call the self-healing API
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{backend_url}/api/self/{endpoint}",
+                    headers={"Content-Type": "application/json"}
+                )
+                data = response.json()
+            
+            # Build response message
+            if response.status_code == 200:
+                message = f"""✅ *{action} Initiated*
+
+*Status*: {data.get('status', 'processing')}
+*Message*: {data.get('message', 'Processing...')}
+
+*Details*:
+"""
+                
+                # Add tier information if available
+                if "tier_used" in data:
+                    tier_names = {
+                        1: "✅ Tier 1 (Local Pattern)",
+                        2: "🔵 Tier 2 (Claude)",
+                        3: "🟢 Tier 3 (OpenAI)"
+                    }
+                    message += f"• Tier Used: {tier_names.get(data['tier_used'], 'Unknown')}\n"
+                
+                # Add fixes information if available
+                if "step_1_tiered_healing" in data:
+                    healing_result = data.get('step_1_tiered_healing', {})
+                    message += f"• Final Result: {healing_result.get('final_result', {}).get('fix', 'N/A')}\n"
+                
+                # Add system status if available
+                if "system_status" in data:
+                    msg = data['system_status']
+                    message += f"• Mock Data: {msg.get('mock_data', '?')}\n"
+                    message += f"• Production Ready: {msg.get('production_ready', '?')}\n"
+                
+                message += f"\n_Next Step: {data.get('action_required', 'Review on GitHub')}_ 🚀"
+            else:
+                message = f"""❌ Error During {action}
+
+*Status Code*: {response.status_code}
+*Error*: {data.get('error', data.get('detail', 'Unknown error'))}"""
+            
+            # Send response
+            await self.slack.send_message(
+                channel=channel_id,
+                text=message,
+                thread_ts=ts
+            )
+            
+        except Exception as e:
+            logger.error(f"Error handling self command: {str(e)}", exc_info=True)
+            await self.slack.send_message(
+                channel=channel_id,
+                text=f"❌ Self command error: {str(e)[:150]}",
                 thread_ts=ts
             )
     

@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     server_port: int = 8001
     debug: bool = False
     
+    # Backend URL for self-healing API calls (used when running on different servers)
+    # Production: https://piddy-backend.railway.app
+    # Development: http://localhost:8000
+    backend_url: str = "http://localhost:8000"
+    
     # Logging
     log_level: str = "INFO"
     
