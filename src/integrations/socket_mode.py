@@ -190,8 +190,11 @@ class SlackSocketModeListener:
             import httpx
             import json
             
+            # Use backend URL from settings (Railway in prod, localhost in dev)
+            backend_url = self.settings.backend_url
+            
             # Call the go-live endpoint
-            response = httpx.post("http://localhost:8000/api/self/go-live", timeout=60)
+            response = httpx.post(f"{backend_url}/api/self/go-live", timeout=60)
             data = response.json()
             
             # Build Slack message
@@ -226,7 +229,8 @@ _Next Step: Review and merge the auto-generated PR on GitHub_"""
         try:
             import httpx
             
-            response = httpx.post("http://localhost:8000/api/self/audit", timeout=60)
+            backend_url = self.settings.backend_url
+            response = httpx.post(f"{backend_url}/api/self/audit", timeout=60)
             data = response.json()
             
             message = f"""🔍 *System Audit Complete*
@@ -252,7 +256,8 @@ _Next Step: {data.get('next_step', 'Review results')}"""
         try:
             import httpx
             
-            response = httpx.post("http://localhost:8000/api/self/fix-all", timeout=120)
+            backend_url = self.settings.backend_url
+            response = httpx.post(f"{backend_url}/api/self/fix-all", timeout=120)
             data = response.json()
             
             message = f"""🔧 *Autonomous Self-Fix Complete*
@@ -285,7 +290,8 @@ _Next Step: {data.get('action_required', 'Review PR on GitHub')}"""
         try:
             import httpx
             
-            response = httpx.get("http://localhost:8000/api/self/status", timeout=30)
+            backend_url = self.settings.backend_url
+            response = httpx.get(f"{backend_url}/api/self/status", timeout=30)
             data = response.json()
             
             message = f"""📊 *Piddy System Status*
