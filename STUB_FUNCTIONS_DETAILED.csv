@@ -1,0 +1,44 @@
+File,Line,Function Name,Return Type,Claims To Do,Actually Does,Issue Type,Severity,Category,Fix Recommendation
+src/api/routes/auth/auth.py,119,get_user_by_username,"Optional[User]",Get user by username from database,pass - deleted code,Database Stub,🔴 CRITICAL,Database/Auth,Implement actual DB query
+src/api/routes/auth/auth.py,123,get_user_by_email,"Optional[User]",Get user by email from database,pass - deleted code,Database Stub,🔴 CRITICAL,Database/Auth,Implement actual DB query
+src/api/routes/auth/auth.py,129,create_user,User,Create new user in database,pass - no creation,Database Stub,🔴 CRITICAL,Database/Auth,Implement actual user creation
+src/api/routes/auth/auth.py,192,register,UserResponse (mock),Register new user in database,Returns hardcoded mock user id=1,Mock Data,🔴 CRITICAL,Auth,Connect to real database
+src/api/routes/auth/auth.py,331,get_current_user_info,UserResponse (mock),Get real user information,Returns mock "John Doe",Mock Data,🔴 CRITICAL,Auth,Query actual user data
+src/tools/design_patterns.py,131,connect,None,PostgreSQL database connection,pass,Pattern Stub,🟡 MEDIUM,Educational Template,Move to docs or implement
+src/tools/design_patterns.py,134,connect,None,MongoDB connection,pass,Pattern Stub,🟡 MEDIUM,Educational Template,Move to docs or implement
+src/tools/design_patterns.py,137,connect,None,Redis connection,pass,Pattern Stub,🟡 MEDIUM,Educational Template,Move to docs or implement
+src/tools/design_patterns.py,403,get,Optional[User],Retrieve user from DB,pass - SQL query not implemented,Database Stub,🟡 MEDIUM,Educational Template,Move to docs
+src/tools/design_patterns.py,407,get_all,List[User],Retrieve all users,pass - SQL query not implemented,Database Stub,🟡 MEDIUM,Educational Template,Move to docs
+src/tools/design_patterns.py,411,save,None,Save user to DB,pass - SQL insert/update not implemented,Database Stub,🟡 MEDIUM,Educational Template,Move to docs
+src/tools/design_patterns.py,415,delete,None,Delete user from DB,pass - SQL delete not implemented,Database Stub,🟡 MEDIUM,Educational Template,Move to docs
+src/tools/design_patterns.py,456,query,None,Execute SQL query,pass,Database Stub,🟡 MEDIUM,Educational Template,Move to docs
+src/phase19_production_hardening.py,265,_check_tls,bool,Check TLS encryption,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Implement actual TLS validation
+src/phase19_production_hardening.py,269,_check_encryption_at_rest,bool,Check encryption at rest,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Implement actual encryption check
+src/phase19_production_hardening.py,273,_check_input_validation,bool,Check input validation,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Validate input sanitization
+src/phase19_production_hardening.py,277,_check_rate_limiting,bool,Check rate limiting config,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Check rate limiter status
+src/phase19_production_hardening.py,281,_check_approval_gates,bool,Check approval gate functionality,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Verify approval gates exist
+src/phase19_production_hardening.py,285,_check_audit_logging,bool,Check audit logging,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Verify audit logs enabled
+src/phase19_production_hardening.py,289,_check_alerting,bool,Check alerting configuration,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Check alerting system
+src/phase19_production_hardening.py,293,_check_dependency_scanning,bool,Check dependency scanning,"return True (no check)",Hardcoded Success,🔴 CRITICAL,Security Checks,Verify dependency checker active
+src/phase24_autonomous_refactoring.py,332,execute,bool,Execute refactoring with plan and changes,"Mark completed but don't apply, return True",Hardcoded Success,🔴 CRITICAL,Refactoring,Apply actual code changes
+src/phase24_autonomous_refactoring.py,336,rollback,bool,Rollback previous refactoring,"return True (no rollback!)",Incomplete Implementation,🔴 CRITICAL,Refactoring,Implement actual rollback logic
+src/phase31_security_compliance.py,224,_audit_logged,bool,Verify all actions are logged,"return True (no verification)",Hardcoded Success,🔴 CRITICAL,Security Checks,Actually check audit logs
+src/api/slack_commands.py,70,handle_slash_command,Dict,"Handle Slack slash commands properly, TODO comment","Returns command echo only",Todo Comment,🟠 HIGH,Slack Integration,Implement command execution
+src/infrastructure/agent_framework.py,138,run,None,Main agent loop - must be implemented by subclass,pass - abstract stub,Abstract Placeholder,🟡 MEDIUM,Agent Framework,Intentional - correctly abstract
+src/infrastructure/agent_framework.py,143,handle_message,None,Handle received message - must be implemented by subclass,pass - abstract stub,Abstract Placeholder,🟡 MEDIUM,Agent Framework,"Intentional - correctly abstract"
+src/phase18_ai_developer_autonomy.py,279,language_validation,Dict,"Validate code language (non-Python)","return valid=True, says not implemented",Incomplete Implementation,🟡 MEDIUM,Code Analysis,Implement language validation
+src/api/self_healing.py,181,_remove_mock_data,Dict,Remove all hardcoded mock data from system,"Delegate to local engine, return status","Logging Only Stub",🟡 MEDIUM,Self-Healing,"Implement or remove delegation"
+src/api/self_healing.py,192,_fix_code_issues,Dict,Fix code quality issues,"Delegate to local engine, return status","Logging Only Stub",🟡 MEDIUM,Self-Healing,"Implement or remove delegation"
+src/api/self_healing.py,202,_fix_security_issues,Dict,Fix security vulnerabilities,"Say scanned, return 0 vulnerabilities","Logging Only Stub",🟡 MEDIUM,Self-Healing,Implement actual checks
+src/api/self_healing.py,238,_validate_integration,Dict,Validate all integrations are live,"Hardcoded checks all True, 100% readiness","Hardcoded Success",🟡 MEDIUM,Self-Healing,Check actual integration status
+src/phase21_autonomous_features.py,532,logout,Dict,Logout endpoint - invalidate session,"return status: logged_out only",Echo-back Function,🟡 MEDIUM,Auth,Add actual session invalidation
+src/phase21_autonomous_features.py,579,delete_webhook,Dict,Delete webhook,"return status: deleted only",Echo-back Function,🟡 MEDIUM,Webhooks,Implement webhook deletion
+src/phase40_mission_simulation.py,156,determine_simulation_validity,bool,Determine if simulation result is valid,"return True (no check)",Hardcoded Success,🟡 MEDIUM,Simulation,"Implement validity checks"
+src/cicd/orchestrator.py,337,trigger_platform_ci,None,Trigger CI for platform,Log error - not implemented,Todo Comment,🟠 HIGH,CI/CD,Implement CI triggers
+src/phase29_sandbox_execution.py,70,setup_container,bool,Setup sandbox container,"return True with basic logging",Incomplete Implementation,🟡 MEDIUM,Sandbox,"May need validation"
+src/integrations/slack.py,53,_is_message_event,bool,Check if Slack message event,"return True (basic check)",Hardcoded Success,🟡 MEDIUM,Slack Integration,Add actual validation
+src/integrations/slack.py,82,_is_app_mention,bool,Check if app mention event,"return True (basic check)",Hardcoded Success,🟡 MEDIUM,Slack Integration,Add actual validation
+src/integrations/slack.py,114,_is_thread_reply,bool,Check if thread reply,"return True (basic check)",Hardcoded Success,🟡 MEDIUM,Slack Integration,Add actual validation
+src/integrations/slack.py,137,_is_reaction,bool,Check if reaction event,"return True (basic check)",Hardcoded Success,🟡 MEDIUM,Slack Integration,Add actual validation
+src/utils/src/common/base_component.py,58,_post_init,None,Additional initialization in subclasses,pass - override in subclass,Abstract Placeholder,🟡 MEDIUM,Framework,Intentional - hook for subclasses
+src/utils/src/common/base_component.py,70,_do_initialize,None,Custom initialization logic,pass - override in subclass,Abstract Placeholder,🟡 MEDIUM,Framework,"Intentional - hook for subclasses"
