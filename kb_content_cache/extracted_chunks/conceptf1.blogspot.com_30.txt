@@ -1,0 +1,62 @@
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='https://conceptf1.blogspot.com/2013/12/'>
+December
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate expanded'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy toggle-open'>
+
+        &#9660;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='https://conceptf1.blogspot.com/2013/11/'>
+November
+</a>
+<span class='post-count' dir='ltr'>(11)</span>
+<ul class='posts'>
+<li><a href='https://conceptf1.blogspot.com/2013/11/list-of-freely-available-programming.html'>List of freely available Programming Books</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/best-resources-to-learn-javascript.html'>Best Resources to Learn JavaScript</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/visual-studio-clean-build-and-rebuild-solution.html'>Visual Studio : Build Solution, Rebuild Solution a...</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/javascript-closures.html'>JavaScript : Closures</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/javascript-prototype-property-and-Inheritance.html'>JavaScript : Prototype Property and Inheritance</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/jquery-library-loaded-or-not-validation.html'>jQuery library loaded or not validation</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/c-javascriptserializer-and-time-zone.html'>C# : JavaScriptSerializer and Time Zone Issue</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/windows-service-appconfig-changes.html'>Windows Service &amp; App.Config changes</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/renaming-project-solution-and-items.html'>Renaming Project Solution and Items</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/create-windows-service-step-by-step.html'>Create Windows Service Step-By-Step</a></li>
+<li><a href='https://conceptf1.blogspot.com/2013/11/kendo-ui-data-source-crud.html'>Kendo-UI Data-Source CRUD (Create,Retrieve,Update ...</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class='clear'></div>
+</div>
+</div><div class='widget AdSense' data-version='1' id='AdSense1'>
+<div class='widget-content'>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- conceptf1_sidebar-right-1_AdSense1_300x600_as -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:300px;height:600px"
+     data-ad-client="ca-pub-8259485254735952"
+     data-ad-host="ca-host-pub-1556223355139109"
+     data-ad-slot="5086277025"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<div class='clear'></div>
+</div>
+</div><div class='widget HTML' data-version='1' id='HTML3'>
+<h2 class='title'>Subscribe YouTube Channel</h2>
+<div class='widget-content'>
+<script src="https://apis.google.com/js/platform.js"></script>

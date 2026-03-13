@@ -1,0 +1,121 @@
+			</div>
+			<div data-col="1/4" class="events__list">
+				<h4 class="heading footer__heading">Events</h4>
+                                <ul class="qcons__list no-style">
+                                    
+
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
+									<li><span class="icon event__type conference"></span>
+										<div class="qcon__detail">
+											<h5 class="heading">
+												<a rel="noreferrer noopener" href="https://qconlondon.com/?utm_source=infoq&utm_medium=referral&utm_campaign=footer_qlondon26" target="_blank">QCon London</a>
+											</h5>
+											<span class="meta date">March 16-19, 2026</span>
+										</div>
+									</li>
+                                    <li><span class="icon event__type conference"></span>
+                                        <div class="qcon__detail">
+                                            <h5 class="heading">
+                                                <a rel="noreferrer noopener" href="https://certification.qconferences.com/?utm_source=infoq&utm_medium=referral&utm_campaign=footer_onlinecohortaprmayjun26" target="_blank">InfoQ Architect Certification</a>
+                                            </h5>
+                                            <span class="meta date">April 15 | May 7 | June 10, 2026</span>
+                                        </div>
+                                    </li>
+                                    <li><span class="icon event__type conference"></span>
+                                        <div class="qcon__detail">
+                                            <h5 class="heading">
+                                                <a rel="noreferrer noopener" href="https://boston.qcon.ai/?utm_source=infoq&utm_medium=referral&utm_campaign=footer_qaiboston26" target="_blank">QCon AI Boston</a>
+                                            </h5>
+                                            <span class="meta date">June 1-2, 2026</span>
+                                        </div>
+                                    </li>
+									<li><span class="icon event__type conference"></span>
+											<div class="qcon__detail">
+													<h5 class="heading">
+															<a rel="noreferrer noopener" href="https://qconsf.com/?utm_source=infoq&utm_medium=referral&utm_campaign=footer_qsf26" target="_blank">QCon San Francisco</a>
+													</h5>
+													<span class="meta date">November 16-20, 2026</span>
+											</div>
+									</li>
+                                </ul>
+			</div>
+			<div data-col="1/4" class="footer__social-wrap">
+				<h4 class="heading text-left footer__heading">Follow us on </h4>
+				<div class="social__links columns social__links__row">
+                            
+                                
+                                        <a href="https://www.youtube.com/infoq"><span class="icon icon__large icon__social icon__youtube"></span><div><span class="social__count">Youtube</span><span class="social__followers">232K Followers</span></div></a>
+                                        <a href="http://www.linkedin.com/company/infoq"><span class="icon icon__large icon__social icon__linkedin"></span><div><span class="social__count">Linkedin</span><span class="social__followers">26K Followers</span></div></a>
+                                        <a href="#" id="footerNewsletterRssLink"><span class="icon icon__large icon__social icon__rss"></span><div><span class="social__count">RSS</span><span class="social__followers">19K Readers</span></div></a>
+                                        <a rel="noreferrer noopener" href="http://twitter.com/infoq" target="_blank"><span class="icon icon__large icon__social icon__twitter"></span><div><span class="social__count">X</span><span class="social__followers">57.1k Followers</span></div></a>
+                                        <a rel="noreferrer noopener" href="https://www.facebook.com/InfoQ-75911537320" target="_blank"><span class="icon icon__large icon__social icon__fb"></span><div><span class="social__count">Facebook</span><span class="social__followers">21K Likes</span></div></a>
+                                        <a rel="noreferrer noopener" href="https://bsky.app/profile/infoq.com" target="_blank"><span class="icon icon__large icon__social icon__bluesky"></span><div><span class="social__count">Bluesky</span><span class="social__followers">New</span></div></a>
+                                        
+                                        
+                                        
+                                        
+                                        
+                                                <a rel="noreferrer noopener" href="https://www.amazon.com/dp/B07KMWGNNL" target="_blank"><span class="icon icon__large icon__social icon__alexa"></span><div><span class="social__count">Alexa</span><span class="social__followers">New</span></div></a>
+                                        
+                                
+                                
+                                
+                                
+				</div>
+			</div>
+            <div data-col="1/4" class="footer__stayin-wrap">
+                <h4 class="heading text-left footer__heading">Stay in the know</h4>
+                <div class="stayIn_panel_container">
+                    <a href="/podcasts/" class="stayIn_panel" target="_blank" rel="noreferrer noopener"><span>The InfoQ Podcast</span><picture><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLXBvZGNhc3QuanBnIiwiZWRpdHMiOiB7IndlYnAiOiB7ICJxdWFsaXR5Ijo4MH19fQ==" type="image/webp"><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLXBvZGNhc3QuanBnIiwiZWRpdHMiOiB7ImpwZWciOiB7ICJxdWFsaXR5Ijo4MH19fQ==" type="image/webp"><img src="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLXBvZGNhc3QuanBnIiwiZWRpdHMiOiB7ImpwZWciOiB7ICJxdWFsaXR5Ijo4MH19fQ==" loading="lazy" width="65px" height="64px" alt="The InfoQ Podcast Logo - Stay in the know"></picture></a>
+                    <a href="/podcasts/#engineering_culture" class="stayIn_panel" target="_blank" rel="noreferrer noopener"><span>Engineering Culture Podcast</span><picture><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLXBvZGNhc3QtZW5naW5lZXJpbmctY3VsdHVyZS5qcGciLCJlZGl0cyI6IHsid2VicCI6IHsgInF1YWxpdHkiOjgwfX19" type="image/webp"><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLXBvZGNhc3QtZW5naW5lZXJpbmctY3VsdHVyZS5qcGciLCJlZGl0cyI6IHsianBlZyI6IHsgInF1YWxpdHkiOjgwfX19" type="image/webp"><img src="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLXBvZGNhc3QtZW5naW5lZXJpbmctY3VsdHVyZS5qcGciLCJlZGl0cyI6IHsianBlZyI6IHsgInF1YWxpdHkiOjgwfX19" loading="lazy" width="65px" height="64px" alt="Engineering Culture Podcast Logo - Stay in the knoww"></picture></a>
+                    <a href="/software-architects-newsletter/" class="stayIn_panel" target="_blank" rel="noreferrer noopener"><span>The Software Architects' Newsletter</span><picture><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLWFyY2hpdGVjdC1uZXdzbGV0dGVyLmpwZyIsImVkaXRzIjogeyJ3ZWJwIjogeyAicXVhbGl0eSI6ODB9fX0=" type="image/webp"><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLWFyY2hpdGVjdC1uZXdzbGV0dGVyLmpwZyIsImVkaXRzIjogeyJqcGVnIjogeyAicXVhbGl0eSI6ODB9fX0=" type="image/webp"><img src="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvZm9vdGVyL2luZm9xLWFyY2hpdGVjdC1uZXdzbGV0dGVyLmpwZyIsImVkaXRzIjogeyJqcGVnIjogeyAicXVhbGl0eSI6ODB9fX0=" loading="lazy" width="65px" height="64px" alt="The Software Architects' Newsletter Logo - Stay in the know"></picture></a>
+                </div>
+            </div>
+			
+		</div>
+	</section>
+	<section data-nosnippet class="container footer__bottom section white align__left">
+		<div class="container__inner columns">
+			<div data-col="2/3" class="column">
+				<div class="footer__contact contact columns">
+					
+					
+						<span data-col="1/6">
+							General Feedback
+							<a href="mailto:feedback@infoq.com">feedback@infoq.com</a>
+						</span>
+						<span data-col="1/6">
+							Advertising
+							<a href="mailto:sales@infoq.com">sales@infoq.com</a>
+						</span>
+						<span data-col="1/6">
+							Editorial
+							<a href="mailto:editors@infoq.com">editors@infoq.com</a>
+						</span>
+						<span data-col="1/6">
+							Marketing
+							<a href="mailto:marketing@infoq.com">marketing@infoq.com</a>
+						</span>
+					
+				</div>
+			</div>
+			<div class="column" data-col="1/3">
+				<p class="footer__more">
+					InfoQ.com and all content copyright &#169; 2006-2026 C4Media Inc.<br/>
+					
+						<a href="/privacy-notice" target="_blank">Privacy Notice</a>, <a href="/terms-and-conditions " target="_blank">Terms And Conditions</a>, <a href="/cookie-policy " target="_blank">Cookie Policy</a>
+					
+					
+				</p>
+			</div>
+		</div>
+	</section>
+</footer>
+                <!--	#######		SITE END	#########	 -->
+            
+        </div>

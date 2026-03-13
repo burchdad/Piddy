@@ -1,0 +1,152 @@
+<footer class="footer ">
+	
+		
+		<section data-nosnippet class="section container">
+			<div class="container__inner">
+				
+					
+					
+					
+					
+					
+					
+				
+
+<ul data-cols="5" class="no-style columns boxes topic__boxes">
+    
+        <li class="development">
+            <div class="box__header">
+                
+                <a class="t_all_footer_more-boxes-header" href="/development/">Development</a>
+            </div>
+            <div class="box__content">
+                <ul class="no-style box__list small">
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/ai-bot-github-actions-exploit/" title="AI-Powered Bot Compromises GitHub Actions Workflows Across Microsoft, DataDog, and CNCF Projects">AI-Powered Bot Compromises GitHub Actions Workflows Across Microsoft, DataDog, and CNCF Projects</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/datadog-go-binary-optimization/" title="How Datadog Cut the Size of Its Agent Go Binaries by 77%">How Datadog Cut the Size of Its Agent Go Binaries by 77%</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/cloudflare-vinext-experimental/" title="Cloudflare Releases Experimental Next.js Alternative Built with AI Assistance">Cloudflare Releases Experimental Next.js Alternative Built with AI Assistance</a></h5>
+                        </li>
+                    
+                </ul>
+            </div>
+        </li>
+    
+        <li class="architecture-design">
+            <div class="box__header">
+                
+                <a class="t_all_footer_more-boxes-header" href="/architecture-design/">Architecture &amp; Design</a>
+            </div>
+            <div class="box__content">
+                <ul class="no-style box__list small">
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/architect-certification-program/" title="Advance Your Socio-Technical Architecture Skills with InfoQ&amp;rsquo;s New Online Cohorts">Advance Your Socio-Technical Architecture Skills with InfoQ&rsquo;s New Online Cohorts</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/uber-mysql-uptime-consensus/" title="From Minutes to Seconds: Uber Boosts MySQL Cluster Uptime with Consensus Architecture">From Minutes to Seconds: Uber Boosts MySQL Cluster Uptime with Consensus Architecture</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/netflix-automates-rds-aurora/" title="Netflix Automates RDS PostgreSQL to Aurora PostgreSQL Migration across 400 Production Clusters">Netflix Automates RDS PostgreSQL to Aurora PostgreSQL Migration across 400 Production Clusters</a></h5>
+                        </li>
+                    
+                </ul>
+            </div>
+        </li>
+    
+        <li class="culture-methods">
+            <div class="box__header">
+                
+                <a class="t_all_footer_more-boxes-header" href="/culture-methods/">Culture &amp; Methods</a>
+            </div>
+            <div class="box__content">
+                <ul class="no-style box__list small">
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/effective-retrospectives/" title="Making Retrospectives Effective with Small Concrete Actions and Rotating Facilitators">Making Retrospectives Effective with Small Concrete Actions and Rotating Facilitators</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/architecture-advice-process/" title="Decentralizing Architectural Decisions with the Architecture Advice Process">Decentralizing Architectural Decisions with the Architecture Advice Process</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/02/software-leadership-team/" title="Lessons from Growing a Software Leadership Team">Lessons from Growing a Software Leadership Team</a></h5>
+                        </li>
+                    
+                </ul>
+            </div>
+        </li>
+    
+        <li class="ai-ml-data-eng">
+            <div class="box__header">
+                
+                <a class="t_all_footer_more-boxes-header" href="/ai-ml-data-eng/">AI, ML &amp; Data Engineering</a>
+            </div>
+            <div class="box__content">
+                <ul class="no-style box__list small">
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/aws-strands-agents/" title="AWS Launches Strands Labs for Experimental AI Agent Projects">AWS Launches Strands Labs for Experimental AI Agent Projects</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/opus-4-6-context-compaction/" title="Claude Opus 4.6 Introduces Adaptive Reasoning and Context Compaction for Long-Running Agents">Claude Opus 4.6 Introduces Adaptive Reasoning and Context Compaction for Long-Running Agents</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/presentations/ai-virtual-care/" title="From Symptom Checkers to Smart Chatbots: The Role of AI in Virtual Care">From Symptom Checkers to Smart Chatbots: The Role of AI in Virtual Care</a></h5>
+                        </li>
+                    
+                </ul>
+            </div>
+        </li>
+    
+        <li class="devops">
+            <div class="box__header">
+                
+                <a class="t_all_footer_more-boxes-header" href="/devops/">DevOps</a>
+            </div>
+            <div class="box__content">
+                <ul class="no-style box__list small">
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/ray-aks-ai-microsoft/" title="Running Ray at Scale on AKS">Running Ray at Scale on AKS</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/news/2026/03/gitlab-ai-governance/" title="GitLab Suggests AI Can Detect Vulnerabilities But it&#039;s AI Governance that Determines Risk">GitLab Suggests AI Can Detect Vulnerabilities But it's AI Governance that Determines Risk</a></h5>
+                        </li>
+                    
+                        <li>
+                            
+                            <h5><a class="t_all_footer_more-boxes-item" href="/articles/change-metrics-system-reliability/" title="Change as Metrics: Measuring System Reliability Through Change Delivery Signals">Change as Metrics: Measuring System Reliability Through Change Delivery Signals</a></h5>
+                        </li>
+                    
+                </ul>
+            </div>
+        </li>
+    
+</ul>

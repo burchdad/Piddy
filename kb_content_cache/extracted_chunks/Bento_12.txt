@@ -1,0 +1,23 @@
+            <!-- Previous Experience Section -->
+            <section class="mb-24">
+                <p class="text-2xl text-neutral-600 dark:text-neutral-300 mb-12 font-gt-super font-light">Previously, I led engineering for Stack Overflow's community Q&amp;A product with 100M monthly users. I joined as an early engineer and left after it was acquired for $1.8B.</p>
+            </section>
+
+            <!-- Beliefs Section -->
+            <section class="mb-24">
+                <div class="prose text-lg text-neutral-600 dark:text-neutral-300 font-gt-super font-light">
+                    <p class="mb-6">
+                        My belief is that we are put on this earth for meaningful connection. Money, power, and fame mean nothing if you're alone and living outside of your values.
+                    </p>
+                    <p class="mb-6">
+                        We are in a moment in history where AI has unlocked the nuance, richness, and emotional depth of the human experience.
+                        I've seen firsthand how this new capability can be harnessed to master ourselves, and in turn, better relate to others and the world around us.
+                    </p>
+                    <p class="mb-6">
+                        We are breaking dawn on the age of intelligence, and&mdash;with a careful hand&mdash;we can usher in a new world where we walk alongside AI in learning about the shape of our souls.
+                    </p>
+                    <p class="mb-6">
+                        Come join me on this journey.
+                    </p>
+                </div>
+            </section>

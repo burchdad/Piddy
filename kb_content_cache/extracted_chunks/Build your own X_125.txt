@@ -1,0 +1,22 @@
+  
+      <div class="BorderGrid-row" hidden>
+        <div class="BorderGrid-cell">
+          <include-fragment src="/codecrafters-io/build-your-own-x/used_by_list" accept="text/fragment+html" data-nonce="v2:5e18aafe-e45a-d4d8-ccf6-10c113e43742" data-view-component="true">
+  
+
+  <div data-show-on-forbidden-error hidden>
+    <div class="Box">
+  <div class="blankslate-container">
+    <div data-view-component="true" class="blankslate blankslate-spacious color-bg-default rounded-2">
+      
+
+      <h3 data-view-component="true" class="blankslate-heading">        Uh oh!
+</h3>
+      <p data-view-component="true" class="blankslate-description">        <p class="color-fg-muted my-2 mb-2 ws-normal">There was an error while loading. <a class="Link--inTextBlock" data-turbo="false" href="" aria-label="Please reload this page">Please reload this page</a>.</p>
+</p>
+
+</div>  </div>
+</div>  </div>
+</include-fragment>
+        </div>
+      </div>

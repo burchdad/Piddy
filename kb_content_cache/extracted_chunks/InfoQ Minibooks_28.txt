@@ -1,0 +1,32 @@
+                    
+                        
+                        
+                        
+                        
+                        
+                        
+                    
+
+
+
+
+
+
+<div>
+    <h3 class="widget__heading">Topics</h3>
+    <nav class="nav header__nav topics" data-trk-ref="header_personas">
+        <div class="has--subnav li-nav">
+            <a href="/development/" title="Development" class="nav__category">Development</a>
+            <div class="nav__subnav subnav">
+                <ul class="subnav__categories no-style">
+                    <li><a href="/java/" title="Java">Java</a></li>
+                    <li><a href="/kotlin/" title="Kotlin">Kotlin</a></li>
+                    <li><a href="/dotnet/" title=".Net">.Net</a></li>
+                    <li><a href="/c_sharp/" title="C#">C#</a></li>
+                    <li><a href="/swift/" title="Swift">Swift</a></li>
+                    <li><a href="/golang/" title="Go">Go</a></li>
+                    <li><a href="/rust/" title="Rust">Rust</a></li>
+                    <li><a href="/javascript/" title="JavaScript">JavaScript</a></li>
+                </ul>
+                <div class="subnav__content" data-id="6815">
+                    

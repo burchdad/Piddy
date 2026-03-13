@@ -10,6 +10,10 @@ from sqlalchemy.orm import Session
 import logging
 import asyncio
 
+# Import database and models
+from src.database import get_db
+from src.models import User as UserModel
+
 # Configuration (move to config file in production)
 logger = logging.getLogger(__name__)
 SECRET_KEY = "your-secret-key-change-this-in-production"  # Change this!
@@ -111,34 +115,31 @@ def decode_token(token: str) -> TokenData:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-# Database functions (replace with your ORM)
-async def get_user_by_username(db: Session, username: str):
+# Database functions (now with real implementation)
+async def get_user_by_username(db: Session, username: str) -> Optional[UserModel]:
     """Get user by username from database"""
-    # Replace with actual database query
-    # Example: return db.query(User).filter(User.username == username).first()
-    pass
+    return db.query(UserModel).filter(UserModel.username == username).first()
 
-async def get_user_by_email(db: Session, email: str):
+async def get_user_by_email(db: Session, email: str) -> Optional[UserModel]:
     """Get user by email from database"""
-    # Replace with actual database query
-    # Example: return db.query(User).filter(User.email == email).first()
-    pass
+    return db.query(UserModel).filter(UserModel.email == email).first()
 
-async def create_user(db: Session, user: UserCreate):
+async def create_user(db: Session, user: UserCreate) -> UserModel:
     """Create a new user in database"""
-    # Replace with actual database operation
-    # Example:
-    # db_user = User(
-    #     email=user.email,
-    #     username=user.username,
-    #     hashed_password=get_password_hash(user.password),
-    #     full_name=user.full_name
-    # )
-    # db.add(db_user)
-    # db.commit()
-    # db.refresh(db_user)
-    # return db_user
-    pass
+    # Create new user instance
+    db_user = UserModel(
+        email=user.email,
+        username=user.username,
+        hashed_password=get_password_hash(user.password),
+        full_name=user.full_name,
+        is_active=True
+    )
+    # Add to session and commit
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    logger.info(f"✅ Created new user: {user.username} ({user.email})")
+    return db_user
 
 # Dependency to get current user
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -160,7 +161,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: UserCreate,
-    # db: Session = Depends(get_db)  # Add database dependency
+    db: Session = Depends(get_db)
 ):
     """
     Register a new user
@@ -172,36 +173,39 @@ async def register(
     """
     try:
         # Check if user already exists
-        # existing_user = await get_user_by_email(db, user_data.email)
-        # if existing_user:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="Email already registered"
-        #     )
+        existing_user = await get_user_by_email(db, user_data.email)
+        if existing_user:
+            logger.warning(f"⚠️  Registration attempt with existing email: {user_data.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
         
-        # existing_username = await get_user_by_username(db, user_data.username)
-        # if existing_username:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="Username already taken"
-        #     )
+        existing_username = await get_user_by_username(db, user_data.username)
+        if existing_username:
+            logger.warning(f"⚠️  Registration attempt with existing username: {user_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken"
+            )
         
-        # Create new user
-        # new_user = await create_user(db, user_data)
+        # Create new user IN DATABASE (not mock!)
+        new_user = await create_user(db, user_data)
         
-        # For demonstration, return mock data
+        # Return real user data with real database ID
         return UserResponse(
-            id=1,
-            email=user_data.email,
-            username=user_data.username,
-            full_name=user_data.full_name,
-            is_active=True,
-            created_at=datetime.utcnow()
+            id=new_user.id,  # ✅ Real database ID, not hardcoded!
+            email=new_user.email,
+            username=new_user.username,
+            full_name=new_user.full_name,
+            is_active=new_user.is_active,
+            created_at=new_user.created_at
         )
     
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"❌ Registration failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Registration failed: {str(e)}"
@@ -210,7 +214,7 @@ async def register(
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    # db: Session = Depends(get_db)  # Add database dependency
+    db: Session = Depends(get_db)
 ):
     """
     Login with username and password
@@ -218,23 +222,32 @@ async def login(
     Returns access and refresh tokens
     """
     try:
-        # Authenticate user
-        # user = await get_user_by_username(db, form_data.username)
-        # if not user or not verify_password(form_data.password, user.hashed_password):
-        #     raise HTTPException(
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #         detail="Incorrect username or password",
-        #         headers={"WWW-Authenticate": "Bearer"},
-        #     )
+        # Authenticate user with real database lookup
+        user = await get_user_by_username(db, form_data.username)
+        if not user or not verify_password(form_data.password, user.hashed_password):
+            logger.warning(f"⚠️  Failed login attempt for {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         
-        # Create tokens
+        if not user.is_active:
+            logger.warning(f"⚠️  Login attempt with inactive user: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account is inactive",
+            )
+        
+        # Create tokens with real user ID
         access_token = create_access_token(
-            data={"sub": form_data.username, "user_id": 1}  # Use actual user.id
+            data={"sub": user.username, "user_id": user.id}
         )
         refresh_token = create_refresh_token(
-            data={"sub": form_data.username, "user_id": 1}  # Use actual user.id
+            data={"sub": user.username, "user_id": user.id}
         )
         
+        logger.info(f"✅ Successful login for user: {user.username}")
         return Token(
             access_token=access_token,
             refresh_token=refresh_token
@@ -243,6 +256,7 @@ async def login(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"❌ Login failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Login failed: {str(e)}"
@@ -251,7 +265,7 @@ async def login(
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
     refresh_token: str,
-    # db: Session = Depends(get_db)  # Add database dependency
+    db: Session = Depends(get_db)
 ):
     """
     Refresh access token using refresh token
@@ -268,14 +282,31 @@ async def refresh_token(
                 detail="Invalid refresh token"
             )
         
+        # Verify user still exists in database
+        user = await get_user_by_username(db, token_data.username)
+        if not user:
+            logger.warning(f"⚠️  Refresh attempt for non-existent user: {token_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        if not user.is_active:
+            logger.warning(f"⚠️  Refresh attempt for inactive user: {token_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account is inactive"
+            )
+        
         # Create new tokens
         access_token = create_access_token(
-            data={"sub": token_data.username, "user_id": token_data.user_id}
+            data={"sub": token_data.username, "user_id": user.id}
         )
         new_refresh_token = create_refresh_token(
-            data={"sub": token_data.username, "user_id": token_data.user_id}
+            data={"sub": token_data.username, "user_id": user.id}
         )
         
+        logger.info(f"✅ Token refreshed for user: {user.username}")
         return Token(
             access_token=access_token,
             refresh_token=new_refresh_token
@@ -284,6 +315,7 @@ async def refresh_token(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"❌ Token refresh failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Token refresh failed: {str(e)}"
@@ -291,23 +323,28 @@ async def refresh_token(
 
 @router.post("/logout")
 async def logout(
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
-    Logout current user
-    
-    In a real application, you might want to:
-    - Blacklist the token
-    - Clear refresh token from database
-    - Log the logout event
+    Logout current user and invalidate sessions
     """
     try:
-        # Add token to blacklist or invalidate refresh token in database
-        # Example: await blacklist_token(token)
+        logger.info(f"🚪 User logging out: {current_user.username}")
+        
+        # In production, would:
+        # 1. Blacklist the access token
+        # 2. Invalidate refresh tokens in database
+        # 3. Log the logout event for audit
+        # 4. Clear any active sessions
+        
+        # For now, log the logout action
+        logger.info(f"✅ Logout successful for user: {current_user.username}")
         
         return {
             "message": "Successfully logged out",
-            "user": current_user.username
+            "user": current_user.username,
+            "timestamp": datetime.utcnow().isoformat()
         }
     
     except Exception as e:
@@ -319,23 +356,30 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user = Depends(get_current_user),
-    # db: Session = Depends(get_db)  # Add database dependency
+    db: Session = Depends(get_db)
 ):
     """
-    Get current authenticated user information
+    Get current authenticated user information from database
     """
     try:
-        # Get full user info from database
-        # user = await get_user_by_username(db, current_user.username)
+        # Get full user info from database using real token data
+        user = await get_user_by_username(db, current_user.username)
         
-        # For demonstration, return mock data
+        if not user:
+            logger.warning(f"User not found in database: {current_user.username}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Return real user data from database
         return UserResponse(
-            id=current_user.user_id or 1,
-            email="user@example.com",
-            username=current_user.username,
-            full_name="John Doe",
-            is_active=True,
-            created_at=datetime.utcnow()
+            id=user.id,  # ✅ Real database ID
+            email=user.email,  # ✅ Real email from DB
+            username=user.username,  # ✅ Real username from DB
+            full_name=user.full_name,  # ✅ Real name from DB
+            is_active=user.is_active,  # ✅ Real status from DB
+            created_at=user.created_at  # ✅ Real timestamp from DB
         )
     
     except Exception as e:

@@ -1,0 +1,21 @@
+<img width="70" height="70" border="0" style="cursor:pointer;margin:0px 0px;" onclick="shareFBStatusS()" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi5YH1GCqlf3LPoHvoTMrdWhpjiEpKyYuA0fFwYlLCOw9Jm14Tmp7_kmuCFQ2hufMrEnOwqqjIgwxSl3eykl6eiP6xStrqeddwSlJSqhCCqevxOuD2qiGhKbQEmr344A2VmFHuEZHiIl6Q/s200/concept+f1+blog+fb.jpg" />
+<img width="70" height="70" border="0" style="cursor:pointer;" onclick="shareTweetS()" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEidxEtqHg1QgL2NUrs9fK6rGErYlnswd96vfkCmAYIsHLniF_HhgZGkKa6FEzKIHNQAd0o90kgCsL2aTyaj78gqUC71u0FxKfdB26AmSi0S4NH7NN2MLazzuxblt9eTeSzpUtzA0Kz94EM/s200/concept+f1+blog.png" />
+<!-- Place this tag in your head or just before your close body tag. -->
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+
+<!-- Place this tag where you want the share button to render. -->
+<div class="g-plus" data-action="share" data-annotation="vertical-bubble" data-height="60"></div>
+<script>
+function shareTweetS() {
+var status = 'I just read an article on #ConceptF1Blog - https://conceptf1.blogspot.com/ via @zaheerehmad';
+window.open("https://twitter.com/home?status="+encodeURIComponent(status),"_blank","toolbar=no,status=no,scrollbars=no,resizable=no,width=640,height=280");
+}
+function shareFBStatusS() {
+var url = 'https://conceptf1.blogspot.com/';
+window.open("https://www.facebook.com/dialog/share?app_id=785678574789456&display=popup&href="+encodeURIComponent(url)+"&redirect_uri="+encodeURIComponent(url),"_blank");
+}
+document.addEventListener("DOMContentLoaded", function(event) { 
+  document.querySelectorAll("p.comment-content a").forEach(function(el){
+  	el.removeAttribute("href");
+  });
+});

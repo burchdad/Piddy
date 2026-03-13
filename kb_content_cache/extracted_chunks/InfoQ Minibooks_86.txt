@@ -1,0 +1,26 @@
+            
+        </div>
+    </li>
+
+    
+        
+    
+    <li  data-id="c6b9e258-328e-4ee9-a4c0-725014c2389d" data-path="/minibooks/cell-based-architecture-2024">
+        <div class="card__content">
+            <div class="card__data">
+                <div class="card__topics topics">
+                    <span>
+                        
+                        <a href="/architecture-design/" data-id="6816">Architecture &amp; Design</a>
+                    </span>
+                </div>
+                <h3 class="card__title">
+                    
+                    <a
+	
+	href="/minibooks/cell-based-architecture-2024/"
+
+ title="Cell-Based Architectures: How to Build Scalable and Resilient Systems">
+
+                        Cell-Based Architectures: How to Build Scalable and Resilient Systems
+                    </a>

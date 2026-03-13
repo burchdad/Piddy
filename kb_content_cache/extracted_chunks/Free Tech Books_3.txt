@@ -1,0 +1,49 @@
+			<!-- Recent Notes -->
+			<div class="row">
+			<div class="col-lg-12 col-md-12">
+			<div class="media-heading lead">
+				<a href="https://www.freetechbooks.com/packt-free-ebooks-b81.html">Packt Free eBooks</a> 
+			</div>
+			<div>
+				<strong>Author:</strong> Packt Publishing; <strong>Post date:</strong> 25 Jan 2017 11:18:03
+			</div>
+		</div>
+	
+</div>
+<br/>
+<div class="row">
+			<div class="col-lg-12 col-md-12">
+			<div class="media-heading lead">
+				<a href="https://www.freetechbooks.com/guidelines-on-writing-computer-science-book-reviews-b56.html">Guidelines on Writing Computer Science Book Reviews</a> 
+			</div>
+			<div>
+				<strong>Author:</strong> Guest Contributor; <strong>Post date:</strong> 23 Nov 2016 07:21:05
+			</div>
+		</div>
+	
+</div>
+<br/>
+<div class="row">
+			<div class="col-lg-12 col-md-12">
+			<div class="media-heading lead">
+				<a href="https://www.freetechbooks.com/removed-algorithms-4th-edition-b53.html">Removed - Algorithms, 4th Edition</a> 
+			</div>
+			<div>
+				<strong>Author:</strong> Site Admin; <strong>Post date:</strong> 09 May 2016 02:22:15
+			</div>
+		</div>
+	
+</div>
+<br/>
+<div class="row">
+			<div class="col-lg-12 col-md-12">
+			<div class="media-heading lead">
+				<a href="https://www.freetechbooks.com/welcome-to-the-new-freetechbooks-b28.html">Welcome to the New FreeTechBooks!</a> 
+			</div>
+			<div>
+				<strong>Author:</strong> Site Admin; <strong>Post date:</strong> 17 Apr 2016 06:17:34
+			</div>
+		</div>
+	
+</div>
+<br/>

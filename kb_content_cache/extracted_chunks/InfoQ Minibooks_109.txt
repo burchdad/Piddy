@@ -1,0 +1,116 @@
+        
+
+
+
+
+
+<script type="text/javascript">
+  $.when(humanDetectionAsync()).then(
+      function(status) {
+          $.getScript("/scripts/__hd.ifq?hdt=MyMIvH2jilXFKHZR&ha=" + status);
+      }
+  );
+</script>
+<script type="text/javascript">
+
+    var pageFullyLoaded = false;
+    // this event is fired by frontend once all the necessary things have been done(mobile display, moving vcr boxes around when needed...)
+    infoq.event.on('loaded', function(e) {
+        pageFullyLoaded = true;
+    });
+
+    infoq.event.on('pageWidthChanged', function(e) {
+        // re-execute tracking vcr impressions when this event happens (it only happens when elements are added/removed from page)
+        // doTrackVcrImpressions takes into account the data-trk-impr="true" if =false the element was already tracked.
+        // this is needed when switching from mobile to desktop or when layout on mobile changes and desktop version is displayed. New elements become visible.
+        Tracker.safeExec(Tracker.doTrackVcrImpressions);
+
+        // these 2 need to be called also because we might be on a content page. In case we are not nothing happens
+        VCR.doTrackingCustomRightbar();
+        VCR.doTrackingCustomRightbarForPresentations()
+    });
+
+    //check to see if error page
+    if(window.device !== undefined) {
+        var intervalImpressions = setInterval(function() {
+            var shouldTrack = false;
+
+            // no vcr widgets on index pages
+            if(window.isIndexPage) {
+                if(window.sponsoredPodcastDone === undefined || window.sponsoredPodcastDone) {
+                    shouldTrack = true;
+                }
+            } else
+            //on homepage, bottom widget + 2 native widgets
+            if(InfoQConstants.pageType == "HOMEPAGE" && window.finishedVcrOptional1 && window.finishedRelatedVcr && (window.finishedVcrOptional2 === undefined || window.finishedVcrOptional2)) {
+                shouldTrack = true;
+            } else
+            // rightbar widgets + native widgets + content vcr widgets
+            if((InfoQConstants.pageType == "NEWS_PAGE" || InfoQConstants.pageType == "ARTICLE_PAGE")
+                    && ((window.finishedRightbarVcr || window.finishedRightbarVcr === undefined) && window.contentVcrFinished)) {
+                shouldTrack = true;
+            } else if ((InfoQConstants.pageType == "PRESENTATION_PAGE")
+                    && (window.contentVcrFinished || window.contentVcrFinished  === undefined)
+                    && (window.finishedRightbarVcr || window.finishedRightbarVcr  === undefined)
+            ) {
+                shouldTrack = true;
+            } else
+            // native widgets + content widgets
+            if(window.contentVcrFinished && (window.finishedVcrOptional1 || window.finishedVcrOptional1 === undefined)
+                    && (window.finishedVcrOptional2 || window.finishedVcrOptional2 === undefined)) {
+                shouldTrack = true;
+            }
+
+            // we start tracking only after the page is fully loaded, frontend signals that they finished everything related to page display.
+            if(shouldTrack && pageFullyLoaded) {
+                clearInterval(intervalImpressions);
+                Tracker.safeExec(Tracker.doTrackVcrImpressions);
+
+                // start tracking viewable impressions also only after everything is ready
+                function callbackRouter(entries, observer) {
+                    var targets = new Array();
+                    entries.forEach(function (entry) {
+                        var target = entry.target;
+                        if (target.dataset.trkView === 'false') return;
+                        if (entry.intersectionRatio > 0) {
+                            target.dataset.trkView = false;
+                            targets.push(target);
+                        }
+                    });
+                    Tracker.doTrackViewableImpressions(targets);
+                }
+                var elementsForTrackingViewableImpressions = document.querySelectorAll('[data-trk-view="true"]')
+                var observer = new IntersectionObserver(callbackRouter, { threshold: 0.3 });
+                elementsForTrackingViewableImpressions.forEach(observer.observe.bind(observer));
+            }
+
+        }, 500);
+    }
+    $(document).ready(function () {
+        // desktop notifications widget
+        Tracker.encodeNotificationLinks($(".f_notificationWidget"));
+        // mobile notifications widget
+        Tracker.encodeNotificationLinks($(".h_notifications"));
+        // desktop notifications page
+        Tracker.encodeNotificationLinks($(".notification-page"));
+        // mobile notifications page
+        Tracker.encodeNotificationLinks($(".notifications_page"));
+    });
+</script>
+        
+
+
+
+
+
+<script type="text/javascript">
+    if(window.location.hash){
+        var hash = window.location.hash.substring(1);
+        if(hash == 'subscribe'){
+            $('html,body').animate({scrollTop: $('.ftxt3 > .newsletter').offset().top}, 'slow');
+        }
+    }
+</script>
+<script type="text/javascript">
+	var newsletterSubscriptionURL ='/newsletter/subscribe.action';
+	DynamicLinks.updateRssLinks('3405691582');

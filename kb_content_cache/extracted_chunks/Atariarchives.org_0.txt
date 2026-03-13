@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<title>AtariArchives.org - archiving vintage computer books, information, and software</title>
+<meta name="resource-type" content="document">
+<meta name="description" content="Full text of Atari computer Books; Atari Program Exchange software; other classic computing information">
+<meta name="keywords" content="Atari Books, 6502, Machine Language, Assembly Language, Atari Program Exchange, APX">
+<link rel="stylesheet" type="text/css" href="//www.atariarchives.org/style.css">
+</head>
+<body>
+<div id="main-content">
+	<script type="text/javascript"><!--
+	google_ad_client = "pub-0754410284344153";
+	google_ad_width = 728;
+	google_ad_height = 90;
+	google_ad_format = "728x90_as";
+	google_ad_type = "text_image";
+	google_ad_channel ="0162359577";
+	google_color_border = "FFFFFF";
+	google_color_bg = "FFFFFF";
+	google_color_link = "0000FF";
+	google_color_url = "666666";
+	google_color_text = "000000";
+	google_alternate_color = "FFFFFF";
+	//--></script>
+	<script type="text/javascript"
+	  src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+	</script>

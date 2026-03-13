@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html class='v2' dir='ltr' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
+<head>
+<link href='https://www.blogger.com/static/v1/widgets/335934321-css_bundle_v2.css' rel='stylesheet' type='text/css'/>
+<meta content='285134168337632' property='fb:pages'/>
+<meta content='ConceptF1 helps in understanding programming concepts. It has articles related to AngularJs, JavaScript, HTML, CSS, CSharp and other programming languages.' name='description' property='og:description'/>
+<meta content='Programming Concepts Help' itemprop='name'/>
+<meta content='285134168337632' property='fb:pages'/>
+<meta content='ConceptF1 helps in understanding programming concepts. It has articles related to AngularJs, JavaScript, HTML, CSS, CSharp and other programming languages.' itemprop='description'/>
+<meta content='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiumaNHVj7qvFmmfhMIIE8ELy0FXR6-yXnt_kSSuAQ6EGTFMNmxuQlQP7zJUgCavlYqZVWo1_uEcHqWda4TXDPOa2CRO5dzAiy2EdaiBu03FUN9J_hGI23iKJ5Fke_vwiJmKAx2WIkO_l4/s1600/concept+f1+blog+logo.png' itemprop='image'/>
+<meta content='yfOB5rMEjJTJlDEvintfFEIVQp4' name='alexaVerifyID'/>
+<meta content='ConceptF1 blog' name='twitter:site'/>
+<meta content='Programming Concepts Help' name='twitter:title'/>
+<meta content='ConceptF1 helps in understanding programming concepts. It has articles related to AngularJs, JavaScript, HTML, CSS, CSharp and other programming languages.' name='twitter:description'/>
+<meta content='Zaheer Ahmed' name='twitter:creator'/>
+<meta content='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiumaNHVj7qvFmmfhMIIE8ELy0FXR6-yXnt_kSSuAQ6EGTFMNmxuQlQP7zJUgCavlYqZVWo1_uEcHqWda4TXDPOa2CRO5dzAiy2EdaiBu03FUN9J_hGI23iKJ5Fke_vwiJmKAx2WIkO_l4/s1600/concept+f1+blog+logo.png' name='twitter:image:src'/>
+<meta content='conceptf1.blogspot.com' name='twitter:domain'/>
+<script async='async' data-ad-client='ca-pub-8259485254735952' src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'></script>
+<link href='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiumaNHVj7qvFmmfhMIIE8ELy0FXR6-yXnt_kSSuAQ6EGTFMNmxuQlQP7zJUgCavlYqZVWo1_uEcHqWda4TXDPOa2CRO5dzAiy2EdaiBu03FUN9J_hGI23iKJ5Fke_vwiJmKAx2WIkO_l4/s1600/concept+f1+blog+logo.png' property='og:image' rel='image_src'/>
+<meta content='width=1100' name='viewport'/>
+<meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+<meta content='blogger' name='generator'/>
+<link href='https://conceptf1.blogspot.com/favicon.ico' rel='icon' type='image/x-icon'/>
+<link href='https://conceptf1.blogspot.com/2013/11/list-of-freely-available-programming.html' rel='canonical'/>
+<link rel="alternate" type="application/atom+xml" title="Programming Concepts Help - Atom" href="https://conceptf1.blogspot.com/feeds/posts/default" />
+<link rel="alternate" type="application/rss+xml" title="Programming Concepts Help - RSS" href="https://conceptf1.blogspot.com/feeds/posts/default?alt=rss" />
+<link rel="service.post" type="application/atom+xml" title="Programming Concepts Help - Atom" href="https://www.blogger.com/feeds/5839969784533137829/posts/default" />

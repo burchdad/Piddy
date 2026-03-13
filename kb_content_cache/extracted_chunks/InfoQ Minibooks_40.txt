@@ -1,0 +1,23 @@
+<a href="/ai-ml-data-eng/" class="button__more button button__large button__arrow arrow__right">All in  ai-ml-data-eng</a>
+
+                </div>
+            </div>
+        </div>
+        <div class="has--subnav li-nav">
+            <a href="/culture-methods/" title="Culture &amp; Methods" class="nav__category">Culture &amp; Methods</a>
+            <div class="nav__subnav subnav">
+                <ul class="subnav__categories no-style">
+                    <li><a href="/agile/" title="Agile">Agile</a></li>
+                    <li><a href="/diversity/" title="Diversity">Diversity</a></li>
+                    <li><a href="/leadership/" title="Leadership">Leadership</a></li>
+                    <li><a href="/lean/" title="Lean/Kanban">Lean/Kanban</a></li>
+                    <li><a href="/personal-growth/" title="Personal Growth">Personal Growth</a></li>
+                    <li><a href="/scrum/" title="Scrum">Scrum</a></li>
+                    <li><a href="/sociocracy/" title="Sociocracy">Sociocracy</a></li>
+                    <li><a href="/software_craftsmanship/" title="Software Craftmanship">Software Craftmanship</a></li>
+                    <li><a href="/team-collaboration/" title="Team Collaboration">Team Collaboration</a></li>
+                    <li><a href="/testing/" title="Testing">Testing</a></li>
+                    <li><a href="/ux/" title="UX">UX</a></li>
+                </ul>
+                <div class="subnav__content" data-id="6817">
+                    

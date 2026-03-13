@@ -1,0 +1,24 @@
+                        Cell-Based Architectures: How to Build Scalable and Resilient Systems
+                    </a>
+
+                </h3>
+                <p class="card__excerpt">
+                    Cell-based architecture is a resiliency and fault tolerance pattern that has co-evolved with SOA and microservices. It builds on the bulkhead pattern to limit the blast radius in case of failures. The cell-based approach can also help organize large-scale microservice architectures into domain-bound service groups to promote high cohesion and loose coupling and help organizations scale.
+                </p>
+                <div class="card__footer">
+                    <div class="card__details">
+                        <div class="card__authors authors">
+                            
+
+
+
+
+
+
+    
+        
+    
+    <span>
+        
+        <a href="/profile/InfoQ/" data-id="author-InfoQ">InfoQ</a>
+    </span>

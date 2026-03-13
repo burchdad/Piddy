@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     
+    # GitHub Configuration
+    github_token: str = ""
+    
+    # Knowledge Base Configuration
+    piddy_kb_repo_url: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

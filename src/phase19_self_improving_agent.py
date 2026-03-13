@@ -24,6 +24,16 @@ from collections import defaultdict
 import statistics
 import logging
 
+# Experience recording for self-growing KB
+try:
+    from src.kb.experience_recorder import KBExperienceRecorder
+    HAS_EXPERIENCE_RECORDER = True
+except ImportError:
+    HAS_EXPERIENCE_RECORDER = False
+
+
+logger = logging.getLogger(__name__)
+
 
 class OutcomeType(Enum):
     """Outcome of an action"""
@@ -425,6 +435,14 @@ class SelfImprovingAgent:
         self.decision_adapter = DecisionAdapter(self.db, self.pattern_learner)
         self.autonomy_level = 0.88  # Inherited from Phase 18
         self.learning_rate = 0.1  # How quickly to adapt
+        
+        # Initialize experience recorder for self-growing KB
+        if HAS_EXPERIENCE_RECORDER:
+            self.experience_recorder = KBExperienceRecorder()
+            logger.info("✅ Experience Recorder initialized (self-growing KB enabled)")
+        else:
+            self.experience_recorder = None
+            logger.warning("⚠️ Experience Recorder not available (self-growing KB disabled)")
 
     def record_code_change(self, file_path: str, change_type: str, description: str,
                           code_before: Optional[str] = None, code_after: Optional[str] = None,
@@ -462,6 +480,27 @@ class SelfImprovingAgent:
         # Update database with patterns
         for pattern in self.pattern_learner.patterns.values():
             self.db.add_pattern(pattern)
+        
+        # Feed to self-growing KB (only for bug fixes and optimizations)
+        if self.experience_recorder and change_type.lower() in ['bug_fix', 'optimization', 'enhancement']:
+            try:
+                # Extract reasoning from decision adapter for context
+                reasoning = f"Automatic fix: {description}"
+                if 'decision_reasoning' in event.metadata:
+                    reasoning = event.metadata['decision_reasoning']
+                
+                # Record in KB experience system
+                exp_id = self.experience_recorder.record_fix(
+                    problem=description,
+                    solution=code_after or "(see code_before for context)",
+                    file_path=file_path,
+                    reasoning=reasoning,
+                    tags=[change_type.lower(), "auto-recorded"],
+                    confidence=min(0.7 + (success_score * 0.2), 1.0)  # Higher if already successful
+                )
+                logger.debug(f"📝 Experience recorded: {exp_id[:8]} ({change_type})")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to record experience: {e}")
 
         return event_id
 

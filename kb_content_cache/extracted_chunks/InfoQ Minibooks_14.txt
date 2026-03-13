@@ -1,0 +1,7 @@
+            
+            
+                var topicsInPage = JSON.parse('[{\"name\":\"Architecture & Design\",\"id\":\"6816\",\"url\":\"\/architecture-design\",\"followers\":10144,\"followedByCurrentUser\":false},{\"name\":\"Culture & Methods\",\"id\":\"6817\",\"url\":\"\/culture-methods\",\"followers\":3929,\"followedByCurrentUser\":false},{\"name\":\"AI, ML & Data Engineering\",\"id\":\"16690\",\"url\":\"\/ai-ml-data-eng\",\"followers\":5803,\"followedByCurrentUser\":false},{\"name\":\".NET Core\",\"id\":\"15683\",\"url\":\"\/Net-Core\",\"followers\":7817,\"followedByCurrentUser\":false},{\"name\":\"Java9\",\"id\":\"7097\",\"url\":\"\/Java9\",\"followers\":5383,\"followedByCurrentUser\":false},{\"name\":\"Machine Learning\",\"id\":\"5449\",\"url\":\"\/MachineLearning\",\"followers\":14327,\"followedByCurrentUser\":false},{\"name\":\"Microservices\",\"id\":\"15274\",\"url\":\"\/microservices\",\"followers\":21881,\"followedByCurrentUser\":false},{\"name\":\"DevOps\",\"id\":\"6043\",\"url\":\"\/Devops\",\"followers\":5018,\"followedByCurrentUser\":false},{\"name\":\"Reactive Programming\",\"id\":\"15453\",\"url\":\"\/reactive-programming\",\"followers\":12182,\"followedByCurrentUser\":false},{\"name\":\"Development\",\"id\":\"6815\",\"url\":\"\/development\",\"followers\":4062,\"followedByCurrentUser\":false}]');
+            
+
+            var userContentLikesInPage = [];
+            var userCommentsLikesInPage = [];

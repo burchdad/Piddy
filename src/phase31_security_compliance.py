@@ -223,7 +223,32 @@ class ComplianceValidator:
 
     def _audit_logged(self, action: ActionType, user: User) -> bool:
         """Verify: All actions are logged"""
-        return True
+        try:
+            from datetime import datetime, timedelta
+            from src.models import AuditLogDB
+            from src.database import SessionLocal
+            
+            # Query audit log for recent matching entry
+            db = SessionLocal()
+            try:
+                recent_log = db.query(AuditLogDB).filter(
+                    AuditLogDB.action == action.value,
+                    AuditLogDB.user_id == user.user_id,
+                    AuditLogDB.timestamp >= datetime.utcnow() - timedelta(seconds=10)
+                ).first()
+                
+                if recent_log:
+                    logger.info(f"✅ Action logged: {action.value} by {user.username}")
+                    return True
+                else:
+                    logger.warning(f"⚠️  Action not found in audit log: {action.value} by {user.username}")
+                    return False
+            finally:
+                db.close()
+                
+        except Exception as e:
+            logger.error(f"❌ Audit log verification failed: {e}")
+            return False
 
     def validate_action(self, action: ActionType, user: User) -> bool:
         """Validate action against all compliance policies"""

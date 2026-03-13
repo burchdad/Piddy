@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" class="dark:bg-neutral-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jon H.M. Chan</title>
+    <meta property="og:title" content="Jon H.M. Chan">
+    <meta property="og:description" content="artist and founder using storytelling and AI to deepen human connection at scale">
+    <meta property="og:image" content="https://jonhmchan.com/bg.png">
+    <meta name="description" content="artist and founder using storytelling and AI to deepen human connection at scale">
+    <meta name="author" content="Jon H.M. Chan">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }

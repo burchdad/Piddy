@@ -240,19 +240,103 @@ async def _validate_integration() -> Dict[str, Any]:
     logger.info("Step 6/7: Validating integrations...")
     
     checks = {
-        "api_responding": True,  # ✅ You're reading this
-        "database_connected": True,  # ✅ Using persistence
-        "authentication_live": True,  # ✅ Production auth
-        "slack_integration": True,  # ✅ Slack connected
-        "github_integration": True,  # ✅ Can create PRs
+        "api_responding": await _check_api_health(),
+        "database_connected": await _check_database_health(),
+        "authentication_live": await _check_auth_health(),
+        "slack_integration": await _check_slack_health(),
+        "github_integration": await _check_github_health(),
     }
     
+    passing = sum(1 for v in checks.values() if v)
+    readiness_score = (passing / len(checks)) * 100 if checks else 0
+    
     return {
-        "status": "all_systems_go",
+        "status": "validation_complete",
         "integrations": checks,
-        "readiness_score": sum(checks.values()) / len(checks) * 100,
-        "note": "100% integration readiness achieved"
+        "readiness_score": readiness_score,
+        "note": f"{passing}/{len(checks)} integrations ready"
     }
+
+
+async def _check_api_health() -> bool:
+    """Check if API is responding"""
+    try:
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get("http://localhost:8000/health", timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                result = resp.status == 200
+                logger.info(f"{'✅' if result else '❌'} API health check: {resp.status}")
+                return result
+    except Exception as e:
+        logger.error(f"❌ API health check failed: {e}")
+        return False
+
+
+async def _check_database_health() -> bool:
+    """Check if database is connected"""
+    try:
+        from src.database import SessionLocal
+        db = SessionLocal()
+        try:
+            # Simple query to verify connection
+            db.execute("SELECT 1")
+            logger.info("✅ Database health check: Connected")
+            return True
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"❌ Database health check failed: {e}")
+        return False
+
+
+async def _check_auth_health() -> bool:
+    """Check if authentication is working"""
+    try:
+        # Try to create a test token
+        from src.api.routes.auth.auth import create_access_token
+        token = create_access_token(data={"sub": "health_check", "user_id": -1})
+        if token:
+            logger.info("✅ Authentication health check: Working")
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"❌ Authentication health check failed: {e}")
+        return False
+
+
+async def _check_slack_health() -> bool:
+    """Check if Slack integration is configured"""
+    try:
+        import os
+        slack_token = os.getenv("SLACK_BOT_TOKEN")
+        slack_signing_secret = os.getenv("SLACK_SIGNING_SECRET")
+        
+        if slack_token and slack_signing_secret:
+            logger.info("✅ Slack integration health check: Configured")
+            return True
+        else:
+            logger.warning("⚠️  Slack integration not configured")
+            return False
+    except Exception as e:
+        logger.error(f"❌ Slack health check failed: {e}")
+        return False
+
+
+async def _check_github_health() -> bool:
+    """Check if GitHub integration is configured"""
+    try:
+        import os
+        github_token = os.getenv("GITHUB_TOKEN")
+        
+        if github_token:
+            logger.info("✅ GitHub integration health check: Configured")
+            return True
+        else:
+            logger.warning("⚠️  GitHub integration not configured")
+            return False
+    except Exception as e:
+        logger.error(f"❌ GitHub health check failed: {e}")
+        return False
 
 
 async def _create_fix_pr(pr_manager) -> Dict[str, Any]:

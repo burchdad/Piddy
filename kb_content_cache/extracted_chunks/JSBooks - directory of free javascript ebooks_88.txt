@@ -1,0 +1,9 @@
+    <span></span><span class="Label Label--secondary v-align-middle mr-1">Public</span>
+  </div>
+
+        </div>
+
+        <div id="repository-details-container" class="flex-shrink-0" data-turbo-replace style="max-width: 70%;">
+            <ul class="pagehead-actions flex-shrink-0 d-none d-md-inline" style="padding: 2px 0;">
+    
+      

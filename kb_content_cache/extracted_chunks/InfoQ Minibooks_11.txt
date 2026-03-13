@@ -1,0 +1,51 @@
+        <script type="text/javascript" src="https://cdn.infoq.com/statics_s1_20260311083832-1/scripts/combinedJs.min.js"></script>
+        <script type="text/javascript">
+            
+                var JSi18n = JSi18n || {}; // define only if not already defined
+                JSi18n.error='Error';
+                JSi18n.login_unverifiedAccount='Unverified account';
+                JSi18n.contentSummary_showPresentations_1='';
+                JSi18n.contentSummary_showPresentations_2='';
+                JSi18n.contentSummary_showPresentations_3='';
+                JSi18n.contentSummary_showInterviews_1='';
+                JSi18n.contentSummary_showInterviews_2='';
+                JSi18n.contentSummary_showInterviews_3='';
+                JSi18n.contentSummary_showMinibooks_1='';
+                JSi18n.contentSummary_showMinibooks_2='';
+                JSi18n.login_sendingRequest='Sending request ...';
+                JSi18n.bookmark_saved='<q>&nbsp;&nbsp;&nbsp;Saved&nbsp;&nbsp;&nbsp;&nbsp;</q>';
+                JSi18n.bookmark_error='<q style=color:black;>&nbsp;&nbsp;&nbsp;Error&nbsp;&nbsp;&nbsp;&nbsp;</q>';
+                JSi18n.categoryManagement_showpopup_viewAllLink_viewAllPrefix='View All';
+                JSi18n.categoryManagement_showpopup_viewAllLink_viewAllSuffix='';
+                JSi18n.categoryManagement_showpopup_includeExcludeLink_Exclude='Exclude';
+                JSi18n.categoryManagement_showpopup_includeExcludeLink_Include='Include';
+                JSi18n.login_invalid_email='Please specify a valid email';
+                JSi18n.login_email_not_found = 'No user found with that email';
+                JSi18n.content_datetime_format='MMM dd, yyyy';
+
+                // used by frontend
+                JSi18n.FE = {
+                    labels: {
+                        follow: "Follow",
+                        followTopic: "Follow Topic",
+                        unfollow: "Unfollow",
+                        unfollowTopic: "Unfollow Topic",
+                        following: "Following",
+                        followers: "Followers",
+                        like: "Like",
+                        liked: "Liked",
+                        authors: "Peers",
+                        users : "Users",
+                        topics: "Topics",
+                        hide: "Hide Item",
+                        hidden: "%s was hidden on your profile page.",
+                        undo: "Undo",
+                        showLess: "Show less",
+                        showMore: "Show more",
+                        moreAuthors: "And %s more",
+                        bookmarked: "Content Bookmarked",
+                        unbookmarked: "Content Unbookmarked",
+                        characterLimit: "Characters Remaining"
+                    }
+                }
+            

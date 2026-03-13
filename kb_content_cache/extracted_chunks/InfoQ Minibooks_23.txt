@@ -1,0 +1,18 @@
+    
+
+<header class="header">
+    <button aria-label="Toggle Navigation" tabindex="0" class="burger header__toggle button">Toggle Navigation <span></span><span></span><span></span></button>
+    <div class="header__container container">
+        <div class="container__inner">
+            <div data-nosnippet class="actions header__top">
+                <div class="actions__left">
+                    <p class="header__desc my-0">
+                        Facilitating the Spread of Knowledge and Innovation in Professional Software Development
+                    </p>
+                    <div class="button__dropdown dropdown header__more my-0 dropdown__center">
+                        
+
+
+
+
+

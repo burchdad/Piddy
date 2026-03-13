@@ -1,0 +1,25 @@
+  <meta name="github-keyboard-shortcuts" content="repository,copilot" data-turbo-transient="true" />
+  
+
+  <meta name="selected-link" value="repo_source" data-turbo-transient>
+  <link rel="assets" href="https://github.githubassets.com/">
+
+    <meta name="google-site-verification" content="Apib7-x98H0j5cPqHWwSMm6dNU4GmODRoqxLiDzdx9I">
+
+<meta name="octolytics-url" content="https://collector.github.com/github/collect" />
+
+  <meta name="analytics-location" content="/&lt;user-name&gt;/&lt;repo-name&gt;" data-turbo-transient="true" />
+
+  
+
+    <meta name="user-login" content="">
+
+  
+
+    <meta name="viewport" content="width=device-width">
+
+    
+
+      <meta name="description" content="Master programming by recreating your favorite technologies from scratch. - codecrafters-io/build-your-own-x">
+
+      <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub">

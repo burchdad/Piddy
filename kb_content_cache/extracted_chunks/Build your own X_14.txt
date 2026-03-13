@@ -1,0 +1,10 @@
+    <meta data-hydrostats="publish">
+
+  <meta name="go-import" content="github.com/codecrafters-io/build-your-own-x git https://github.com/codecrafters-io/build-your-own-x.git">
+
+  <meta name="octolytics-dimension-user_id" content="58904235" /><meta name="octolytics-dimension-user_login" content="codecrafters-io" /><meta name="octolytics-dimension-repository_id" content="132750724" /><meta name="octolytics-dimension-repository_nwo" content="codecrafters-io/build-your-own-x" /><meta name="octolytics-dimension-repository_public" content="true" /><meta name="octolytics-dimension-repository_is_fork" content="false" /><meta name="octolytics-dimension-repository_network_root_id" content="132750724" /><meta name="octolytics-dimension-repository_network_root_nwo" content="codecrafters-io/build-your-own-x" />
+
+    
+
+    <meta name="turbo-body-classes" content="logged-out env-production page-responsive">
+  <meta name="disable-turbo" content="false">

@@ -1,0 +1,17 @@
+                        <a href="https://qconlondon.com/?utm_source=infoq&utm_medium=referral&utm_campaign=homepageheader_qlondon26" rel="nofollow" target="_blank" class="header__event-slot">
+                            <picture><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvaGVhZGVyL2NvbmZlcmVuY2VzLzIwMjYvUUNvbi1Mb25kb24tMjAyNi10b3AuanBnIiwiZWRpdHMiOiB7IndlYnAiOiB7ICJxdWFsaXR5Ijo4MH19fQ==" type="image/webp"><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvaGVhZGVyL2NvbmZlcmVuY2VzLzIwMjYvUUNvbi1Mb25kb24tMjAyNi10b3AuanBnIiwiZWRpdHMiOiB7ImpwZWciOiB7ICJxdWFsaXR5Ijo4MH19fQ==" type="image/webp"><img src="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvaGVhZGVyL2NvbmZlcmVuY2VzLzIwMjYvUUNvbi1Mb25kb24tMjAyNi10b3AuanBnIiwiZWRpdHMiOiB7ImpwZWciOiB7ICJxdWFsaXR5Ijo4MH19fQ==" loading="lazy" width="40px" height="40px" alt="QCon London - image"></picture>
+                            <div>
+                                <span>QCon London 2026</span>
+                                <p>Learn what works in AI, architecture, data, security & FinTech.</p>
+                                <p><strong>Early Bird ends March 10.</strong></p>
+                            </div>
+                        </a>
+
+                        <a href="https://boston.qcon.ai/?utm_source=infoq&utm_medium=referral&utm_campaign=homepageheader_qaiboston26" rel="nofollow" target="_blank" class="header__event-slot">
+                            <picture><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvaGVhZGVyL2NvbmZlcmVuY2VzLzIwMjYvUUNvbi1BSS1Cb3N0b24tMjAyNi10b3AuanBnIiwiZWRpdHMiOiB7IndlYnAiOiB7ICJxdWFsaXR5Ijo4MH19fQ==" type="image/webp"><source srcset="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvaGVhZGVyL2NvbmZlcmVuY2VzLzIwMjYvUUNvbi1BSS1Cb3N0b24tMjAyNi10b3AuanBnIiwiZWRpdHMiOiB7ImpwZWciOiB7ICJxdWFsaXR5Ijo4MH19fQ==" type="image/webp"><img src="https://imgopt.infoq.com/eyJidWNrZXQiOiAiYXNzZXRzLmluZm9xLmNvbSIsImtleSI6ICJ3ZWIvaGVhZGVyL2NvbmZlcmVuY2VzLzIwMjYvUUNvbi1BSS1Cb3N0b24tMjAyNi10b3AuanBnIiwiZWRpdHMiOiB7ImpwZWciOiB7ICJxdWFsaXR5Ijo4MH19fQ==" loading="lazy" width="40px" height="40px" alt="QCon AI Boston - image"></picture>
+                            <div>
+                                <span>QCon AI Boston</span>
+                                <p>Learn how leading engineering teams run AI in production—reliably, securely, and at scale.</p>
+                                <p><strong>Early Bird ends March 10.</strong></p>
+                            </div>
+                        </a>

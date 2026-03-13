@@ -1,0 +1,18 @@
+<a href="/architecture-design/" class="button__more button button__large button__arrow arrow__right">All in  architecture-design</a>
+
+                </div>
+            </div>
+        </div>
+        <div class="has--subnav li-nav">
+            <a href="/ai-ml-data-eng/" title="AI Infrastructure" class="nav__category">AI Infrastructure</a>
+            <div class="nav__subnav subnav">
+                <ul class="subnav__categories no-style">
+                    <li><a href="/bigdata/" title="Big Data">Big Data</a></li>
+                    <li><a href="/machinelearning/" title="Machine Learning">Machine Learning</a></li>
+                    <li><a href="/nosql/" title="NoSQL">NoSQL</a></li>
+                    <li><a href="/database/" title="Database">Database</a></li>
+                    <li><a href="/data-analytics/" title="Data Analytics">Data Analytics</a></li>
+                    <li><a href="/streaming/" title="Streaming">Streaming</a></li>
+                </ul>
+                <div class="subnav__content" data-id="16690">
+                    

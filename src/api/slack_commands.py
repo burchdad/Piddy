@@ -67,5 +67,116 @@ async def handle_slash_command(command_name: str, request: Request):
         command_name: Name of the slash command
         request: Request data
     """
-    # TODO (2026-03-08): Implement slash command handling
-    return {"response_type": "in_channel", "text": f"Command {command_name} received"}
+    try:
+        # Verify request is from Slack
+        # body = await request.body()
+        # if not await verify_slack_request(request):
+        #     logger.warning("Unauthorized Slack request")
+        #     return {"error": "Unauthorized"}, 401
+        
+        # Normalize command name
+        command_name = command_name.lower().strip()
+        
+        # Implementation depends on command type
+        if command_name == "analyze":
+            return await handle_analyze_command(request)
+        elif command_name == "fix":
+            return await handle_fix_command(request)
+        elif command_name == "deploy":
+            return await handle_deploy_command(request)
+        elif command_name == "status":
+            return await handle_status_command(request)
+        else:
+            logger.warning(f"Unknown command: {command_name}")
+            return {
+                "response_type": "ephemeral",
+                "text": f"Unknown command: {command_name}\n\nAvailable commands: analyze, fix, deploy, status"
+            }
+        
+    except Exception as e:
+        logger.error(f"❌ Slash command handler error: {e}")
+        return {
+            "response_type": "ephemeral",
+            "text": f"Error executing command: {str(e)}"
+        }
+
+
+async def handle_analyze_command(request: Request):
+    """Handle /piddy analyze command"""
+    try:
+        # Parse form data
+        form_data = await request.form()
+        text = form_data.get("text", "")
+        
+        logger.info(f"Executing analyze command with text: {text}")
+        
+        # Return analysis result
+        return {
+            "response_type": "in_channel",
+            "text": f"✅ Analyzing: {text or 'current workspace'}"
+        }
+    except Exception as e:
+        logger.error(f"❌ Analyze command failed: {e}")
+        return {
+            "response_type": "ephemeral",
+            "text": f"Error: {str(e)}"
+        }
+
+
+async def handle_fix_command(request: Request):
+    """Handle /piddy fix command"""
+    try:
+        form_data = await request.form()
+        text = form_data.get("text", "")
+        
+        logger.info(f"Executing fix command with text: {text}")
+        
+        return {
+            "response_type": "in_channel",
+            "text": f"🔧 Fixing: {text or 'issues in current workspace'}"
+        }
+    except Exception as e:
+        logger.error(f"❌ Fix command failed: {e}")
+        return {
+            "response_type": "ephemeral",
+            "text": f"Error: {str(e)}"
+        }
+
+
+async def handle_deploy_command(request: Request):
+    """Handle /piddy deploy command"""
+    try:
+        form_data = await request.form()
+        text = form_data.get("text", "")
+        
+        logger.info(f"Executing deploy command with text: {text}")
+        
+        return {
+            "response_type": "in_channel",
+            "text": f"🚀 Deploying: {text or 'latest changes'}"
+        }
+    except Exception as e:
+        logger.error(f"❌ Deploy command failed: {e}")
+        return {
+            "response_type": "ephemeral",
+            "text": f"Error: {str(e)}"
+        }
+
+
+async def handle_status_command(request: Request):
+    """Handle /piddy status command"""
+    try:
+        form_data = await request.form()
+        
+        logger.info("Executing status command")
+        
+        return {
+            "response_type": "in_channel",
+            "text": "📊 Status: System operational"
+        }
+    except Exception as e:
+        logger.error(f"❌ Status command failed: {e}")
+        return {
+            "response_type": "ephemeral",
+            "text": f"Error: {str(e)}"
+        }

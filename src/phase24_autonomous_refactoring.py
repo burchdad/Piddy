@@ -309,31 +309,137 @@ def test_refactored_code():
 
 
 class RefactoringExecutor:
-    """Execute refactoring safely"""
+    """Execute refactoring safely with rollback capability"""
 
     def __init__(self):
         self.execution_history: List[Dict[str, Any]] = []
+        self.snapshots: Dict[str, Dict[str, str]] = {}  # {refactoring_id -> {file_path -> original_content}}
+        import os
+        self.snapshot_dir = os.getenv('SNAPSHOT_DIR', '/tmp/refactoring_snapshots')
+        os.makedirs(self.snapshot_dir, exist_ok=True)
+
+    def _create_snapshot(self, refactoring_id: str, files_to_change: Dict[str, str]) -> bool:
+        """Create snapshot of original files before making changes"""
+        try:
+            import os
+            snapshot = {}
+            
+            # Store original content of all files that will be changed
+            for file_path in files_to_change.keys():
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        snapshot[file_path] = f.read()
+                else:
+                    snapshot[file_path] = None  # Mark as new file
+            
+            self.snapshots[refactoring_id] = snapshot
+            
+            # Also persist to disk for robustness
+            import json
+            snapshot_file = f"{self.snapshot_dir}/{refactoring_id}.json"
+            with open(snapshot_file, 'w', encoding='utf-8') as f:
+                json.dump(snapshot, f, indent=2)
+            
+            logger.info(f"✅ Created snapshot for refactoring {refactoring_id}")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Failed to create snapshot: {e}")
+            return False
 
     def execute(self, plan: RefactoringPlan, changes: Dict[str, str]) -> bool:
-        """Execute refactoring"""
-        plan.status = RefactoringStatus.COMMITTING
-        plan.executed_at = datetime.now()
-        
-        # Log execution
-        self.execution_history.append({
-            'refactoring_id': plan.refactoring_id,
-            'type': plan.refactoring_type.value,
-            'timestamp': datetime.now().isoformat(),
-            'affected_files': list(plan.affected_files),
-            'changes_count': plan.total_changes,
-        })
-        
-        plan.status = RefactoringStatus.COMPLETED
-        return True
+        """Execute refactoring with rollback capability"""
+        try:
+            import os
+            
+            plan.status = RefactoringStatus.COMMITTING
+            plan.executed_at = datetime.now()
+            
+            # Create snapshot before making changes
+            if not self._create_snapshot(plan.refactoring_id, changes):
+                logger.error(f"❌ Failed to create snapshot, aborting refactoring")
+                plan.status = RefactoringStatus.FAILED
+                return False
+            
+            # Apply changes to files
+            for file_path, content in changes.items():
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    logger.info(f"✅ Updated {file_path}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to write {file_path}: {e}")
+                    # Rollback on failure
+                    self.rollback(plan.refactoring_id)
+                    plan.status = RefactoringStatus.FAILED
+                    return False
+            
+            # Log execution
+            self.execution_history.append({
+                'refactoring_id': plan.refactoring_id,
+                'type': plan.refactoring_type.value,
+                'timestamp': datetime.now().isoformat(),
+                'affected_files': list(plan.affected_files),
+                'changes_count': plan.total_changes,
+                'status': 'completed'
+            })
+            
+            plan.status = RefactoringStatus.COMPLETED
+            logger.info(f"✅ Refactoring {plan.refactoring_id} completed successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Execute failed: {e}")
+            plan.status = RefactoringStatus.FAILED
+            return False
 
     def rollback(self, refactoring_id: str) -> bool:
-        """Rollback refactoring"""
-        return True
+        """Rollback refactoring to previous state"""
+        try:
+            import os
+            
+            # Try to get from memory first, then from disk
+            if refactoring_id not in self.snapshots:
+                # Try to load from disk
+                import json
+                snapshot_file = f"{self.snapshot_dir}/{refactoring_id}.json"
+                if os.path.exists(snapshot_file):
+                    with open(snapshot_file, 'r', encoding='utf-8') as f:
+                        self.snapshots[refactoring_id] = json.load(f)
+                else:
+                    logger.error(f"❌ Snapshot not found for {refactoring_id}")
+                    return False
+            
+            snapshot = self.snapshots[refactoring_id]
+            
+            # Restore files
+            for file_path, original_content in snapshot.items():
+                try:
+                    if original_content is None:
+                        # This was a new file - delete it
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            logger.info(f"✅ Deleted new file: {file_path}")
+                    else:
+                        # Restore original content
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(original_content)
+                        logger.info(f"✅ Restored {file_path}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to restore {file_path}: {e}")
+                    return False
+            
+            # Log rollback in history
+            for entry in self.execution_history:
+                if entry.get('refactoring_id') == refactoring_id:
+                    entry['status'] = 'rolled_back'
+            
+            logger.info(f"✅ Successfully rolled back refactoring {refactoring_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Rollback failed: {e}")
+            return False
 
 
 class AutoRefactorer:

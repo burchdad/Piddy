@@ -1,0 +1,26 @@
+.region-inner.header-inner {
+    height: 153px;
+    border: 1px solid #fefefe;
+    border-radius: 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+#header-left{
+display: inline-block;
+float: left;
+}
+#header-right {
+display:inline-block;
+float:right;
+}
+</style>
+<!-- page level ads-->
+<script async='async' src='//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-8259485254735952",
+    enable_page_level_ads: true
+  });
+</script>
+<link href='https://www.blogger.com/dyn-css/authorization.css?targetBlogID=5839969784533137829&amp;zx=2c09bb8c-341f-4bdb-89b4-c87be2228f11' media='none' onload='if(media!=&#39;all&#39;)media=&#39;all&#39;' rel='stylesheet'/><noscript><link href='https://www.blogger.com/dyn-css/authorization.css?targetBlogID=5839969784533137829&amp;zx=2c09bb8c-341f-4bdb-89b4-c87be2228f11' rel='stylesheet'/></noscript>
+<meta name='google-adsense-platform-account' content='ca-host-pub-1556223355139109'/>
+<meta name='google-adsense-platform-domain' content='blogspot.com'/>

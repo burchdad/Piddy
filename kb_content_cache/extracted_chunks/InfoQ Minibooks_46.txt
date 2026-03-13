@@ -1,0 +1,25 @@
+<div class="heading__container actions">
+    <div class="actions__left">
+        <h3 class="heading section__heading">Featured in  DevOps</h3>
+    </div>
+</div>
+<ul data-size="large" data-horizontal="true" data-tax="" taxonomy="articles" class="cards no-style">
+    <li>
+        <div class="card__content">
+            <div class="card__data">
+                <h4 class="card__title">
+                    <a href="/articles/change-metrics-system-reliability">Change as Metrics: Measuring System Reliability Through Change Delivery Signals</a>
+                </h4>
+                <p class="card__excerpt">System changes are the primary driver of production incidents, making change-related metrics essential reliability signals. A minimal metric set of Change Lead Time, Change Success Rate, and Incident Leakage Rate assesses delivery efficiency and reliability, supported by actionable technical metrics and an event-centric data warehouse for unified change observability.</p>
+                <div class="card__footer"></div>
+            </div>
+            
+                <a href="/articles/change-metrics-system-reliability" class="card__header">
+                    <img loading="lazy" alt="Change as Metrics: Measuring System Reliability Through Change Delivery Signals" src="https://imgopt.infoq.com/fit-in/100x100/filters:quality(80)/articles/change-metrics-system-reliability/en/smallimage/change-metrics-systems-reliability-thumbnail-1772787617464.jpg" class="card__image"/>
+                </a>
+            
+        </div>
+    </li>
+</ul>
+
+    

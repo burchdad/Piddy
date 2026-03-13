@@ -1,0 +1,46 @@
+        
+
+
+
+
+
+    <section data-nosnippet class="section container subscribe-box hidden">
+        <div class="container__inner">
+            <div class="actions">
+                <div class="actions__left">
+                    <h2>InfoQ Software Architects' Newsletter</h2>
+                    <span><p>A monthly overview of things you need to know as an architect or aspiring architect.</p>
+
+<p><a href="https://www.infoq.com/software-architects-newsletter#placeholderPastIssues">View an example</a></p>
+</span>
+                    <div class="newsletter__subscribe">
+                        <form class="form gdpr" name="dataCollectCampaignNewsletterForm" id="dataCollectCampaignNewsletterForm" action="#" onsubmit="dataCollectNewsletter.saveSubscription(); return false;">
+                            <div class="field newsletter__mail input__text input__no-label input__medium email">
+                                <label for="email-dataCollectnewsletter-infoq" class="label field__label">Enter your e-mail address</label>
+                                <input id="email-dataCollectnewsletter-infoq" name="footerNewsletterEmail" placeholder="Enter your e-mail address" class="input field__input" type="email"/>
+                                <input type="text" name="emailH" id="input_email_h_d" aria-required="false" style="display:none !important" tabindex="-1" autocomplete="off"/>
+                                <input type="hidden" id="fnt_d" name="fnt_d" value="MyMIvH2jilXFKHZR"/>
+                                <input type="hidden" id="dataCollectNewsletterType" name="dataCollectNewsletterType" value="regular"/>
+                                <input type="hidden" id="cmpi_d" name="cmpi_d" value="4"/>
+                            </div>
+                            <div class="hidden">
+                    <span class="input__select field country">
+                        <label for="input-dataCollect-newsletter-country" class="label field__label">Select your country</label>
+                        <select id="input-dataCollect-newsletter-country" class="select field__input">
+                            <option value="" class="select__option">Select a country</option>
+                        </select>
+                        <p class="input__message field__desc"></p>
+                    </span>
+                                <span class="input__checkbox field hidden">
+                        <input type="checkbox" id="gdpr-consent-campaign">
+                        <label for="gdpr-consent-campaign" class="label"><span>I consent to InfoQ.com handling my data as explained in this <a href="https://www.infoq.com/privacy-notice">Privacy Notice</a>.</span></label>
+                    </span>
+                            </div>
+                            <input type="submit" role="button" value="Subscribe" class="button button__medium button__red" onclick="return dataCollectNewsletter.validateEmail('Invalid email address');"/>
+                        </form>
+                        <p class="meta">
+                            <a href="/privacy-notice/" target="_blank">We protect your privacy.</a>
+                        </p>
+                        
+                        <span class="success" style="display:none;" id="dataCollectNewsletterMessage"></span>
+                    </div>

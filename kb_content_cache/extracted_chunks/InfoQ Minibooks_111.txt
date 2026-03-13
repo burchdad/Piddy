@@ -1,0 +1,43 @@
+	ContentSummary.setSelectedTab('en');
+	//when user enters the main content area show default topics in the topics bar
+	$("#content-wrapper").mouseenter(function() {	
+	        showDefaultTopics();
+	});
+	
+	
+	Bookmarks.contentTitle = "";
+	Bookmarks.apiUrl = '/widgets/bookmark.action';
+    Bookmarks.isContentBookmarked = "";
+</script>
+<script type="text/javascript"> 
+var $buoop = {vs:{i:6,f:1,o:10.1,s:1}} 
+$buoop.ol = window.onload; 
+$(document).ready(function() {
+	 try {if ($buoop.ol) $buoop.ol();}catch (e) {} 
+	 var e = document.createElement("script"); 
+	 e.setAttribute("type", "text/javascript"); 
+	 e.setAttribute("src", "https://cdn.infoq.com/statics_s1_20260311083832-1/scripts/lib/browser-update-org/update.js");
+	 document.body.appendChild(e); 
+});
+</script>
+        
+
+        
+            
+            <script>
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                    n.queue=[];t=b.createElement(e);t.async=!0;
+                    t.src=v;s=b.getElementsByTagName(e)[0];
+                    s.parentNode.insertBefore(t,s)}(window,document,'script',
+                        'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '842388869148196');
+                fbq('track', 'PageView');
+            </script>
+            <noscript>
+                <img height="1" width="1" src="https://www.facebook.com/tr?id=842388869148196&ev=PageView&noscript=1"/>
+            </noscript>
+            
+        

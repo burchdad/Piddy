@@ -56,6 +56,35 @@ def create_app() -> FastAPI:
         logger.info(f"Model: {settings.agent_model}")
         logger.info(f"Environment: {'DEBUG' if settings.debug else 'PRODUCTION'}")
         
+        # Initialize Knowledge Base if configured
+        kb_repo_url = os.getenv('PIDDY_KB_REPO_URL')
+        if kb_repo_url:
+            try:
+                from src.kb_repo_manager import setup_kb_repo
+                logger.info(f"📚 Syncing Knowledge Base from: {kb_repo_url}")
+                setup_kb_repo(kb_repo_url)
+                logger.info("✅ Knowledge Base synced and ready")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to sync Knowledge Base: {str(e)}")
+        else:
+            logger.info("⏭️ Knowledge Base not configured (set PIDDY_KB_REPO_URL)")
+        
+        # Feed approved experiences to KB (self-growing KB initialization)
+        try:
+            from src.kb.experience_recorder import KBExperienceRecorder
+            recorder = KBExperienceRecorder()
+            
+            # Batch feed all high-confidence approved experiences
+            added = recorder.feed_all_approved_to_kb(
+                min_approvals=1,        # Approved at least once
+                min_confidence=0.75     # 75%+ confidence
+            )
+            
+            if added > 0:
+                logger.info(f"✅ Fed {added} experiences to KB on startup")
+        except Exception as e:
+            logger.debug(f"ℹ️ Experience recording not available or no experiences ready: {str(e)}")
+        
         # Start Slack listener if configured
         if settings.slack_app_token and settings.slack_bot_token:
             try:

@@ -1,0 +1,5 @@
+			<p class="lead">
+				<strong>Recent Posts</strong>
+				<a href="https://www.freetechbooks.com/posts" class="btn btn-primary pull-right">Browse all posts <i class="fa fa-arrow-circle-right"></i></a>
+			</p>
+			<hr>

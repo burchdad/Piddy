@@ -1,0 +1,35 @@
+                    
+                    <div>
+                        <h3 class="widget__heading">Choose your language</h3>
+                        
+
+
+
+
+
+
+<ul class="language__switcher no-style">
+	<li class="active"><a href="#" onclick="return false;" title="InfoQ English">En</a></li>
+	<li><a href="https://www.infoq.cn">中文</a></li>
+	<li><a href="/jp/">日本</a></li>
+	<li><a href="/fr/">Fr</a></li>
+</ul>
+                    </div>
+                </div>
+                    
+            </div>
+            <div data-nosnippet class="actions header__bottom header__bottom__events">
+                <div class="actions__left">
+                    <div class="header__events-all">
+
+                            
+
+                        
+                        
+                        
+                        
+
+                                       
+                        
+
+                        
