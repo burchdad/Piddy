@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 sys.path.insert(0, str(Path(__file__).parent))
 from growth_engine import AutonomousGrowthEngine, SystemMetric, GrowthPattern
 from acceleration_framework import AccelerationFramework, DeploymentWave
+from market_analyzer import MarketAnalyzer
+from autonomous_builder import AutonomousBuilder
 
 
 logger = logging.getLogger(__name__)
@@ -225,12 +227,84 @@ class WaveCoordinator:
         self.logger.warning(f"✅ WAVE DEPLOYED: {wave.value}")
 
 
+class MarketDrivenBuildManager:
+    """
+    Manages autonomous builds based on market analysis
+    
+    This is the bridge between:
+    - Market analysis (what the world needs)
+    - Autonomous builder (building new agents)
+    - Growth engine (learning from metrics)
+    
+    Runs periodically to discover gaps and propose new builds
+    """
+    
+    def __init__(self, config: ServiceConfig):
+        self.config = config
+        self.logger = logging.getLogger(f"{__name__}.MarketBuilder")
+        self.market_analyzer = MarketAnalyzer()
+        self.builder = AutonomousBuilder()
+        self.analysis_cycle = 0
+        self.last_analysis: Optional[Dict] = None
+        
+    async def run_market_analysis_cycle(self) -> Dict:
+        """
+        Periodically analyze market for gaps and queue builds
+        
+        Runs less frequently than metrics collection (e.g., every 12 hours)
+        """
+        self.analysis_cycle += 1
+        
+        self.logger.info(f"🌍 Market Analysis Cycle {self.analysis_cycle}")
+        
+        # Run market analysis
+        analysis = await self.market_analyzer.run_market_analysis()
+        self.last_analysis = analysis
+        
+        # Queue top proposals for building
+        for proposal in analysis.get("recommended_builds", [])[:3]:
+            self.logger.warning(f"👷 Queueing build: {proposal['agent_name']}")
+            await self.builder.queue_build(proposal)
+        
+        return analysis
+    
+    async def process_pending_builds(self) -> List[Dict]:
+        """
+        Process any queued builds (autonomous building happens here)
+        """
+        if not self.builder.build_queue:
+            return []
+        
+        self.logger.warning(
+            f"👷 Processing {len(self.builder.build_queue)} queued builds..."
+        )
+        
+        results = await self.builder.process_build_queue()
+        
+        for result in results:
+            self.logger.warning(
+                f"✅ Built: {result['agent_name']} "
+                f"({result['lines_of_code']} LOC)"
+            )
+        
+        return results
+    
+    async def get_next_deployable_agent(self) -> Optional[Dict]:
+        """Get next agent that's ready to deploy"""
+        agent = await self.builder.get_next_deployable()
+        if agent:
+            self.logger.warning(f"🚀 Ready to deploy: {agent['agent_name']}")
+        return agent
+
+
 class AutonomousBackgroundService:
     """
     The HEARTBEAT of the autonomous system.
     
     Runs continuously 24/7, feeding metrics and triggering improvements.
     This is what makes the system self-improving.
+    
+    Now with market-driven autonomous building!
     """
     
     def __init__(self, config: ServiceConfig = None):
@@ -243,10 +317,12 @@ class AutonomousBackgroundService:
         self.metrics_collector = MetricsCollector(self.config)
         self.automation_executor = AutomationExecutor(self.config)
         self.wave_coordinator = WaveCoordinator(self.framework, self.config)
+        self.market_builder = MarketDrivenBuildManager(self.config)
         
         self.logger = logging.getLogger(f"{__name__}.Service")
         
         self.cycles_completed = 0
+        self.market_analysis_cycles = 0
         self.service_start_time = datetime.utcnow()
         self.is_running = False
         
@@ -301,6 +377,7 @@ class AutonomousBackgroundService:
         
         This is the HEARTBEAT. It never stops.
         Every cycle: metrics → learning → improvement → cascade
+        Every N cycles: market analysis → autonomous builds
         """
         self.is_running = True
         self.logger.warning("❤️  AUTONOMOUS BACKGROUND SERVICE STARTED")
@@ -308,13 +385,14 @@ class AutonomousBackgroundService:
         self.logger.warning(f"   Auto-trigger: {self.config.auto_trigger_enabled}")
         self.logger.warning(f"   Auto-execute: {self.config.auto_execute_enabled}")
         self.logger.warning("   Status: RUNNING (will feed metrics continuously)")
+        self.logger.warning("   🌍 Market-Driven Building: ENABLED")
         
         start_time = datetime.utcnow()
         end_time = None
         if duration_hours:
             end_time = start_time + timedelta(hours=duration_hours)
         
-        last_report = datetime.utcnow()
+        market_analysis_interval = 100  # Run market analysis every 100 cycles
         
         try:
             while self.is_running:
@@ -325,6 +403,20 @@ class AutonomousBackgroundService:
                 
                 # Run one feed cycle
                 await self.run_cycle()
+                
+                # Every N cycles: run market analysis and autonomous building
+                if self.cycles_completed % market_analysis_interval == 0 and self.cycles_completed > 0:
+                    self.logger.warning("\n" + "=" * 80)
+                    self.logger.warning("🌍 MARKET-DRIVEN BUILD PHASE")
+                    self.logger.warning("=" * 80)
+                    
+                    # Run market analysis
+                    await self.market_builder.run_market_analysis_cycle()
+                    
+                    # Process pending builds
+                    await self.market_builder.process_pending_builds()
+                    
+                    self.market_analysis_cycles += 1
                 
                 # Print status report periodically (every 10 cycles)
                 if self.cycles_completed % 10 == 0:

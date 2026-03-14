@@ -1,0 +1,44 @@
+[
+  {
+    "timestamp": "2026-03-14T20:00:00",
+    "metric_name": "tests_generated_total",
+    "value": 675.0,
+    "unit": "tests"
+  },
+  {
+    "timestamp": "2026-03-14T20:05:00",
+    "metric_name": "coverage_percentage",
+    "value": 5.0,
+    "unit": "%"
+  },
+  {
+    "timestamp": "2026-03-16T18:00:00",
+    "metric_name": "tests_generated_total",
+    "value": 2000.0,
+    "unit": "tests"
+  },
+  {
+    "timestamp": "2026-03-16T18:05:00",
+    "metric_name": "coverage_percentage",
+    "value": 15.0,
+    "unit": "%"
+  },
+  {
+    "timestamp": "2026-03-17T22:00:00",
+    "metric_name": "tests_generated_total",
+    "value": 3500.0,
+    "unit": "tests"
+  },
+  {
+    "timestamp": "2026-03-17T22:05:00",
+    "metric_name": "coverage_percentage",
+    "value": 23.0,
+    "unit": "%"
+  },
+  {
+    "timestamp": "2026-03-17T22:10:00",
+    "metric_name": "phase40_success_probability",
+    "value": 0.72,
+    "unit": "probability"
+  }
+]
