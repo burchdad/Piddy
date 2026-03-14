@@ -22,6 +22,8 @@ from growth_engine import AutonomousGrowthEngine, SystemMetric, GrowthPattern
 from acceleration_framework import AccelerationFramework, DeploymentWave
 from market_analyzer import MarketAnalyzer
 from autonomous_builder import AutonomousBuilder
+from market_gap_reporter import MarketGapReporter
+from approval_workflow import ApprovalWorkflow, ApprovalBuilderBridge
 
 
 logger = logging.getLogger(__name__)
@@ -229,29 +231,52 @@ class WaveCoordinator:
 
 class MarketDrivenBuildManager:
     """
-    Manages autonomous builds based on market analysis
+    Manages autonomous builds with USER APPROVAL WORKFLOW
     
     This is the bridge between:
     - Market analysis (what the world needs)
-    - Autonomous builder (building new agents)
+    - Gap reporter (notifies user for security review)
+    - Approval workflow (waits for user decision)
+    - Autonomous builder (building new agents only when approved)
     - Growth engine (learning from metrics)
     
-    Runs periodically to discover gaps and propose new builds
+    SECURITY: No builds happen without user approval!
+    
+    Flow:
+    1. Market analyzer identifies gaps
+    2. Gap reporter sends email to user
+    3. User reviews gaps via dashboard
+    4. Only approved gaps are queued for building
+    5. Background service builds approved gaps
     """
     
-    def __init__(self, config: ServiceConfig):
+    def __init__(self, 
+                 config: ServiceConfig,
+                 user_email: str = "user@example.com"):
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.MarketBuilder")
+        
+        # Core components
         self.market_analyzer = MarketAnalyzer()
         self.builder = AutonomousBuilder()
+        
+        # New: Approval workflow
+        self.gap_reporter = MarketGapReporter(
+            user_email=user_email,
+            dashboard_url="http://localhost:8000"
+        )
+        self.approval_workflow = ApprovalWorkflow()
+        self.builder_bridge = ApprovalBuilderBridge(self.approval_workflow)
+        
         self.analysis_cycle = 0
         self.last_analysis: Optional[Dict] = None
+        self.pending_approval_requests: List[str] = []
         
     async def run_market_analysis_cycle(self) -> Dict:
         """
-        Periodically analyze market for gaps and queue builds
+        Periodically analyze market for gaps
         
-        Runs less frequently than metrics collection (e.g., every 12 hours)
+        ⚠️  Gap reporter sends email to user for approval
         """
         self.analysis_cycle += 1
         
@@ -261,31 +286,115 @@ class MarketDrivenBuildManager:
         analysis = await self.market_analyzer.run_market_analysis()
         self.last_analysis = analysis
         
-        # Queue top proposals for building
-        for proposal in analysis.get("recommended_builds", [])[:3]:
-            self.logger.warning(f"👷 Queueing build: {proposal['agent_name']}")
-            await self.builder.queue_build(proposal)
+        top_proposals = analysis.get("recommended_builds", [])[:3]
+        
+        if not top_proposals:
+            self.logger.info("No proposals found")
+            return analysis
+        
+        # Convert proposals to gap format
+        gaps = [{"gap_id": p.get("agent_name", f"agent_{i}")}
+                | p for i, p in enumerate(top_proposals)]
+        
+        # NEW: Generate report and send to user
+        self.logger.warning(f"\n{'='*60}")
+        self.logger.warning("📧 SENDING APPROVAL REQUEST TO USER")
+        self.logger.warning(f"{'='*60}")
+        
+        request_id = f"req_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        approval_request = await self.gap_reporter.generate_and_send_report(gaps)
+        
+        if approval_request:
+            # NEW: Initiate approval workflow
+            await self.approval_workflow.initiate_approval_workflow(
+                request_id=request_id,
+                market_gaps=gaps,
+                recipient_email=self.gap_reporter.user_email
+            )
+            self.pending_approval_requests.append(request_id)
+            
+            self.logger.warning(f"✅ Approval workflow initiated: {request_id}")
+            self.logger.warning(f"📍 User will review at: http://localhost:8000")
         
         return analysis
     
-    async def process_pending_builds(self) -> List[Dict]:
+    async def check_pending_approvals(self) -> int:
         """
-        Process any queued builds (autonomous building happens here)
-        """
-        if not self.builder.build_queue:
-            return []
+        Check if any approvals are ready to proceed
         
-        self.logger.warning(
-            f"👷 Processing {len(self.builder.build_queue)} queued builds..."
+        Returns count of gaps ready to build
+        """
+        total_ready = 0
+        
+        for request_id in self.pending_approval_requests[:]:
+            # Check if approval deadline passed
+            timeout = await self.approval_workflow.check_workflow_timeout(request_id)
+            
+            # Get approved gaps
+            approved = await self.approval_workflow.get_approved_gaps(request_id)
+            
+            if approved:
+                self.logger.warning(f"✅ {len(approved)} gaps approved for building")
+                total_ready += len(approved)
+                
+                # Remove from pending if auto-approved (no more waiting)
+                if timeout:
+                    self.pending_approval_requests.remove(request_id)
+        
+        return total_ready
+    
+    async def process_approved_builds(self) -> List[Dict]:
+        """
+        Build only APPROVED gaps (not all gaps)
+        
+        NEW: Respects user approvals before building
+        """
+        results = []
+        
+        # Get next approved gap to build
+        gap = await self.builder_bridge.get_next_gap_to_build()
+        
+        if not gap:
+            # No approved gaps waiting
+            return results
+        
+        # Build the approved gap
+        self.logger.warning(f"\n{'='*60}")
+        self.logger.warning(f"👷 BUILDING APPROVED GAP: {gap.get('agent_name', 'Unknown')}")
+        self.logger.warning(f"{'='*60}")
+        
+        result = await self.builder.build_agent(gap)
+        results.append(result)
+        
+        # Record completion
+        await self.builder_bridge.notify_build_complete(
+            gap.get("gap_id"),
+            success=result.get("ready_to_deploy", False)
         )
         
-        results = await self.builder.process_build_queue()
+        return results
+    
+    async def process_pending_builds(self) -> List[Dict]:
+        """
+        Process approved builds (replacing direct queue processing)
         
-        for result in results:
-            self.logger.warning(
-                f"✅ Built: {result['agent_name']} "
-                f"({result['lines_of_code']} LOC)"
-            )
+        Only builds gaps that user has explicitly approved
+        """
+        # First check for any new approvals
+        ready_count = await self.check_pending_approvals()
+        
+        if ready_count > 0:
+            self.logger.warning(f"🎯 {ready_count} gaps ready to build (user approved)")
+        
+        # Then process approved builds
+        return await self.process_approved_builds()
+    
+    async def get_next_deployable_agent(self) -> Optional[Dict]:
+        """Get next agent that's ready to deploy (was approved and built)"""
+        agent = await self.builder.get_next_deployable()
+        if agent:
+            self.logger.warning(f"🚀 Ready to deploy: {agent['agent_name']}")
+        return agent
         
         return results
     

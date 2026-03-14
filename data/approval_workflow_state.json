@@ -1,0 +1,38 @@
+{
+  "test_approval_001": {
+    "request_id": "test_approval_001",
+    "market_gaps": [
+      {
+        "gap_id": "gap_001",
+        "title": "Mutation Testing Agent",
+        "category": "testing",
+        "security_risk_level": "LOW"
+      },
+      {
+        "gap_id": "gap_002",
+        "title": "Build Optimization Agent",
+        "category": "ci-cd",
+        "security_risk_level": "HIGH"
+      },
+      {
+        "gap_id": "gap_003",
+        "title": "Code Duplication Detector",
+        "category": "code-quality",
+        "security_risk_level": "MEDIUM"
+      }
+    ],
+    "sent_at": "2026-03-14T18:42:15.082800",
+    "approval_deadline": "2026-03-15T18:42:15.082803",
+    "status": "partially_approved",
+    "approved_gaps": [
+      "gap_001",
+      "gap_003"
+    ],
+    "rejected_gaps": [
+      "gap_002"
+    ],
+    "rejection_reasons": {
+      "gap_002": "Needs security audit before deploying to CI/CD pipeline"
+    }
+  }
+}
