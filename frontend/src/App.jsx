@@ -18,6 +18,7 @@ import Missions from './components/Missions';
 import DependencyGraph from './components/DependencyGraph';
 import MissionReplay from './components/MissionReplay';
 import { DatabasePerformance } from './components/DatabasePerformance';
+import Approvals from './components/Approvals';
 
 function App() {
   const [activePage, setActivePage] = useState('overview');
@@ -97,6 +98,8 @@ function App() {
         return <MissionReplay />;
       case 'database':
         return <DatabasePerformance />;
+      case 'approvals':
+        return <Approvals />;
       default:
         return <Overview systemStatus={systemStatus} />;
     }
