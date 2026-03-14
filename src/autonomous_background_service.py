@@ -252,7 +252,7 @@ class MarketDrivenBuildManager:
     
     def __init__(self, 
                  config: ServiceConfig,
-                 user_email: str = "user@example.com"):
+                 user_email: str = "stephen.burch@ghostai.solutions,burchsl4@gmail.com"):
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.MarketBuilder")
         

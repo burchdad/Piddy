@@ -171,6 +171,7 @@ class EmailNotifier:
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["From"] = self.from_email
+            # Support multiple recipient emails (comma-separated)
             msg["To"] = approval_request.sent_to_email
             
             msg.attach(MIMEText(text_body, "plain"))
@@ -379,7 +380,7 @@ class MarketGapReporter:
     """
     
     def __init__(self, 
-                 user_email: str = "user@example.com",
+                 user_email: str = "stephen.burch@ghostai.solutions,burchsl4@gmail.com",
                  dashboard_url: str = "http://localhost:8000"):
         self.user_email = user_email
         self.dashboard_url = dashboard_url
@@ -426,7 +427,9 @@ class MarketGapReporter:
         )
         
         # Send email
-        print(f"\n✉️  SENDING APPROVAL REQUEST TO: {self.user_email}")
+        print(f"\n✉️  SENDING APPROVAL REQUEST TO:")
+        for email in self.user_email.split(","):
+            print(f"   • {email.strip()}")
         print(f"   Request ID: {request_id}")
         print(f"   Gaps: {len(assessed_gaps)} total")
         print(f"   🚨 HIGH RISK: {high_risk}")
@@ -529,7 +532,7 @@ class MarketGapReporter:
 async def main():
     """Demo the market gap reporter"""
     reporter = MarketGapReporter(
-        user_email="dev@example.com",
+        user_email="stephen.burch@ghostai.solutions,burchsl4@gmail.com",
         dashboard_url="http://localhost:8000"
     )
     
