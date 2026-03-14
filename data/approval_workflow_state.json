@@ -34,5 +34,230 @@
     "rejection_reasons": {
       "gap_002": "Needs security audit before deploying to CI/CD pipeline"
     }
+  },
+  "test_req_001": {
+    "request_id": "test_req_001",
+    "market_gaps": [
+      {
+        "gap_id": "gap_001",
+        "title": "Low Risk Agent"
+      },
+      {
+        "gap_id": "gap_002",
+        "title": "High Risk Agent"
+      }
+    ],
+    "sent_at": "2026-03-14T19:02:40.002716",
+    "approval_deadline": "2026-03-15T19:02:40.002718",
+    "status": "partially_approved",
+    "approved_gaps": [
+      "gap_001"
+    ],
+    "rejected_gaps": [
+      "gap_002"
+    ],
+    "rejection_reasons": {
+      "gap_002": "Security risk"
+    }
+  },
+  "test_req_002": {
+    "request_id": "test_req_002",
+    "market_gaps": [
+      {
+        "gap_id": "gap_001",
+        "title": "Agent 1"
+      },
+      {
+        "gap_id": "gap_002",
+        "title": "Agent 2"
+      },
+      {
+        "gap_id": "gap_003",
+        "title": "Agent 3"
+      }
+    ],
+    "sent_at": "2026-03-14T19:02:40.004556",
+    "approval_deadline": "2026-03-15T19:02:40.004558",
+    "status": "partially_approved",
+    "approved_gaps": [
+      "gap_001",
+      "gap_003"
+    ],
+    "rejected_gaps": [
+      "gap_002"
+    ],
+    "rejection_reasons": {
+      "gap_002": "High risk"
+    }
+  },
+  "e2e_test_1773514923.33391": {
+    "request_id": "e2e_test_1773514923.33391",
+    "market_gaps": [
+      {
+        "gap_id": "gap_e2e_001",
+        "title": "Mutation Testing Agent",
+        "category": "testing",
+        "market_need": "Mutation testing framework",
+        "frequency": 45,
+        "estimated_impact": 0.9,
+        "complexity_score": 5,
+        "integration_points": [
+          "Test Runner"
+        ]
+      },
+      {
+        "gap_id": "gap_e2e_002",
+        "title": "Build Optimization Agent",
+        "category": "ci-cd",
+        "market_need": "Build speed optimization",
+        "frequency": 55,
+        "estimated_impact": 0.87,
+        "complexity_score": 9,
+        "integration_points": [
+          "Build",
+          "Pipeline",
+          "CI/CD",
+          "Deployment",
+          "Repository"
+        ]
+      },
+      {
+        "gap_id": "gap_e2e_003",
+        "title": "Code Duplication Detector",
+        "category": "code-quality",
+        "market_need": "Find duplicate code",
+        "frequency": 40,
+        "estimated_impact": 0.8,
+        "complexity_score": 6,
+        "integration_points": [
+          "Analyzer",
+          "Reporter"
+        ]
+      }
+    ],
+    "sent_at": "2026-03-14T19:02:03.333944",
+    "approval_deadline": "2026-03-15T19:02:03.333946",
+    "status": "waiting",
+    "approved_gaps": [],
+    "rejected_gaps": [],
+    "rejection_reasons": {}
+  },
+  "e2e_test_1773514948.588372": {
+    "request_id": "e2e_test_1773514948.588372",
+    "market_gaps": [
+      {
+        "gap_id": "gap_e2e_001",
+        "title": "Mutation Testing Agent",
+        "category": "testing",
+        "market_need": "Mutation testing framework",
+        "frequency": 45,
+        "estimated_impact": 0.9,
+        "complexity_score": 5,
+        "integration_points": [
+          "Test Runner"
+        ]
+      },
+      {
+        "gap_id": "gap_e2e_002",
+        "title": "Build Optimization Agent",
+        "category": "ci-cd",
+        "market_need": "Build speed optimization",
+        "frequency": 55,
+        "estimated_impact": 0.87,
+        "complexity_score": 9,
+        "integration_points": [
+          "Build",
+          "Pipeline",
+          "CI/CD",
+          "Deployment",
+          "Repository"
+        ]
+      },
+      {
+        "gap_id": "gap_e2e_003",
+        "title": "Code Duplication Detector",
+        "category": "code-quality",
+        "market_need": "Find duplicate code",
+        "frequency": 40,
+        "estimated_impact": 0.8,
+        "complexity_score": 6,
+        "integration_points": [
+          "Analyzer",
+          "Reporter"
+        ]
+      }
+    ],
+    "sent_at": "2026-03-14T19:02:28.588386",
+    "approval_deadline": "2026-03-15T19:02:28.588387",
+    "status": "partially_approved",
+    "approved_gaps": [
+      "gap_e2e_001",
+      "gap_e2e_003"
+    ],
+    "rejected_gaps": [
+      "gap_e2e_002"
+    ],
+    "rejection_reasons": {
+      "gap_e2e_002": "Needs security audit"
+    }
+  },
+  "e2e_test_1773514960.00807": {
+    "request_id": "e2e_test_1773514960.00807",
+    "market_gaps": [
+      {
+        "gap_id": "gap_e2e_001",
+        "title": "Mutation Testing Agent",
+        "category": "testing",
+        "market_need": "Mutation testing framework",
+        "frequency": 45,
+        "estimated_impact": 0.9,
+        "complexity_score": 5,
+        "integration_points": [
+          "Test Runner"
+        ]
+      },
+      {
+        "gap_id": "gap_e2e_002",
+        "title": "Build Optimization Agent",
+        "category": "ci-cd",
+        "market_need": "Build speed optimization",
+        "frequency": 55,
+        "estimated_impact": 0.87,
+        "complexity_score": 9,
+        "integration_points": [
+          "Build",
+          "Pipeline",
+          "CI/CD",
+          "Deployment",
+          "Repository"
+        ]
+      },
+      {
+        "gap_id": "gap_e2e_003",
+        "title": "Code Duplication Detector",
+        "category": "code-quality",
+        "market_need": "Find duplicate code",
+        "frequency": 40,
+        "estimated_impact": 0.8,
+        "complexity_score": 6,
+        "integration_points": [
+          "Analyzer",
+          "Reporter"
+        ]
+      }
+    ],
+    "sent_at": "2026-03-14T19:02:40.008083",
+    "approval_deadline": "2026-03-15T19:02:40.008084",
+    "status": "partially_approved",
+    "approved_gaps": [
+      "gap_e2e_001",
+      "gap_e2e_003"
+    ],
+    "rejected_gaps": [
+      "gap_e2e_002"
+    ],
+    "rejection_reasons": {
+      "gap_e2e_002": "Needs security audit"
+    }
   }
 }
