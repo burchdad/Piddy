@@ -152,6 +152,49 @@ class DashboardMetrics(BaseModel):
     tests_failed: int
 
 
+# ============================================================================
+# MARKET GAP APPROVAL MODELS
+# ============================================================================
+
+class MarketGap(BaseModel):
+    """Market gap requiring approval"""
+    gap_id: str
+    title: str
+    category: str  # ci-cd, code-quality, testing, documentation, etc.
+    market_need: str
+    frequency: int  # how many repos need it
+    estimated_impact: float  # 0.0-1.0
+    complexity_score: int  # 1-10
+    integration_points: List[str]
+    security_risk_level: str  # LOW, MEDIUM, HIGH
+    security_concerns: List[str]
+    estimated_build_time_hours: float
+
+
+class ApprovalRequest(BaseModel):
+    """Market gap approval request"""
+    request_id: str
+    gaps: List[MarketGap]
+    created_at: str
+    deadline: str
+    status: str  # waiting, partially_approved, fully_approved, expired
+    sent_to_emails: List[str]
+    high_risk_count: int
+    medium_risk_count: int
+    low_risk_count: int
+
+
+class ApprovalDecision(BaseModel):
+    """User's decision on a market gap"""
+    request_id: str
+    gap_id: str
+    title: str
+    approved: bool
+    decision_time: str
+    reason: Optional[str] = None
+    risk_level: str
+
+
 class Decision(BaseModel):
     """AI decision with reasoning"""
     id: str
@@ -1740,6 +1783,204 @@ async def get_providers() -> Dict:
         "count": 4,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+# ============================================================================
+# MARKET GAP APPROVAL ENDPOINTS
+# ============================================================================
+
+@app.get("/api/approvals")
+async def list_approvals() -> Dict:
+    """List all pending and historical approval requests"""
+    try:
+        from pathlib import Path
+        workflow_file = Path("data/approval_workflow_state.json")
+        
+        if workflow_file.exists():
+            with open(workflow_file, 'r') as f:
+                workflows = json.load(f)
+                return {
+                    "requests": workflows,
+                    "count": len(workflows),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+        return {"requests": {}, "count": 0, "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error listing approvals: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/api/approvals/{request_id}")
+async def get_approval_request(request_id: str) -> Dict:
+    """Get specific approval request details"""
+    try:
+        from pathlib import Path
+        workflow_file = Path("data/approval_workflow_state.json")
+        
+        if workflow_file.exists():
+            with open(workflow_file, 'r') as f:
+                workflows = json.load(f)
+                if request_id in workflows:
+                    return {
+                        "request": workflows[request_id],
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+        return {"error": "Request not found", "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error getting approval request: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/api/approvals/{request_id}/gaps/{gap_id}")
+async def get_gap_details(request_id: str, gap_id: str) -> Dict:
+    """Get specific gap details within an approval request"""
+    try:
+        from pathlib import Path
+        workflow_file = Path("data/approval_workflow_state.json")
+        
+        if workflow_file.exists():
+            with open(workflow_file, 'r') as f:
+                workflows = json.load(f)
+                if request_id in workflows:
+                    gaps = workflows[request_id].get("market_gaps", [])
+                    for gap in gaps:
+                        if gap.get("gap_id") == gap_id:
+                            return {
+                                "gap": gap,
+                                "timestamp": datetime.utcnow().isoformat()
+                            }
+        return {"error": "Gap not found", "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error getting gap details: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.post("/api/approvals/{request_id}/gaps/{gap_id}/approve")
+async def approve_gap(request_id: str, gap_id: str) -> Dict:
+    """Approve a specific market gap"""
+    try:
+        from pathlib import Path
+        decisions_file = Path("data/approval_decisions.json")
+        decisions_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Load existing decisions
+        decisions = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+        
+        # Record decision
+        if request_id not in decisions:
+            decisions[request_id] = []
+        
+        decisions[request_id].append({
+            "gap_id": gap_id,
+            "approved": True,
+            "decision_time": datetime.utcnow().isoformat(),
+            "reason": None
+        })
+        
+        # Save decisions
+        with open(decisions_file, 'w') as f:
+            json.dump(decisions, f, indent=2)
+        
+        logger.info(f"Gap {gap_id} approved in request {request_id}")
+        return {
+            "success": True,
+            "gap_id": gap_id,
+            "action": "approved",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error approving gap: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.post("/api/approvals/{request_id}/gaps/{gap_id}/reject")
+async def reject_gap(request_id: str, gap_id: str, reason: Optional[str] = None) -> Dict:
+    """Reject a specific market gap"""
+    try:
+        from pathlib import Path
+        decisions_file = Path("data/approval_decisions.json")
+        decisions_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Load existing decisions
+        decisions = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+        
+        # Record decision
+        if request_id not in decisions:
+            decisions[request_id] = []
+        
+        decisions[request_id].append({
+            "gap_id": gap_id,
+            "approved": False,
+            "decision_time": datetime.utcnow().isoformat(),
+            "reason": reason
+        })
+        
+        # Save decisions
+        with open(decisions_file, 'w') as f:
+            json.dump(decisions, f, indent=2)
+        
+        logger.info(f"Gap {gap_id} rejected in request {request_id}: {reason}")
+        return {
+            "success": True,
+            "gap_id": gap_id,
+            "action": "rejected",
+            "reason": reason,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error rejecting gap: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.get("/api/approvals/summary/stats")
+async def get_approval_stats() -> Dict:
+    """Get approval summary statistics"""
+    try:
+        from pathlib import Path
+        
+        decisions_file = Path("data/approval_decisions.json")
+        workflow_file = Path("data/approval_workflow_state.json")
+        
+        total_decisions = 0
+        approved_count = 0
+        rejected_count = 0
+        pending_requests = 0
+        
+        if workflow_file.exists():
+            with open(workflow_file, 'r') as f:
+                workflows = json.load(f)
+                for req_id, workflow in workflows.items():
+                    if workflow.get("status") == "waiting":
+                        pending_requests += 1
+        
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+                for req_id, decisions_list in decisions.items():
+                    for decision in decisions_list:
+                        total_decisions += 1
+                        if decision.get("approved"):
+                            approved_count += 1
+                        else:
+                            rejected_count += 1
+        
+        return {
+            "total_decisions": total_decisions,
+            "approved_count": approved_count,
+            "rejected_count": rejected_count,
+            "pending_requests": pending_requests,
+            "approval_rate": ((approved_count / total_decisions * 100) if total_decisions > 0 else 0),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting approval stats: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
 
 
 # ============================================================================

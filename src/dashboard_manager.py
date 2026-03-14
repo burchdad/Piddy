@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-PIDDY Approval Dashboard Manager
+PIDDY Unified Dashboard Manager
 
-Manages the approval dashboard UI:
+Manages the unified Piddy dashboard (monitoring + approvals):
   - Start/stop the dashboard server
   - Configure dashboard port and settings
   - Open dashboard in browser
   - Check dashboard status
+
+Integrates:
+  - System monitoring & observability
+  - Market gap approval workflow
+  - Agent status & reputation
+  - Phase deployments
 """
 
 import os
@@ -20,9 +26,9 @@ from datetime import datetime
 
 
 class DashboardManager:
-    """Manages the approval dashboard"""
+    """Manages the unified Piddy dashboard"""
     
-    DASHBOARD_PYTHON = Path("src/approval_dashboard.py")
+    DASHBOARD_PYTHON = Path("src/dashboard_api.py")
     DASHBOARD_PID_FILE = Path("data/dashboard.pid")
     DASHBOARD_LOG_FILE = Path("data/dashboard.log")
     
@@ -94,7 +100,7 @@ class DashboardManager:
         # Build uvicorn command
         uvicorn_cmd = [
             sys.executable, "-m", "uvicorn",
-            "approval_dashboard:app",
+            "dashboard_api:app",
             "--host", host,
             "--port", str(port),
             "--reload",  # Auto-reload on file changes
@@ -236,7 +242,7 @@ def print_help():
     """Print help"""
     print("""
 ╔════════════════════════════════════════════════════════════════════╗
-║    PIDDY APPROVAL DASHBOARD MANAGER                               ║
+║    PIDDY UNIFIED DASHBOARD MANAGER                                ║
 ╚════════════════════════════════════════════════════════════════════╝
 
 Usage: python src/dashboard_manager.py [COMMAND]
@@ -261,25 +267,33 @@ Examples:
   python src/dashboard_manager.py --open            # Open in browser
 
 Features:
+  ✅ Unified monitoring + market gap approvals
   ✅ Runs as background daemon
   ✅ Auto-opens in browser on first start
   ✅ FastAPI with auto-reload
   ✅ Easy status checking
   ✅ Graceful shutdown
 
-Dashboard Features:
-  📋 View all market gap approval requests
-  ✅ Approve or reject each gap
-  🚨 Security risk assessment display
-  📝 Rejection reason tracking
-  🔍 Approval history
+Dashboard Sections:
+  📊 System Monitoring
+    - Agent status & reputation
+    - Real-time message feeds
+    - Phase deployments
+    - Performance metrics
+
+  📋 Market Gap Approvals
+    - Review pending gaps
+    - Approve/reject with security assessment
+    - Risk indicators (🚨 HIGH / ⚠️ MEDIUM / ✅ LOW)
+    - Rejection reason tracking
+    - Audit trail
     """)
 
 
 def main():
     import argparse
     
-    parser = argparse.ArgumentParser(description="PIDDY Approval Dashboard Manager", add_help=False)
+    parser = argparse.ArgumentParser(description="PIDDY Unified Dashboard Manager - Monitoring + Approvals", add_help=False)
     parser.add_argument("--start", action="store_true", help="Start as daemon")
     parser.add_argument("--start-fg", action="store_true", help="Start in foreground")
     parser.add_argument("--stop", action="store_true", help="Stop dashboard")
