@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 🚀 Piddy Unified Startup Script - Start Everything
 
@@ -348,6 +349,14 @@ def cleanup():
         pass
 
 def main():
+    # Force UTF-8 encoding on Windows
+    import sys
+    import platform
+    if platform.system() == 'Windows':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    
     parser = argparse.ArgumentParser(
         description="🚀 Piddy Unified Startup - Start all system components",
         formatter_class=argparse.RawDescriptionHelpFormatter,
