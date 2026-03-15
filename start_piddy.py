@@ -375,6 +375,8 @@ Examples:
                        help="Skip health checks")
     parser.add_argument("--configure", action="store_true",
                        help="Configure email before starting")
+    parser.add_argument("--desktop", action="store_true",
+                       help="Run in desktop app mode (called from Electron)")
     
     args = parser.parse_args()
     
@@ -416,6 +418,38 @@ Examples:
         install_frontend_dependencies()
         start_frontend()
         log_info("Frontend running on http://localhost:5173")
+        return
+    
+    # Desktop app mode - start all services
+    if args.desktop:
+        log_header("🎯 Starting Piddy Desktop Application")
+        log_info("Running from Electron desktop app")
+        
+        # Install frontend dependencies
+        install_frontend_dependencies()
+        
+        # Start all services
+        start_background_service(args.foreground)
+        start_dashboard()
+        start_frontend()
+        
+        # Health checks
+        if not args.no_health_check:
+            time.sleep(2)
+            health_check()
+        
+        # Show status
+        show_status()
+        log_success("✅ Piddy Desktop App is running!")
+        
+        # Keep running
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            cleanup()
+            log_info("Piddy Desktop App shutting down...")
+            sys.exit(0)
         return
     
     # Start all services

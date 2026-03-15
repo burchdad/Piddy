@@ -36,6 +36,7 @@ setup(
         "console_scripts": [
             "phase5=src.phase5_cli:main",
             "piddy=src.phase5_cli:main",
+            "piddy-desktop=src.desktop_launcher:main",
         ],
     },
 )

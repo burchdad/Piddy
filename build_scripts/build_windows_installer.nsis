@@ -1,0 +1,52 @@
+; Piddy Desktop App - Windows Installer
+; Uses NSIS (Nullsoft Scriptable Install System)
+; Build with: makensis build_windows_installer.nsis
+
+!include "MUI2.nsh"
+
+; Name and file
+Name "Piddy"
+OutFile "Piddy-Setup.exe"
+InstallDir "$PROGRAMFILES\Piddy"
+
+; Request admin privileges on Vista+
+RequestExecutionLevel admin
+
+; MUI Settings
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_LANGUAGE "English"
+
+; Installer sections
+Section "Install"
+  SetOutPath "$INSTDIR"
+  
+  ; Copy files
+  File /r "desktop\dist\Piddy-1.0.0.exe"
+  File /r "src\*"
+  File /r "config\*"
+  File /r "frontend\dist\*"
+  File "requirements.txt"
+  File "start_piddy.py"
+  File "README.md"
+  
+  ; Create shortcuts
+  CreateDirectory "$SMPROGRAMS\Piddy"
+  CreateShortCut "$SMPROGRAMS\Piddy\Piddy.lnk" "$INSTDIR\Piddy-1.0.0.exe"
+  CreateShortCut "$SMPROGRAMS\Piddy\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+  CreateShortCut "$DESKTOP\Piddy.lnk" "$INSTDIR\Piddy-1.0.0.exe"
+  
+  ; Create uninstaller
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+SectionEnd
+
+; Uninstaller sections
+Section "Uninstall"
+  ; Remove files
+  RMDir /r "$INSTDIR"
+  RMDir /r "$SMPROGRAMS\Piddy"
+  Delete "$DESKTOP\Piddy.lnk"
+SectionEnd
