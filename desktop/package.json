@@ -54,6 +54,9 @@
       "../start_piddy.py"
     ],
     "win": {
+      "certificateFile": null,
+      "certificatePassword": null,
+      "signingHashAlgorithms": ["sha256"],
       "target": [
         {
           "target": "portable",
