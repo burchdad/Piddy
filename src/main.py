@@ -4,8 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from datetime import datetime
+from typing import Dict, Optional, List
 import logging
 import os
+import json
 
 from config.settings import get_settings, setup_logging
 from src.api.agent_commands import router as agent_router
