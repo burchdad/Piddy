@@ -259,5 +259,103 @@
     "rejection_reasons": {
       "gap_e2e_002": "Needs security audit"
     }
+  },
+  "req_20260314_203724": {
+    "request_id": "req_20260314_203724",
+    "market_gaps": [
+      {
+        "gap_id": "Mutation-TestingAgent",
+        "agent_name": "Mutation-TestingAgent",
+        "category": "testing",
+        "capabilities": [
+          "Analyze code for testability",
+          "Generate test cases",
+          "Measure coverage gaps",
+          "Suggest improvements"
+        ],
+        "market_justification": "Market demand: Found in 45 repos - 90% critical",
+        "estimated_build_time_days": 8,
+        "integration_points": [
+          "Phase 42 PR Generation",
+          "Growth Engine Learning",
+          "Automation Rules Triggering",
+          "Metrics Collection",
+          "Dashboard Display"
+        ],
+        "success_metrics": [
+          "Issues found per testing repo",
+          "Fixes accepted %",
+          "Repo integration rate",
+          "User satisfaction score",
+          "Adoption in testing market"
+        ],
+        "proposed_by": "market_analyzer",
+        "timestamp": "2026-03-14T20:37:24.212545"
+      },
+      {
+        "gap_id": "Flaky-Test-DetectionAgent",
+        "agent_name": "Flaky-Test-DetectionAgent",
+        "category": "testing",
+        "capabilities": [
+          "Analyze code for testability",
+          "Generate test cases",
+          "Measure coverage gaps",
+          "Suggest improvements"
+        ],
+        "market_justification": "Market demand: Found in 62 repos - 95% critical",
+        "estimated_build_time_days": 8,
+        "integration_points": [
+          "Phase 42 PR Generation",
+          "Growth Engine Learning",
+          "Automation Rules Triggering",
+          "Metrics Collection",
+          "Dashboard Display"
+        ],
+        "success_metrics": [
+          "Issues found per testing repo",
+          "Fixes accepted %",
+          "Repo integration rate",
+          "User satisfaction score",
+          "Adoption in testing market"
+        ],
+        "proposed_by": "market_analyzer",
+        "timestamp": "2026-03-14T20:37:24.212566"
+      },
+      {
+        "gap_id": "Code-DuplicationAgent",
+        "agent_name": "Code-DuplicationAgent",
+        "category": "code-quality",
+        "capabilities": [
+          "Scan for issues",
+          "Report findings",
+          "Suggest fixes",
+          "Track trends"
+        ],
+        "market_justification": "Market demand: Found in 72 repos - 92% critical",
+        "estimated_build_time_days": 9,
+        "integration_points": [
+          "Phase 42 PR Generation",
+          "Growth Engine Learning",
+          "Automation Rules Triggering",
+          "Metrics Collection",
+          "Dashboard Display"
+        ],
+        "success_metrics": [
+          "Issues found per code-quality repo",
+          "Fixes accepted %",
+          "Repo integration rate",
+          "User satisfaction score",
+          "Adoption in code-quality market"
+        ],
+        "proposed_by": "market_analyzer",
+        "timestamp": "2026-03-14T20:37:24.212573"
+      }
+    ],
+    "sent_at": "2026-03-14T20:37:24.215178",
+    "approval_deadline": "2026-03-15T20:37:24.215180",
+    "status": "waiting",
+    "approved_gaps": [],
+    "rejected_gaps": [],
+    "rejection_reasons": {}
   }
 }
