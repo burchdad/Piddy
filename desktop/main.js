@@ -6,8 +6,18 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
-const fixPath = require('fix-path');
 const fs = require('fs');
+const axios = require('axios');
+
+// Handle ES Module imports - fix-path is an ES module
+let fixPath;
+try {
+  const fixPathModule = require('fix-path');
+  fixPath = fixPathModule.default || fixPathModule;
+} catch (err) {
+  console.warn('[WARN] fix-path not available, using fallback');
+  fixPath = () => {}; // Fallback no-op function
+}
 
 // Simple logging wrapper (avoid electron-log ES Module issues)
 const log = {
@@ -18,7 +28,13 @@ const log = {
 };
 
 // Fix PATH for macOS to find Python
-fixPath();
+try {
+  if (typeof fixPath === 'function') {
+    fixPath();
+  }
+} catch (err) {
+  log.warn(`Failed to fix PATH: ${err.message}`);
+}
 
 let mainWindow;
 let pythonProcess = null;
@@ -179,22 +195,30 @@ function startPythonBackend() {
       const checkBackend = setInterval(() => {
         attempts++;
 
-        // Try simple health check
-        const axios = require('axios');
-        axios
-          .get('http://localhost:8000/health')
-          .then(() => {
-            log.info('✅ Backend is ready!');
-            clearInterval(checkBackend);
-            backendReady = true;
-            resolve();
-          })
-          .catch(() => {
-            if (attempts >= maxAttempts) {
+        // Try simple health check with error handling
+        try {
+          axios
+            .get('http://localhost:8000/health', { timeout: 2000 })
+            .then(() => {
+              log.info('✅ Backend is ready!');
               clearInterval(checkBackend);
-              reject(new Error('Backend failed to start'));
-            }
-          });
+              backendReady = true;
+              resolve();
+            })
+            .catch((err) => {
+              // Backend not ready yet, retry
+              if (attempts >= maxAttempts) {
+                clearInterval(checkBackend);
+                reject(new Error(`Backend failed to start after ${maxAttempts}s: ${err.message}`));
+              }
+            });
+        } catch (err) {
+          log.error(`Health check error: ${err.message}`);
+          if (attempts >= maxAttempts) {
+            clearInterval(checkBackend);
+            reject(new Error('Backend health check failed'));
+          }
+        }
       }, 1000);
     } catch (err) {
       log.error(`Error spawning backend: ${err}`);

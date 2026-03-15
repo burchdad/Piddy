@@ -25,6 +25,7 @@
     "email": "stephen.burch@ghostai.solutions"
   },
   "license": "MIT",
+  "type": "commonjs",
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^25.1.4",
@@ -45,11 +46,18 @@
     "files": [
       "main.js",
       "preload.js",
+      "node_modules/fix-path/**/*",
+      "node_modules/axios/**/*",
+      "node_modules/follow-redirects/**/*",
+      "node_modules/form-data/**/*",
+      "node_modules/proxy-from-env/**/*",
+      "node_modules/mime-types/**/*",
+      "node_modules/mime-db/**/*",
+      "node_modules/asynckit/**/*",
+      "node_modules/combined-stream/**/*",
+      "node_modules/delayed-stream/**/*",
       "../frontend/dist/**/*",
       "../requirements.txt",
-      "../src/**/*",
-      "../config/**/*",
-      "../data/**/*",
       "../start_piddy.py"
     ],
     "win": {
