@@ -1,3 +1,0 @@
-          <div class="date-outer">
-        
-<h2 class='date-header'><span>Sunday, November 24, 2013</span></h2>

@@ -1,7 +1,0 @@
-				  </div>
-
-			</div>
-			<div data-col="1/4" class="events__list">
-				<h4 class="heading footer__heading">Events</h4>
-                                <ul class="qcons__list no-style">
-                                    

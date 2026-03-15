@@ -1,9 +1,0 @@
-  </head>
-
-  <body class="logged-out env-production page-responsive" style="word-wrap: break-word;" >
-    <div data-turbo-body class="logged-out env-production page-responsive" style="word-wrap: break-word;" >
-      <div id="__primerPortalRoot__" role="region" style="z-index: 1000; position: absolute; width: 100%;" data-turbo-permanent></div>
-      
-
-    <div class="position-relative header-wrapper js-header-wrapper ">
-      <a href="#start-of-content" data-skip-target-assigned="false" class="px-2 tmp-py-4 color-bg-accent-emphasis color-fg-on-emphasis show-on-focus js-skip-to-content">Skip to content</a>

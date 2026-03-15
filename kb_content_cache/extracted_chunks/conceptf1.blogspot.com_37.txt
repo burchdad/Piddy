@@ -1,9 +1,0 @@
-.adblcr.hidden{display:none}
-
-.adblcr .textsshow{position:relative;background:#fff;max-width:400px;display:flex;justify-content:center;align-items:center;flex-direction:column;padding:30px;border-radius:30px}
-
-.adblcr .textsshow svg{display:block;width:50px;height:50px;fill:none !important;stroke:#08102b;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.5}
-
-.adblcr .textsshow h2{margin:10px 0 15px 0;font-size:1.2rem;font-weight:800;color:#08102b}
-
-.adblcr .textsshow p{margin:0;line-height:1.7em;font-size:0.9rem;color:#08102b}
