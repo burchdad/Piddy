@@ -9,17 +9,13 @@ const { spawn } = require('child_process');
 const fixPath = require('fix-path');
 const fs = require('fs');
 
-// Dynamic import for electron-log (ES Module compatibility)
-let log;
-import('electron-log').then(module => {
-  log = module.default;
-  // Configure logging
-  log.transports.file.level = 'info';
-  log.transports.console.level = 'info';
-}).catch(err => {
-  console.error('Failed to load electron-log:', err);
-  process.exit(1);
-});
+// Simple logging wrapper (avoid electron-log ES Module issues)
+const log = {
+  info: (msg) => console.log('[INFO]', msg),
+  error: (msg) => console.error('[ERROR]', msg),
+  warn: (msg) => console.warn('[WARN]', msg),
+  debug: (msg) => console.log('[DEBUG]', msg),
+};
 
 // Fix PATH for macOS to find Python
 fixPath();
