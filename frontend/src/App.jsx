@@ -31,9 +31,23 @@ function App() {
     const fetchStatus = async () => {
       try {
         setError(null);
-        // Use environment variable for API URL, default to relative path for localhost
-        const apiUrl = import.meta.env.VITE_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/system/overview`, {
+        
+        // Get API URL - check if running in Electron, otherwise use env var or relative path
+        let apiUrl = '';
+        if (window.piddy && window.piddy.backendUrl) {
+          // Running in Electron desktop app
+          apiUrl = window.piddy.backendUrl;
+          console.log('🖥️ Using Electron backend URL:', apiUrl);
+        } else {
+          // Running in browser or vite dev server
+          apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+          console.log('🌐 Using web backend URL:', apiUrl);
+        }
+        
+        const url = `${apiUrl}/api/system/overview`;
+        console.log('📡 Fetching status from:', url);
+        
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

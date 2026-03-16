@@ -7,6 +7,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose safe APIs to renderer process
 contextBridge.exposeInMainWorld('piddy', {
+  // Backend configuration
+  backendUrl: 'http://localhost:8000',
+  
   // Check backend status
   backendStatus: () => ipcRenderer.invoke('backend-status'),
 
@@ -28,3 +31,4 @@ contextBridge.exposeInMainWorld('piddy', {
 });
 
 console.log('[Preload] Piddy API exposed to renderer');
+console.log('[Preload] Backend URL:', 'http://localhost:8000');
