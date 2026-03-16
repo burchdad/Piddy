@@ -1,8 +1,0 @@
-<div class="list-group">
-    <div class="list-group-item active">Hosting Company</div>
-</div>
-
-<a href="https://www.vpsserver.com/windows-vps/">
-    <center><img src="https://www.freetechbooks.com/img/vpsserver.png" style="width:200px;height:auto" alt="VPS Server" title="VPS Server"></center>
-</a>
-<br/>

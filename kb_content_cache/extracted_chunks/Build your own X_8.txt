@@ -1,9 +1,0 @@
-    
-  <meta name="current-catalog-service-hash" content="f3abb0cc802f3d7b95fc8762b94bdcb13bf39634c40c357301c4aa1d67a256fb">
-
-  <meta name="request-id" content="3A40:2361A6:1D45618:27B5D2B:69B38829" data-pjax-transient="true"/><meta name="html-safe-nonce" content="bc001071f5c48683aafc857917f1759257644916e4e6bc91a9615bfb4e71dc8b" data-pjax-transient="true"/><meta name="visitor-payload" content="eyJyZWZlcnJlciI6IiIsInJlcXVlc3RfaWQiOiIzQTQwOjIzNjFBNjoxRDQ1NjE4OjI3QjVEMkI6NjlCMzg4MjkiLCJ2aXNpdG9yX2lkIjoiNDM2MzgwNjcyMDA2MTA0ODg3MyIsInJlZ2lvbl9lZGdlIjoiaWFkIiwicmVnaW9uX3JlbmRlciI6ImlhZCJ9" data-pjax-transient="true"/><meta name="visitor-hmac" content="48495df220b3b970f656fe236b0aa3cf20388c61d45088e770a4561914c4ed5d" data-pjax-transient="true"/>
-
-    <meta name="hovercard-subject-tag" content="repository:132750724" data-turbo-transient>
-
-  <meta name="github-keyboard-shortcuts" content="repository,copilot" data-turbo-transient="true" />
-  

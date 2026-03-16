@@ -1,9 +1,0 @@
-  <title>GitHub - revolunet/JSbooks: Directory of free JavaScript ebooks · GitHub</title>
-
-  <meta name="route-pattern" content="/:user_id/:repository" data-turbo-transient>
-  <meta name="route-controller" content="files" data-turbo-transient>
-  <meta name="route-action" content="disambiguate" data-turbo-transient>
-  <meta name="fetch-nonce" content="v2:9be0b665-d232-073a-4f39-773886ab9bd5">
-
-    
-  <meta name="current-catalog-service-hash" content="f3abb0cc802f3d7b95fc8762b94bdcb13bf39634c40c357301c4aa1d67a256fb">

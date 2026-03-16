@@ -1,5 +1,0 @@
-			<p class="lead">
-				<strong>Recent Books</strong>
-				<a href="https://www.freetechbooks.com/topics" class="btn btn-primary pull-right">Browse all books <i class="fa fa-arrow-circle-right"></i></a>
-			</p>
-			<hr>
