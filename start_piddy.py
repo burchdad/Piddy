@@ -262,11 +262,11 @@ def health_check():
     
     checks = {
         "Dashboard API": {
-            "url": "http://localhost:8000/api/system/overview",
+            "url": "http://localhost:8001/api/system/overview",
             "timeout": 5
         },
         "Approval Endpoints": {
-            "url": "http://localhost:8000/api/approvals",
+            "url": "http://localhost:8001/api/approvals",
             "timeout": 5
         },
     }

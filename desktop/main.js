@@ -331,7 +331,7 @@ function startPythonBackend() {
         // Try actual API endpoint that frontend will use
         try {
           axios
-            .get('http://localhost:8000/api/system/overview', { timeout: 3000 })
+            .get('http://localhost:8001/api/system/overview', { timeout: 3000 })
             .then((response) => {
               log.info('✅ Backend is ready!');
               clearInterval(checkBackend);

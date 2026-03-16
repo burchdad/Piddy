@@ -33,7 +33,7 @@ class DashboardManager:
     DASHBOARD_LOG_FILE = Path("data/dashboard.log")
     
     DEFAULT_HOST = "localhost"
-    DEFAULT_PORT = 8000
+    DEFAULT_PORT = 8001
     
     @classmethod
     def ensure_data_dir(cls):
