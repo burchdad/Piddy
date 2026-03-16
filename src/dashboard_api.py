@@ -291,23 +291,9 @@ class MissionReplayData(BaseModel):
     timestamp: str
 
 
-# ============================================================================
-# MOCK DATA GENERATORS (Replace with real data from Piddy)
-# ============================================================================
-
-class MockDataGenerator:
-    """Generate mock data for dashboard"""
-    
-    @staticmethod
-    def get_system_status() -> SystemStatus:
-        """Get system status"""
-        return SystemStatus(
-            status="healthy",
-            uptime_seconds=86400,
-            version="2.0.0",
-            environment="production",
-            timestamp=datetime.utcnow().isoformat()
-        )
+# NOTE: MockDataGenerator class removed - all endpoints now use real data only
+# If data files don't exist, endpoints return empty arrays/0 values
+# This ensures the dashboard only shows real system state
     
     @staticmethod
     def get_agents() -> List[AgentStatus]:
@@ -1313,8 +1299,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Use mock data for now (replace with real data integration)
-generator = MockDataGenerator()
+# All endpoints use real data from JSON files only
+# No mock data fallback - ensures dashboard shows actual system state
 
 
 # ============================================================================
