@@ -25,6 +25,7 @@ import subprocess
 import signal
 import json
 import argparse
+import shutil
 import requests
 from pathlib import Path
 from datetime import datetime
@@ -119,13 +120,29 @@ def check_configuration():
         log_info("Run: python src/email_config.py --profile gmail to configure")
 
 def install_frontend_dependencies():
-    """Install npm dependencies for frontend"""
+    """Install npm dependencies for frontend - skip if already built or in desktop mode"""
     log_header("📦 Installing Frontend Dependencies")
     
     frontend_dir = Path("frontend")
     if not frontend_dir.exists():
         log_warning("Frontend directory not found - skipping")
         return False
+    
+    # Skip npm install if frontend is already built (dist folder exists)
+    dist_dir = frontend_dir / "dist"
+    if dist_dir.exists():
+        log_info("Frontend already built (dist/ exists) - skipping npm install")
+        return True
+    
+    # Skip npm install if we don't have access to npm in this environment
+    try:
+        import shutil
+        if not shutil.which("npm"):
+            log_warning("npm not found in PATH - skipping frontend build")
+            log_warning("Frontend dist must be built separately: cd frontend && npm install && npm run build")
+            return False
+    except:
+        pass
     
     try:
         log_info("Installing npm packages...")
