@@ -279,14 +279,18 @@ def health_check():
                 log_success(f"{service} - OK")
             else:
                 log_warning(f"{service} - HTTP {response.status_code}")
-        except requests.exceptions.ConnectionError:
+                if response.text:
+                    log_info(f"  Response: {response.text[:100]}")
+        except requests.exceptions.ConnectionError as e:
             log_error(f"{service} - Connection refused")
+            log_info(f"  Error: {str(e)}")
             all_healthy = False
         except requests.exceptions.Timeout:
             log_error(f"{service} - Timeout")
             all_healthy = False
         except Exception as e:
             log_warning(f"{service} - {str(e)}")
+
     
     return all_healthy
 
@@ -450,14 +454,16 @@ Examples:
     if args.desktop:
         log_header("🎯 Starting Piddy Desktop Application")
         log_info("Running from Electron desktop app")
+        log_info("Frontend already built and served via HTTP static server in Electron")
         
-        # Install frontend dependencies
+        # Install frontend dependencies (skip npm, frontend is built)
         install_frontend_dependencies()
         
-        # Start all services
+        # Start only backend services (Electron provides frontend)
         start_background_service(args.foreground)
         start_dashboard()
-        start_frontend()
+        
+        # Skip frontend dev server - Electron's HTTP server handles it
         
         # Health checks
         if not args.no_health_check:
