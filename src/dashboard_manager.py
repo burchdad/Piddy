@@ -103,8 +103,11 @@ class DashboardManager:
             "dashboard_api:app",
             "--host", host,
             "--port", str(port),
-            "--reload",  # Auto-reload on file changes
         ]
+        
+        # Only add --reload in foreground mode (development)
+        if foreground:
+            uvicorn_cmd.append("--reload")
         
         if foreground:
             try:
