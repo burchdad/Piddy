@@ -28,7 +28,7 @@ function App() {
 
   // Fetch system status on mount
   useEffect(() => {
-    const fetchStatus = async () => {
+    const fetchStatus = async (retry = 0, maxRetries = 3) => {
       try {
         setError(null);
         
@@ -55,6 +55,13 @@ function App() {
         });
         
         if (!response.ok) {
+          // On 400/500 errors, retry with backoff (backend might be starting)
+          if (retry < maxRetries && (response.status === 400 || response.status >= 500)) {
+            const delayMs = 1000 * (retry + 1); // 1s, 2s, 3s
+            console.log(`⏳ Backend returned ${response.status}, retrying in ${delayMs}ms... (${retry + 1}/${maxRetries})`);
+            setTimeout(() => fetchStatus(retry + 1, maxRetries), delayMs);
+            return;
+          }
           throw new Error(`HTTP ${response.status}`);
         }
         
@@ -78,7 +85,7 @@ function App() {
 
     fetchStatus();
     // Poll every 30 seconds
-    const interval = setInterval(fetchStatus, 30000);
+    const interval = setInterval(() => fetchStatus(), 30000);
     return () => clearInterval(interval);
   }, []);
 

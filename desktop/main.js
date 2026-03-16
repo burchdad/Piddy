@@ -323,16 +323,16 @@ function startPythonBackend() {
 
       // Wait for backend to be ready (check API endpoint)
       let attempts = 0;
-      const maxAttempts = 60; // 60 seconds (increased from 30)
+      const maxAttempts = 60; // 60 seconds
 
       const checkBackend = setInterval(() => {
         attempts++;
 
-        // Try simple health check with error handling
+        // Try actual API endpoint that frontend will use
         try {
           axios
-            .get('http://localhost:8000/health', { timeout: 3000 })
-            .then(() => {
+            .get('http://localhost:8000/api/system/overview', { timeout: 3000 })
+            .then((response) => {
               log.info('✅ Backend is ready!');
               clearInterval(checkBackend);
               backendReady = true;
@@ -344,9 +344,10 @@ function startPythonBackend() {
                 log.debug(`Backend check attempt ${attempts}: ${err.code || err.message}`);
               }
               
-              // If we get a 5xx error, backend is up but broken - still proceed
-              if (err.response && err.response.status >= 500) {
-                log.warn(`Backend has internal error but is running`);
+              // If backend is responding (any status code), that means it's running
+              // even if it's a 400/500 error, at least the process is listening
+              if (err.response) {
+                log.warn(`Backend responded with status ${err.response.status} - assuming it's running`);
                 clearInterval(checkBackend);
                 backendReady = true;
                 resolve();
