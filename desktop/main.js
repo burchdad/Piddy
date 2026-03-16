@@ -295,9 +295,14 @@ function startPythonBackend() {
         log.info(`✅ Found start_piddy.py`);
       }
 
+      // Set working directory to the parent directory containing start_piddy.py
+      // This ensures Python can import dashboard_api from src/ subdirectory
+      const scriptDir = path.dirname(scriptPath);
+      
       pythonProcess = spawn(pythonExe, [scriptPath, '--desktop'], {
         stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true
+        windowsHide: true,
+        cwd: scriptDir
       });
 
       pythonProcess.stdout.on('data', (data) => {
