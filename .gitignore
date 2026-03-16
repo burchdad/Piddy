@@ -67,6 +67,11 @@ package-lock.json
 .vscode/
 *.iml
 
+# Cache directories
+kb_content_cache/
+knowledge_base_cache/
+.cache/
+
 # OS
 .DS_Store
 Thumbs.db
