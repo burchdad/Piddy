@@ -211,19 +211,33 @@ def start_background_service(foreground=False):
     
     return True
 
-def start_dashboard():
+def start_dashboard(foreground=False):
     """Start dashboard API"""
     log_header("📊 Starting Dashboard API")
     
     try:
         log_info("Starting dashboard...")
-        subprocess.Popen(
-            ["python", "src/dashboard_manager.py", "--start"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        time.sleep(3)
-        log_success("Dashboard started")
+        
+        # Build command
+        cmd = ["python", "src/dashboard_manager.py"]
+        if foreground:
+            cmd.append("--start-fg")  # Use --start-fg for foreground
+        else:
+            cmd.append("--start")
+        
+        # If foreground mode, don't suppress output
+        if foreground:
+            subprocess.run(cmd, cwd=".")
+        else:
+            subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        
+        if not foreground:
+            time.sleep(3)
+            log_success("Dashboard started")
     except FileNotFoundError:
         log_error("dashboard_manager.py not found")
         return False
@@ -433,7 +447,7 @@ Examples:
     
     # Start specific components
     if args.dashboard_only:
-        start_dashboard()
+        start_dashboard(foreground=True)  # Run in foreground for --dashboard-only
         if not args.no_health_check:
             time.sleep(1)
             health_check()
@@ -461,7 +475,7 @@ Examples:
         
         # Start only backend services (Electron provides frontend)
         start_background_service(args.foreground)
-        start_dashboard()
+        start_dashboard(foreground=args.foreground)
         
         # Skip frontend dev server - Electron's HTTP server handles it
         
@@ -496,7 +510,7 @@ Examples:
     
     # Start services
     start_background_service(args.foreground)
-    start_dashboard()
+    start_dashboard(foreground=args.foreground)
     
     if not args.no_frontend:
         start_frontend()
