@@ -74,7 +74,7 @@ class DashboardManager:
         
         Args:
             host: Server host (default: localhost)
-            port: Server port (default: 8000)
+            port: Server port (default: 8001)
             foreground: Run in foreground instead of daemon
             open_browser: Auto-open dashboard in browser
         """
@@ -271,7 +271,7 @@ Commands:
 
 Options:
   --host HOST          Server host (default: localhost)
-  --port PORT          Server port (default: 8000)
+  --port PORT          Server port (default: 8001)
 
 Examples:
   python src/dashboard_manager.py --start           # Start background
@@ -314,7 +314,7 @@ def main():
     parser.add_argument("--open", action="store_true", help="Open in browser")
     parser.add_argument("--restart", action="store_true", help="Restart dashboard")
     parser.add_argument("--host", default="localhost", help="Server host")
-    parser.add_argument("--port", type=int, default=8000, help="Server port")
+    parser.add_argument("--port", type=int, default=8001, help="Server port")
     parser.add_argument("--help", action="store_true", help="Show help")
     
     args = parser.parse_args()
