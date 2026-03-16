@@ -21,8 +21,26 @@ try {
 }
 
 // Setup logging to both console and file
-const logFilePath = path.join(app.getPath('userData'), 'piddy_main.log');
+// Create a logs directory relative to the app's install location for easy debugging
+const homeDir = process.env.USERPROFILE || process.env.HOME || process.env.HOMEPATH;
+const logsDir = path.join(homeDir, '.piddy_logs');
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+} catch (err) {
+  console.log('Could not create logs directory:', err.message);
+}
+const logFilePath = path.join(logsDir, 'piddy_main.log');
 const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+
+// Log startup info immediately
+console.log(`\n${'='.repeat(80)}`);
+console.log(`[STARTUP] Piddy App Starting - ${new Date().toISOString()}`);
+console.log(`[STARTUP] Logs: ${logFilePath}`);
+console.log(`[STARTUP] Platform: ${process.platform}`);
+console.log(`[STARTUP] App Path: ${__dirname}`);
+console.log(`${'='.repeat(80)}\n`);
 
 // Simple logging wrapper (avoid electron-log ES Module issues)
 const log = {
