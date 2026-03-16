@@ -20,12 +20,28 @@ try {
   fixPath = () => {}; // Fallback no-op function
 }
 
+// Setup logging to both console and file
+const logFilePath = path.join(app.getPath('userData'), 'piddy_main.log');
+const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+
 // Simple logging wrapper (avoid electron-log ES Module issues)
 const log = {
-  info: (msg) => console.log('[INFO]', msg),
-  error: (msg) => console.error('[ERROR]', msg),
-  warn: (msg) => console.warn('[WARN]', msg),
-  debug: (msg) => console.log('[DEBUG]', msg),
+  info: (msg) => {
+    console.log('[INFO]', msg);
+    logStream.write(`[INFO] ${msg}\n`);
+  },
+  error: (msg) => {
+    console.error('[ERROR]', msg);
+    logStream.write(`[ERROR] ${msg}\n`);
+  },
+  warn: (msg) => {
+    console.warn('[WARN]', msg);
+    logStream.write(`[WARN] ${msg}\n`);
+  },
+  debug: (msg) => {
+    console.log('[DEBUG]', msg);
+    logStream.write(`[DEBUG] ${msg}\n`);
+  },
 };
 
 // Fix PATH for macOS to find Python
@@ -297,6 +313,8 @@ function findPython() {
       path.join(process.env.APPDATA || '', 'Python', 'Python311', 'python.exe'),
     ];
     
+    log.debug(`Searching Windows paths: ${windowsPaths.join(', ')}`);
+    
     for (const pythonPath of windowsPaths) {
       try {
         if (fs.existsSync(pythonPath)) {
@@ -327,6 +345,7 @@ function findPython() {
   }
   
   log.error('❌ Python executable not found!');
+  log.error(`   PATH: ${process.env.PATH}`);
   return null;
 }
 
@@ -408,56 +427,6 @@ function startPythonBackend() {
           mainWindow.webContents.send('backend-stopped', { code, signal });
         }
       });
-
-      // Wait for backend to be ready (check API endpoint)
-      let attempts = 0;
-      const maxAttempts = 60; // 60 seconds
-
-      const checkBackend = setInterval(() => {
-        attempts++;
-
-        // Try actual API endpoint that frontend will use
-        try {
-          axios
-            .get('http://localhost:8001/api/system/overview', { timeout: 3000 })
-            .then((response) => {
-              log.info('✅ Backend is ready!');
-              clearInterval(checkBackend);
-              backendReady = true;
-              resolve();
-            })
-            .catch((err) => {
-              // Log errors briefly
-              if (attempts % 10 === 0) {
-                log.debug(`Backend check attempt ${attempts}: ${err.code || err.message}`);
-              }
-              
-              // If backend is responding (any status code), that means it's running
-              // even if it's a 400/500 error, at least the process is listening
-              if (err.response) {
-                log.warn(`Backend responded with status ${err.response.status} - assuming it's running`);
-                clearInterval(checkBackend);
-                backendReady = true;
-                resolve();
-              }
-              
-              // Final attempt - give up and try anyway
-              if (attempts >= maxAttempts) {
-                clearInterval(checkBackend);
-                log.warn(`Backend health check gave up after ${maxAttempts}s, but proceeding anyway`);
-                backendReady = true; // Assume it's running anyway
-                resolve();
-              }
-            });
-        } catch (err) {
-          if (attempts >= maxAttempts) {
-            clearInterval(checkBackend);
-            log.warn(`Backend error after ${maxAttempts}s attempts, proceeding anyway`);
-            backendReady = true;
-            resolve();
-          }
-        }
-      }, 1000);
     } catch (err) {
       log.error(`Error spawning backend: ${err}`);
       reject(err);
@@ -465,9 +434,6 @@ function startPythonBackend() {
   });
 }
 
-/**
- * IPC Handlers
- */
 ipcMain.handle('backend-status', async () => {
   return { ready: backendReady };
 });
@@ -479,6 +445,11 @@ ipcMain.handle('get-version', async () => {
 ipcMain.handle('open-external', async (event, url) => {
   const { shell } = require('electron');
   shell.openExternal(url);
+});
+
+ipcMain.handle('get-logs', async () => {
+  // Return the main process log file path for debugging
+  return { logPath: logFilePath };
 });
 
 /**
