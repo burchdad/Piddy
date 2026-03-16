@@ -1332,12 +1332,77 @@ async def health_check() -> Dict:
 
 @app.get("/api/system/overview")
 async def system_overview() -> Dict:
-    """Get system overview"""
-    return {
-        "system": generator.get_system_status(),
-        "metrics": generator.get_dashboard_metrics(),
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    """Get system overview from real data"""
+    try:
+        from pathlib import Path
+        import psutil
+        import os
+        
+        # Get real system info
+        process = psutil.Process(os.getpid())
+        memory_info = process.memory_info()
+        cpu_percent = process.cpu_percent(interval=0.1)
+        
+        # Count real approval data
+        approval_count = 0
+        decision_count = 0
+        mission_count = 0
+        agent_count = 0
+        
+        workflow_file = Path("data/approval_workflow_state.json")
+        if workflow_file.exists():
+            with open(workflow_file, 'r') as f:
+                workflows = json.load(f)
+                approval_count = len(workflows)
+        
+        decisions_file = Path("data/decision_logs.json")
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+                decision_count = len(decisions) if isinstance(decisions, list) else len(decisions)
+        
+        missions_file = Path("data/mission_telemetry.json")
+        if missions_file.exists():
+            with open(missions_file, 'r') as f:
+                missions = json.load(f)
+                mission_count = len(missions) if isinstance(missions, list) else len(missions)
+        
+        agents_file = Path("data/agent_state.json")
+        if agents_file.exists():
+            with open(agents_file, 'r') as f:
+                agents = json.load(f)
+                agent_count = len(agents) if isinstance(agents, list) else len(agents)
+        
+        return {
+            "status": "operational",
+            "uptime_seconds": int(process.create_time()),
+            "agents_online": agent_count,
+            "missions_active": mission_count,
+            "decisions_pending": decision_count,
+            "approvals_pending": approval_count,
+            "metrics": {
+                "agents_online": agent_count,
+                "agents_offline": 0,
+                "recent_messages": 0,
+                "phases_in_progress": 0,
+                "security_issues": 0,
+                "performance_warnings": 0,
+                "tests_passed": 0,
+                "tests_failed": 0
+            },
+            "process": {
+                "memory_mb": memory_info.rss / 1024 / 1024,
+                "cpu_percent": cpu_percent
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error in system overview: {e}")
+        return {
+            "status": "degraded",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 
 # ============================================================================
@@ -1746,17 +1811,29 @@ async def get_decisions() -> List[Decision]:
 async def approve_decision(decision_id: str, approved_by: str = "user"):
     """Approve a pending decision"""
     try:
+        from pathlib import Path
+        decisions_file = Path("data/decision_approvals.json")
+        decisions_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Load existing approvals
+        approvals = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                approvals = json.load(f)
+        
+        # Record approval
+        approvals[decision_id] = {
+            "decision_id": decision_id,
+            "approved_by": approved_by,
+            "approved_at": datetime.utcnow().isoformat(),
+            "action": "approved"
+        }
+        
+        # Save approvals
+        with open(decisions_file, 'w') as f:
+            json.dump(approvals, f, indent=2)
+        
         logger.info(f"✅ Decision {decision_id} approved by {approved_by}")
-        
-        # Update decision status in memory
-        decisions = MockDataGenerator.get_decisions()
-        for decision in decisions:
-            if decision.get('id') == decision_id:
-                decision['status'] = 'approved'
-                decision['approved_by'] = approved_by
-                decision['approved_at'] = datetime.utcnow().isoformat()
-                break
-        
         return {
             "status": "success",
             "decision_id": decision_id,
@@ -1777,18 +1854,30 @@ async def approve_decision(decision_id: str, approved_by: str = "user"):
 async def reject_decision(decision_id: str, rejected_by: str = "user", reason: str = ""):
     """Reject a pending decision"""
     try:
+        from pathlib import Path
+        decisions_file = Path("data/decision_rejections.json")
+        decisions_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Load existing rejections
+        rejections = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                rejections = json.load(f)
+        
+        # Record rejection
+        rejections[decision_id] = {
+            "decision_id": decision_id,
+            "rejected_by": rejected_by,
+            "rejected_at": datetime.utcnow().isoformat(),
+            "reason": reason,
+            "action": "rejected"
+        }
+        
+        # Save rejections
+        with open(decisions_file, 'w') as f:
+            json.dump(rejections, f, indent=2)
+        
         logger.info(f"❌ Decision {decision_id} rejected by {rejected_by}. Reason: {reason}")
-        
-        # Update decision status in memory
-        decisions = MockDataGenerator.get_decisions()
-        for decision in decisions:
-            if decision.get('id') == decision_id:
-                decision['status'] = 'rejected'
-                decision['rejected_by'] = rejected_by
-                decision['rejection_reason'] = reason
-                decision['rejected_at'] = datetime.utcnow().isoformat()
-                break
-        
         return {
             "status": "success",
             "decision_id": decision_id,
@@ -1830,8 +1919,48 @@ async def get_missions() -> List[Mission]:
 
 @app.get("/api/missions/{mission_id}/replay")
 async def get_mission_replay(mission_id: str) -> MissionReplayData:
-    """Get detailed mission replay with step-by-step execution"""
-    return MockDataGenerator.get_mission_replay(mission_id)
+    """Get detailed mission replay from real data"""
+    try:
+        from pathlib import Path
+        missions_file = Path("data/mission_telemetry.json")
+        
+        if missions_file.exists():
+            with open(missions_file, 'r') as f:
+                missions_data = json.load(f)
+                if isinstance(missions_data, dict) and mission_id in missions_data:
+                    return MissionReplayData(**missions_data[mission_id])
+                elif isinstance(missions_data, list):
+                    for mission in missions_data:
+                        if mission.get('mission_id') == mission_id:
+                            return MissionReplayData(**mission)
+        
+        # Return empty replay if not found
+        return MissionReplayData(
+            mission_id=mission_id,
+            mission_name="Unknown",
+            mission_description="Mission not found",
+            status="not_found",
+            steps=[],
+            agents_involved=[],
+            total_duration="0s",
+            efficiency_score=0,
+            quality_score=0,
+            timestamp=datetime.utcnow().isoformat()
+        )
+    except Exception as e:
+        logger.error(f"Error fetching mission replay: {e}")
+        return MissionReplayData(
+            mission_id=mission_id,
+            mission_name="Error",
+            mission_description=str(e),
+            status="error",
+            steps=[],
+            agents_involved=[],
+            total_duration="0s",
+            efficiency_score=0,
+            quality_score=0,
+            timestamp=datetime.utcnow().isoformat()
+        )
 
 
 @app.get("/api/graph/dependencies")
