@@ -343,6 +343,10 @@ async def system_overview() -> Dict:
         memory_info = process.memory_info()
         cpu_percent = process.cpu_percent(interval=0.1)
         
+        # DEBUG: Log current working directory
+        cwd = os.getcwd()
+        logger.info(f"[DEBUG] Current working directory: {cwd}")
+        
         # Count real approval data
         approval_count = 0
         decision_count = 0
@@ -350,6 +354,7 @@ async def system_overview() -> Dict:
         agent_count = 0
         
         workflow_file = Path("data/approval_workflow_state.json")
+        logger.info(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
         if workflow_file.exists():
             with open(workflow_file, 'r') as f:
                 workflows = json.load(f)
@@ -372,6 +377,8 @@ async def system_overview() -> Dict:
             with open(agents_file, 'r') as f:
                 agents = json.load(f)
                 agent_count = len(agents) if isinstance(agents, list) else len(agents)
+        
+        logger.info(f"[DEBUG] Final data counts - agents: {agent_count}, decisions: {decision_count}, missions: {mission_count}, approvals: {approval_count}")
         
         return {
             "status": "operational",
