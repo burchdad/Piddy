@@ -28,7 +28,7 @@ function App() {
 
   // Fetch system status on mount
   useEffect(() => {
-    const fetchStatus = async (retry = 0, maxRetries = 3) => {
+    const fetchStatus = async (retry = 0, maxRetries = 5) => {
       try {
         setError(null);
         
@@ -55,13 +55,6 @@ function App() {
         });
         
         if (!response.ok) {
-          // On 400/500 errors, retry with backoff (backend might be starting)
-          if (retry < maxRetries && (response.status === 400 || response.status >= 500)) {
-            const delayMs = 1000 * (retry + 1); // 1s, 2s, 3s
-            console.log(`⏳ Backend returned ${response.status}, retrying in ${delayMs}ms... (${retry + 1}/${maxRetries})`);
-            setTimeout(() => fetchStatus(retry + 1, maxRetries), delayMs);
-            return;
-          }
           throw new Error(`HTTP ${response.status}`);
         }
         
@@ -75,9 +68,18 @@ function App() {
         });
         setLoading(false);
       } catch (error) {
-        console.error('❌ Failed to fetch system status:', error);
+        console.error(`❌ Attempt ${retry + 1}/${maxRetries + 1} - Failed to fetch system status:`, error.message);
+        
+        // Retry if we haven't exceeded maxRetries (for connection errors and server errors)
+        if (retry < maxRetries) {
+          const delayMs = 1000 * (retry + 1); // 1s, 2s, 3s, 4s, 5s
+          console.log(`⏳ Retrying in ${delayMs}ms...`);
+          setTimeout(() => fetchStatus(retry + 1, maxRetries), delayMs);
+          return;
+        }
+        
+        // All retries exhausted - show error but still display page
         setError(error.message);
-        // Still show the page even if fetch fails
         setSystemStatus({ is_healthy: false, status: 'offline' });
         setLoading(false);
       }
