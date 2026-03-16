@@ -1,0 +1,58 @@
+	
+		
+			id="infoq-nl"
+		
+
+	
+	
+>
+	<h2 class="heading">
+		<strong>The InfoQ</strong> Newsletter
+	</h2>
+	<p class="intro">A round-up of last week&#x2019;s content on InfoQ sent out every Tuesday. Join a community of over 250,000 senior developers.
+		
+			<a target="_blank" href="https://assets.infoq.com/newsletter/regular/en/newsletter_sample/newsletter_sample.html">View an example</a>
+		
+		
+	</p>
+	<ul class="newsletter__features">
+		<li>Get a quick overview of content published on a variety of innovator and early adopter technologies</li>
+		<li>Learn what you don&#x2019;t know that you don&#x2019;t know</li>
+		<li>Stay up to date with the latest information from the topics you are interested in</li>
+	</ul>
+	<div class="newsletter__subscribe">
+		<form class="form gdpr" name="footerNewsletterForm" id="footerNewsletterForm" action="#" onsubmit="footerNewsletter.saveSubscription(); return false;">
+			<div class="field newsletter__mail input__text input__no-label input__medium email">
+				<label for="email-newsletter-infoq" class="label field__label">Enter your e-mail address</label>
+				<input id="email-newsletter-infoq" name="footerNewsletterEmail" placeholder="Enter your e-mail address" class="input field__input" type="email"/>
+				<input type="text" name="emailH" id="input_email_h" aria-required="false" style="display:none !important" tabindex="-1" autocomplete="off"/>
+				<input type="hidden" id="fnt" name="fnt" value="MyMIvH2jilXFKHZR"/>
+				<input type="hidden" id="footerNewsletterType" name="footerNewsletterType" value="regular"/>
+				<input type="hidden" id="cmpi" name="cmpi" value="1"/>
+			</div>
+			<div class="hidden">
+				<span class="input__select field country">
+					<label for="input-simple-newsletter-country" class="label field__label">Select your country</label>
+					<select id="input-simple-newsletter-country" class="select field__input">
+						<option value="" class="select__option">Select a country</option>
+					</select>
+					<p class="input__message field__desc"></p>
+				</span>
+				<span class="input__checkbox field hidden">
+					<input type="checkbox" id="gdpr-consent-simple-nl">
+					<label for="gdpr-consent-simple-nl" class="label"><span>I consent to InfoQ.com handling my data as explained in this <a href="https://www.infoq.com/privacy-notice">Privacy Notice</a>.</span></label>
+				</span>
+			</div>
+			<input type="submit" role="button" value="Subscribe" class="button button__medium button__red" onclick="return footerNewsletter.validateEmail('Invalid email address');"/>
+		</form>
+		<p class="meta">
+			<a href="/privacy-notice/" target="_blank">We protect your privacy.</a>
+		</p>
+		
+		<span class="success" style="display:none;" id="footerNewsletterMessage"></span>
+	</div>
+	<script type="text/javascript">
+		var footerNewsletter = new Newsletter('Enter your e-mail address',
+				'email-newsletter-infoq', 'footerNewsletterType','footerNewsletterMessage', 'fnt', 'input_email_h', 'input-simple-newsletter-country', 'cmpi','footer_except_homepage');
+	</script>
+</div>

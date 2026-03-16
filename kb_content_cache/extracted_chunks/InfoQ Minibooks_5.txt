@@ -1,0 +1,37 @@
+        <title>
+                
+                Guides >
+                
+                
+                    Page #1
+                
+             - InfoQ</title>
+        <link rel="canonical" href="https://www.infoq.com/minibooks/"/>
+        <link rel="alternate" href="https://www.infoq.com/minibooks/" hreflang="en"/>
+        
+
+
+
+
+
+    
+    
+        
+            
+            <link rel="alternate" href="https://www.infoq.com/jp/minibooks/" hreflang="ja" />
+        
+    
+        
+            
+            <link rel="alternate" href="https://www.infoq.com/br/minibooks/" hreflang="pt" />
+        
+    
+        
+            
+            <link rel="alternate" href="https://www.infoq.com/fr/minibooks/" hreflang="fr" />
+        
+    
+        
+    
+    
+    <link rel="alternate" href="https://www.infoq.com/minibooks/" hreflang="x-default" />

@@ -1,0 +1,23 @@
+    <!-- Custom Font -->
+    <!-- Declaration and definition of a custom font named 'Relative Faux' -->
+    <style>
+        @font-face {
+            font-family: 'Relative Faux';
+            font-style: normal;
+            font-weight: 400;
+            src: url("https://cdnintech.com/web/fonts/v1.1/relative-faux.eot");
+            src: local("Relative Faux"),
+            local("Relative-Faux"),
+            url("https://cdnintech.com/web/fonts/v1.1/relative-faux.eot#iefix") format("embedded-opentype"),
+            url("https://cdnintech.com/web/fonts/v1.1/relative-faux.woff") format("woff"),
+            url("https://cdnintech.com/web/fonts/v1.1/relative-faux.otf") format("otf"),
+            url("https://cdnintech.com/web/fonts/v1.1/relative-faux.woff2") format("woff2"),
+            url("https://cdnintech.com/web/fonts/v1.1/relative-faux.ttf") format("ttf");
+        }
+
+        .cc-window {
+            font-family: 'Relative Faux', Helvetica;
+            /*border: 0.2em solid rgba(0,0,0,.1);*/
+            border-top: 0.2em solid rgba(0, 0, 0, .1);
+            font-size: 15px;
+        }

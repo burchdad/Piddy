@@ -1,0 +1,24 @@
+                        Architecture Through Different Lenses
+                    </a>
+
+                </h3>
+                <p class="card__excerpt">
+                    How can we architect software for a greener future? How can a company ensure highly reliable online stateful systems?  Software architecture can be viewed from many perspectives, such as technical, business, and organizational. This emag will explore the different lenses and discuss the implications of each perspective for software design and development.
+                </p>
+                <div class="card__footer">
+                    <div class="card__details">
+                        <div class="card__authors authors">
+                            
+
+
+
+
+
+
+    
+        
+    
+    <span>
+        
+        <a href="/profile/InfoQ/" data-id="author-InfoQ">InfoQ</a>
+    </span>

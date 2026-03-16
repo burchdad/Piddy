@@ -45,18 +45,38 @@ let staticServerReady = false;
 const isDevelopment = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV_LAUNCH === 'true';
 
 /**
+ * Resolve file paths correctly for both dev and packaged modes
+ * In dev: files are relative to ../
+ * In packaged: files are in the same directory as the executable
+ */
+function getResourcePath(relativePath) {
+  if (isDevelopment) {
+    // In development, files are outside the app directory
+    return path.join(__dirname, '..', relativePath);
+  } else {
+    // In packaged app with extraFiles, they're copied to the app root
+    // __dirname points to /resources/app, so use app.getAppPath()
+    return path.join(app.getAppPath(), relativePath);
+  }
+}
+
+/**
  * Start a simple static file server for the frontend
  * Avoids file:// CORS issues in Electron
  */
 function startStaticServer() {
   return new Promise((resolve, reject) => {
-    const distPath = path.join(__dirname, '../frontend/dist');
+    const distPath = getResourcePath('frontend/dist');
+    log.info(`Attempting to serve static files from: ${distPath}`);
     
     if (!fs.existsSync(distPath)) {
-      log.warn('Frontend dist directory not found, UI may not load');
+      log.warn(`Frontend dist directory not found at ${distPath}, UI may not load`);
       resolve(null);
       return;
     }
+    
+    log.info(`✅ Found frontend dist directory`);
+
     
     const server = http.createServer((req, res) => {
       // Remove query string and decode URL
@@ -266,7 +286,14 @@ function startPythonBackend() {
     try {
       // Determine python executable
       const pythonExe = process.platform === 'win32' ? 'python' : 'python3';
-      const scriptPath = path.join(__dirname, '../start_piddy.py');
+      const scriptPath = getResourcePath('start_piddy.py');
+      log.info(`Python script path: ${scriptPath}`);
+      
+      if (!fs.existsSync(scriptPath)) {
+        log.warn(`⚠️  start_piddy.py not found at ${scriptPath}`);
+      } else {
+        log.info(`✅ Found start_piddy.py`);
+      }
 
       pythonProcess = spawn(pythonExe, [scriptPath, '--desktop'], {
         stdio: ['ignore', 'pipe', 'pipe'],

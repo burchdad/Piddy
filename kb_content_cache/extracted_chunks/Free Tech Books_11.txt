@@ -1,0 +1,32 @@
+	<li class="list-group-item">
+		Apica <a href="https://www.apicasystem.com/load-testing/">Load Testing</a> Services
+	</li>
+
+	<li class="list-group-item">
+		<a href="https://www.conversational.com/virtual-assistant-services-a-simple-and-affordable-solution/">virtual assistant</a>
+	</li>
+
+	<li class="list-group-item">
+		USA Department store coupons from <a href="https://www.couponsmonk.com/category/department-stores">CouponsMonk.com</a>
+	</li>
+-->	
+
+</ul>
+
+			<!-- 
+<div class="list-group">
+    <div class="list-group-item active">Sponsors</div>
+</div>
+ -->
+
+<div class="list-group">
+    <div class="list-group-item active">Sponsors</div>
+    <ul class="list-group">
+<!--
+        <li class="list-group-item">
+            <a href="https://webtrafficgeeks.org/website-traffic/site-traffic/">WEB TRAFFIC GEEKS</a>
+        </li>
+
+        <li class="list-group-item">
+            <a href="https://www.buywebtrafficexperts.com/product/order-website-traffic/">WEB TRAFFIC EXPERTS</a>
+        </li>

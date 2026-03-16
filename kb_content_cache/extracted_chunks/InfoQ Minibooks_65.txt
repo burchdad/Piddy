@@ -1,0 +1,26 @@
+            
+        </div>
+    </li>
+
+    
+        
+    
+    <li  data-id="efcb3aed-5e3b-48ab-989d-a59163906ead" data-path="/minibooks/architecture-lenses-2025">
+        <div class="card__content">
+            <div class="card__data">
+                <div class="card__topics topics">
+                    <span>
+                        
+                        <a href="/architecture-design/" data-id="6816">Architecture &amp; Design</a>
+                    </span>
+                </div>
+                <h3 class="card__title">
+                    
+                    <a
+	
+	href="/minibooks/architecture-lenses-2025/"
+
+ title="Architecture Through Different Lenses 2025">
+
+                        Architecture Through Different Lenses 2025
+                    </a>

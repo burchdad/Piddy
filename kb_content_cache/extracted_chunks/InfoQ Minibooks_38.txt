@@ -1,0 +1,25 @@
+<div class="heading__container actions">
+    <div class="actions__left">
+        <h3 class="heading section__heading">Featured in  AI, ML &amp; Data Engineering</h3>
+    </div>
+</div>
+<ul data-size="large" data-horizontal="true" data-tax="" taxonomy="articles" class="cards no-style">
+    <li>
+        <div class="card__content">
+            <div class="card__data">
+                <h4 class="card__title">
+                    <a href="/presentations/ai-virtual-care">From Symptom Checkers to Smart Chatbots: The Role of AI in Virtual Care</a>
+                </h4>
+                <p class="card__excerpt">Andre Ribeiro discusses the architecture of Healthily’s AI symptom checker. He explains how Bayesian inference and RAG models bridge the gap between medical insights and confident patient action.</p>
+                <div class="card__footer"></div>
+            </div>
+            
+                <a href="/presentations/ai-virtual-care" class="card__header">
+                    <img loading="lazy" alt="From Symptom Checkers to Smart Chatbots: The Role of AI in Virtual Care" src="https://imgopt.infoq.com/fit-in/100x100/filters:quality(80)/presentations/ai-virtual-care/en/smallimage/andre-riberio-thumbnail-1772012325922.jpeg" class="card__image"/>
+                </a>
+            
+        </div>
+    </li>
+</ul>
+
+    

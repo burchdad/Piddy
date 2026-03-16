@@ -1,0 +1,26 @@
+                    <img loading="lazy" src="https://imgopt.infoq.com/fit-in/256x364/filters:quality(80)/minibooks/ai-assisted-development-2025/en/cover/image-cover-eMag-119-AI-Assisted-Development-Real-World-Patterns-Pitfalls-and-Production-Readiness-1769498675558.jpg" class="card__image"/>
+                </a>
+
+            
+        </div>
+    </li>
+
+    
+        
+    
+    <li  data-id="03567600-f26c-49e7-b6aa-78d72dd43689" data-path="/minibooks/architectures-2025">
+        <div class="card__content">
+            <div class="card__data">
+                <div class="card__topics topics">
+                    <span>
+                        
+                        <a href="/architecture-design/" data-id="6816">Architecture &amp; Design</a>
+                    </span>
+                </div>
+                <h3 class="card__title">
+                    
+                    <a
+	
+	href="/minibooks/architectures-2025/"
+
+ title="Architectures You’ve Always Wondered About 2025">

@@ -1,0 +1,24 @@
+                        Improving Developer Experience with Platform Engineering
+                    </a>
+
+                </h3>
+                <p class="card__excerpt">
+                    Platform engineering has become a hot topic over the last several years. The need to deliver software with speed, safety, and efficiency has driven the rise of platforms designed “as a product” with the internal customer, the developer.  In this InfoQ emag, we bring together insights from platform builders, practitioners, and developer experience leaders at the forefront of these topics.
+                </p>
+                <div class="card__footer">
+                    <div class="card__details">
+                        <div class="card__authors authors">
+                            
+
+
+
+
+
+
+    
+        
+    
+    <span>
+        
+        <a href="/profile/InfoQ/" data-id="author-InfoQ">InfoQ</a>
+    </span>

@@ -1,0 +1,19 @@
+        @font-face {
+            font-family: 'GT Super Display';
+            src: url('gt-super/GT-Super-Display-Light-Italic.woff2') format('woff2'),
+                 url('gt-super/GT-Super-Display-Light-Italic.woff') format('woff'),
+                 url('gt-super/GT-Super-Display-Light-Italic.ttf') format('truetype'),
+                 url('gt-super/GT-Super-Display-Light-Italic.eot') format('embedded-opentype');
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'GT Super Display';
+            src: url('gt-super/GT-Super-Display-Bold-Italic.woff2') format('woff2'),
+                 url('gt-super/GT-Super-Display-Bold-Italic.woff') format('woff'),
+                 url('gt-super/GT-Super-Display-Bold-Italic.ttf') format('truetype'),
+                 url('gt-super/GT-Super-Display-Bold-Italic.eot') format('embedded-opentype');
+            font-weight: 700;
+            font-style: italic;
+        }

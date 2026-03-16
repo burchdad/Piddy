@@ -1,0 +1,4 @@
+.adblcr .textsshow p{margin:0;line-height:1.7em;font-size:0.9rem;color:#08102b}
+
+</style>
+<script>/*<![CDATA[*/ /* Anti Ad-Blocker Script by techedubyte.com */ var lazyAnti=!1;window.addEventListener("scroll",function(){(0!=document.documentElement.scrollTop&&!1===lazyAnti||0!=document.body.scrollTop&&!1===lazyAnti)&&(!function(){var superadblocker=document.querySelector("#superadblocker");var e=document.createElement("script");e.type="text/javascript",e.async=!0,e.src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";e.onerror=function(){if(superadblocker!=null){superadblocker.classList.remove("hidden");window.lazyAnti=!0}};var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(e,a)}(),lazyAnti=!0)},!0); /*]]>*/</script>

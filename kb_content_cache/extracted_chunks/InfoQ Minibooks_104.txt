@@ -1,0 +1,16 @@
+<a rel="noreferrer noopener" href="http://qconferences.com/" target="_blank" title="QCon Conferences">QCon Conferences</a>
+<a rel="noreferrer noopener" href="https://events.infoq.com/" target="_blank">Events</a>
+
+    <a href="/write-for-infoq/" title="Write for InfoQ">Write for InfoQ</a>
+    <a href="/infoq-editors/" title="InfoQ Editors">InfoQ Editors</a>
+    <a href="/about-infoq/" title="About InfoQ">About InfoQ</a>
+    <a href="https://c4media.com/" target="_blank" title="About C4Media">About C4Media</a>
+    
+        <a rel="noreferrer noopener" href="https://get.infoq.com/infoq-mediakit/" title="Media Kit" target="_blank">
+            Media Kit
+        </a>
+        <a href="https://devmarketing.c4media.com/?utm_source=infoq" title="InfoQ Developer Marketing Blog" target="_blank">InfoQ Developer Marketing Blog</a>
+    
+    <a rel="noreferrer noopener" href="https://c4media.com/diversity" title="Diversity" target="_blank">Diversity</a>
+
+				  </div>

@@ -1,0 +1,61 @@
+                            </ul>
+                            
+
+
+
+
+
+
+<div class="actions items__navigator">
+    <div class="actions__left">
+        
+            <a href="#" class="items__newer button button__arrow arrow__left button__disabled" onclick="return false;">Newer Guides</a>
+        
+        
+    </div>
+    <div class="actions__right">
+        
+            
+            
+            <a
+	
+	href="/minibooks/12/"
+
+ class="items__older button button__arrow arrow__right">
+
+                Older Guides
+            </a>
+
+        
+        
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    
+                </main>
+
+            
+                
+
+
+
+
+
+<footer class="footer ">
+	
+		
+		<section data-nosnippet class="section container">
+			<div class="container__inner">
+				
+					
+					
+					
+					
+					
+					
+				

@@ -1,0 +1,13 @@
+    
+
+<a href="/devops/" class="button__more button button__large button__arrow arrow__right">All in  devops</a>
+
+                </div>
+            </div>
+        </div>
+        <div class="li-nav">
+            
+            <a rel="noreferrer noopener" href="https://events.infoq.com/" class="nav__category" title="Events" target="_blank">Events</a>
+        </div>
+    </nav>
+</div>

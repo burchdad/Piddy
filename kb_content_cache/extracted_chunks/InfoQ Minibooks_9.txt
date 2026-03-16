@@ -1,0 +1,16 @@
+        <link rel="stylesheet" type="text/css" href="https://cdn.infoq.com/statics_s1_20260311083832-1/styles/fonts/font.css"/>
+
+        <link rel="shortcut icon" href="https://cdn.infoq.com/statics_s1_20260311083832-1/favicon.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="https://cdn.infoq.com/statics_s1_20260311083832-1/apple-touch-icon.png"/>
+
+        <script type="text/javascript">
+        	var device='desktop';
+            var InfoQConstants = {};
+            InfoQConstants.language = 'en';
+            InfoQConstants.countryCode = '';
+            
+            InfoQConstants.pageUrl = (typeof window.location != 'undefined' && window.location && typeof window.location.href != 'undefined' && window.location.href) ? window.location.href : "URL_UNAVAILABLE";
+            InfoQConstants.cet='MyMIvH2jilXFKHZR';
+            InfoQConstants.userDetectedCountryCode = '';
+            InfoQConstants.bpadb = 'u4D2zf7K1nUGgQVgHpYL';
+        </script>

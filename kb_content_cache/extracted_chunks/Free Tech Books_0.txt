@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  	<title>Database of Free Online Computer Science and Programming Books, Textbooks, and Lecture Notes</title>
+	<meta name="description" lang="en" content="This site lists free online computer science, engineering and programming books, textbooks and lecture notes, all of which are legally and freely available.">
+	<meta property="og:url"            content="https://www.freetechbooks.com" />
+	<meta property="og:type"           content="frontpage" />
+	<meta property="og:title"          content="Free / Open Acess Online Computer Science Books, Textbooks, and Lecture Notes" />
+	<meta property="og:description"    content="This site lists free online computer science, engineering and programming books, textbooks and lecture notes, all of which are legally and freely available." />
+	<meta property="og:image"          content="https://www.freetechbooks.com/uploads/logo_left.gif" />
+	<meta name="google-site-verification" content="cphkcR_kP71kZTwhPDdW1OzPGX4i229uRrSmSjmZ92s" />
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- <link rel="alternate" type="application/rss+xml" href="https://www.freetechbooks.com/rss" title="RSS Feed FreeTechBooks"> -->
+  <link rel="alternate" lang="en" type="application/rss+xml" href="https://www.freetechbooks.com/rss" title="RSS Feed FreeTechBooks">
+
+  <!-- Latest compiled and minified CSS -->
+  <!-- Bootstrap: sandstone, spacelab, united --> 
+  <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.yeti.css">
+  
+  <!-- Optional theme -->
+  <!-- <link rel="stylesheet" type="text/css" href="/css/bootstrap-theme.min.css"> -->
+  <!-- Submenu Bootstrap -->
+  <!-- <link rel="stylesheet" href="/css/bootstrap-submenu.min.css">   -->
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/bower_components/font-awesome/css/font-awesome.min.css">
+  <!-- Custom Bootstrap -->
+  <link rel="stylesheet" type="text/css" href="/css/custom.css">
+  <!-- Custom BBCode CSS -->
+  <link rel="stylesheet" type="text/css" href="/css/bbcode.css">  
+  <!-- Custom Sliding Menu CSS -->
+  <link rel="stylesheet" type="text/css" href="/css/seqola.css">  
+
+  <style type="text/css">
+	.navbar {
+		margin-bottom: 0px;
+	}
+</style>
+
+  <!-- Latest compiled and minified JS -->
+  <!-- respond.js -->
+  <script type="text/javascript" src="/js/respond.min.js"></script>
+
+  <!-- Latest compiled and minified JavaScript -->
+  <!-- jQuery -->
+  <script type="text/javascript" src="/bower_components/jquery/dist/jquery.min.js"></script>
+  <!-- Bootstrap -->
+  <script type="text/javascript" src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+  <!-- Submenu Bootstrap -->
+  <script type="text/javascript" src="/js/seqola.js"></script>
+
+<!--
+  <script type="text/javascript">
+  yuhuads="http://track.yuhuads.com/interstitial/573060d2ed6ef6df1ccef924/"+((new Date()).getTime()) + Math.random();
+  document.write("<scr"+"ipt language='javascript' type='text/javascript' src='"+yuhuads+"'></scri"+"pt>");
+  </script>
+-->
+
+</head>
+<body>
+
+  
+  <nav class="navbar navbar-default">
+  <div class="container">
+
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://www.freetechbooks.com">FreeTechBooks</a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+<!-- 
+        <li><a href="https://www.freetechbooks.com/categories">Browse Categories</a></li>
+        <li><a href="https://www.freetechbooks.com/authors">Authors</a></li>
+        <li><a href="https://www.freetechbooks.com/publishers">Publishers</a></li>
+        <li><a href="https://www.freetechbooks.com/licenses">Licenses</a></li>
+ -->
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+            Browse Books <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="https://www.freetechbooks.com/topics">All Books</a></li>
+            <li><a href="https://www.freetechbooks.com/categories">By Category</a></li>
+            <li><a href="https://www.freetechbooks.com/authors">By Author</a></li>
+            <li><a href="https://www.freetechbooks.com/publishers">By Publisher</a></li>
+            <li><a href="https://www.freetechbooks.com/licenses">By License</a></li>
+          </ul>
+        </li>
+        <!-- <li><a href="facebook"><i class="fa fa-facebook fa-lg"></i></a></li> -->
+        <!-- <li><a href="https://www.freetechbooks.com/contact"><i class="fa fa-envelope fa-lg"></i></a></li> -->
+        <li><a href="https://www.freetechbooks.com/about">About</a></li>
+        <li><a href="https://www.freetechbooks.com/contact">Contact</a></li>
+        <li><a href="https://feeds.feedburner.com/freetechbooks"><i class="fa fa-rss fa-lg"></i></a></li>
+        <li><a href="https://twitter.com/freetechbooks2"><i class="fa fa-twitter fa-lg"></i></a></li>
+      </ul>
+
+      <ul class="nav navbar-nav navbar-right">
+
+          
+          
+                  
+      </ul>
+    </div>
+
+  </div>
+</nav>
+
+  <div class="jumbotron">
+	<div class="container">
+		<p class="h1"><strong>Welcome to FreeTechBooks!</strong></p>
+		<p>Database of Free / Open Access Online Computer Science Books, Textbooks, and Lecture Notes<br>
+		(1244 books and growing)</p>
+        <ul class="list-inline">
+        	<li><a class="btn btn-primary" href="https://www.freetechbooks.com/about" role="button">About <i class="fa fa-info-circle"></i></a></li>
+        	<li><a class="btn btn-primary" href="https://www.freetechbooks.com/newdesign" role="button">Updates <i class="fa fa-cube"></i></a></li>
+        	<li><a class="btn btn-primary" href="https://www.freetechbooks.com/contact" role="button">Contact <i class="fa fa-envelope"></i></a></li>
+        </ul>
+	</div>
+</div>
+
+  <div class="container">
+      
+      	<div class="row">
+		<!-- content column -->
+		<div class="col-lg-8 col-md-8">

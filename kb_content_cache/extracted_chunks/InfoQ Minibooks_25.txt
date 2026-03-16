@@ -1,0 +1,64 @@
+<button aria-label="English edition" class="button button__unstyled button__small">English edition </button>
+<div class="dropdown__holder">
+	<!---->
+	<div class="dropdown__content">
+		<ul class="no-style dropdown__nav languagesEdition">
+			<li class="active"><a href="#" onclick="return false;">English edition</a></li>
+			<li><a href="https://www.infoq.cn">Chinese edition</a></li>
+			<li><a href="/jp/">Japanese edition</a></li>
+			<li><a href="/fr/">French edition</a></li>
+		</ul>
+	</div>
+	<!---->
+</div>
+                    </div>
+                    <a class="my-0 contribute-link" role="button" href="/write-for-infoq/" title="Write for InfoQ">
+                        Write for InfoQ
+                    </a>
+                </div>
+                <div class="actions__right">
+                    <div>
+                        <form id="searchForm" name="search-form" action="/search.action" enctype="multipart/form-data" class="search icon__search icon icon__green">
+                            <div class="field search__bar input__text input__no-label input__small">
+                                <label for="search" class="label field__label">Search</label>
+                                <input name="queryString" type="text" id="search" value="" placeholder="Search" class="input field__input">
+                                <input type="hidden" name="page" value="1"/>
+                                <input type="hidden" size="15" name="searchOrder">
+                            </div>
+                            <input value="Search" type="submit" class="search__go">
+                        </form>
+                    </div>
+                    
+
+
+
+
+
+	<div class="action_button__group">
+		<a href="/reginit.action?" onclick="return UserActions_Login.addLoginInfo(this);" class="button button__green button__small">Register</a>
+		<a href="/social/keycloakLogin.action?fl=login"  onclick="return UserActions_Login.addLoginInfo(this);" class="button button__small button__outline">Sign in</a>
+	</div>
+	
+	<div class="modal_auth_required">
+		<div class="modal_auth_required__actions">
+			<h2 class="h2">Unlock the full InfoQ experience</h2>
+			<p>Unlock the full InfoQ experience by logging in! Stay updated with your favorite authors and topics, engage with content, and download exclusive resources.</p>
+			<a href="/social/keycloakLogin.action?fl=login"  onclick="return UserActions_Login.addLoginInfo(this);" class="button button__has-transition">Log In</a>
+			<div class="separator"><span>or</span></div>
+			<h3 class="h3">Don't have an InfoQ account?</h3>
+			<a href="/reginit.action?" onclick="return UserActions_Login.addLoginInfo(this);" class="button__outline button__has-transition">Register</a>
+		</div>
+		<div class="modal_auth_required__content">
+			<ul class="newsletter__features">
+				<li><strong>Stay updated on topics and peers that matter to you</strong>Receive instant alerts on the latest insights and trends.</li>
+				<li><strong>Quickly access free resources for continuous learning</strong>Minibooks, videos with transcripts, and training materials.</li>
+				<li><strong>Save articles and read at anytime</strong>Bookmark articles to read whenever youre ready.</li>
+			</ul>
+		</div>
+		<form id="login-form" data-vv-scope="login" class="login__form form" action="#" data-gtm-form-interact-id="0">
+			<input type="hidden" id="loginWidgetOrigin" name="loginWidgetOrigin" value="mainLogin">
+			<input type="hidden" name="fromP13N" id="isP13n" value="">
+			<input type="hidden" name="fromP13NId" id="p13n-id" value="">
+			<input type="hidden" name="fromP13NType" id="p13n-type" value="">
+		</form>
+	</div>

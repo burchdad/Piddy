@@ -1,0 +1,24 @@
+                        Practical Applications of Generative AI
+                    </a>
+
+                </h3>
+                <p class="card__excerpt">
+                    Generative AI (GenAI) has become a major component of the artificial intelligence (AI) and machine learning (ML) industry. In the InfoQ "Practical Applications of Generative AI" eMag, we present real-world solutions and hands-on practices from leading GenAI practitioners.
+                </p>
+                <div class="card__footer">
+                    <div class="card__details">
+                        <div class="card__authors authors">
+                            
+
+
+
+
+
+
+    
+        
+    
+    <span>
+        
+        <a href="/profile/InfoQ/" data-id="author-InfoQ">InfoQ</a>
+    </span>

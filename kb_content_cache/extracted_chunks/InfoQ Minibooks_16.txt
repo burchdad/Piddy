@@ -1,0 +1,25 @@
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://feed.infoq.com/minibooks/"/>
+
+        
+        
+        
+        
+        
+            
+            <link rel="next" href="/minibooks/12/">
+        
+    
+        
+        
+			<link rel="image_src" href="https://cdn.infoq.com/statics_s1_20260311083832-1/styles/static/images/logo/logo-big.jpg" />
+			<meta property="og:image" content="https://cdn.infoq.com/statics_s1_20260311083832-1/styles/static/images/logo/logo-big.jpg"/>
+		
+        
+        <script type="text/javascript" src="https://cdn.infoq.com/statics_s1_20260311083832-1/scripts/infoq.js"></script>
+
+        <script type="text/javascript">
+           document.addEventListener('DOMContentLoaded', function() {
+               if (!window || !window.infoq) return
+               infoq.init()
+           })
+       </script>

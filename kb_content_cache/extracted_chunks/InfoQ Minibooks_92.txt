@@ -1,0 +1,26 @@
+            
+        </div>
+    </li>
+
+    
+        
+    
+    <li  data-id="92d39c4d-fa91-46ba-89f8-49cac7d69995" data-path="/minibooks/architectures-2024">
+        <div class="card__content">
+            <div class="card__data">
+                <div class="card__topics topics">
+                    <span>
+                        
+                        <a href="/architecture-design/" data-id="6816">Architecture &amp; Design</a>
+                    </span>
+                </div>
+                <h3 class="card__title">
+                    
+                    <a
+	
+	href="/minibooks/architectures-2024/"
+
+ title="Architectures You’ve Always Wondered About 2024 eMag">
+
+                        Architectures You’ve Always Wondered About 2024 eMag
+                    </a>

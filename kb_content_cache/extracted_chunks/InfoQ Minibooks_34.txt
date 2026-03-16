@@ -1,0 +1,25 @@
+<div class="heading__container actions">
+    <div class="actions__left">
+        <h3 class="heading section__heading">Featured in  Architecture &amp; Design</h3>
+    </div>
+</div>
+<ul data-size="large" data-horizontal="true" data-tax="" taxonomy="articles" class="cards no-style">
+    <li>
+        <div class="card__content">
+            <div class="card__data">
+                <h4 class="card__title">
+                    <a href="/presentations/monzo-typescript-migration">So You&rsquo;ve Decided to Do a Technical Migration</a>
+                </h4>
+                <p class="card__excerpt">Sophie Koonin discusses the realities of large-scale technical migrations, using Monzo’s shift to TypeScript as a roadmap. She explains how to handle &quot;bends in the road,&quot; from documentation and tooling to setting measurable milestones. Koonin shares vital lessons on balancing technical debt with feature work and provides a framework for deciding if a migration is truly worth the effort.</p>
+                <div class="card__footer"></div>
+            </div>
+            
+                <a href="/presentations/monzo-typescript-migration" class="card__header">
+                    <img loading="lazy" alt="So You&rsquo;ve Decided to Do a Technical Migration" src="https://imgopt.infoq.com/fit-in/100x100/filters:quality(80)/presentations/monzo-typescript-migration/en/smallimage/sophie-koonin-thumbnail-1771411500678.jpeg" class="card__image"/>
+                </a>
+            
+        </div>
+    </li>
+</ul>
+
+    

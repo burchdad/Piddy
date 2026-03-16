@@ -1,0 +1,19 @@
+    <div class="mt-2">
+      <a class="Link--muted" href="/contact/report-content?content_url=https%3A%2F%2Fgithub.com%2Fcodecrafters-io%2Fbuild-your-own-x&amp;report=codecrafters-io+%28user%29">
+          Report repository
+</a>    </div>
+</div>
+
+    </div>
+  </div>
+
+  
+      <div class="BorderGrid-row">
+        <div class="BorderGrid-cell">
+          <h2 class="h4 tmp-mb-3" data-pjax="#repo-content-pjax-container" data-turbo-frame="repo-content-turbo-frame">
+  <a href="/codecrafters-io/build-your-own-x/releases" data-view-component="true" class="Link--primary no-underline Link">Releases</a></h2>
+
+    <div class="text-small color-fg-muted">No releases published</div>
+
+        </div>
+      </div>

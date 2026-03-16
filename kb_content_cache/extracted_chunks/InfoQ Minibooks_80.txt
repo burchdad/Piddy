@@ -1,0 +1,26 @@
+            
+        </div>
+    </li>
+
+    
+        
+    
+    <li  data-id="4b15a1f0-65cc-4895-906b-2e2710fcaf2a" data-path="/minibooks/devex-platform-engineering">
+        <div class="card__content">
+            <div class="card__data">
+                <div class="card__topics topics">
+                    <span>
+                        
+                        <a href="/Devops/" data-id="6043">DevOps</a>
+                    </span>
+                </div>
+                <h3 class="card__title">
+                    
+                    <a
+	
+	href="/minibooks/devex-platform-engineering/"
+
+ title="Improving Developer Experience with Platform Engineering">
+
+                        Improving Developer Experience with Platform Engineering
+                    </a>

@@ -1,0 +1,38 @@
+<div>
+    <h3 class="widget__heading">Helpful links</h3>
+    <ul class="no-style header__nav">
+       <li>
+            <a href="/about-infoq" title="About InfoQ">
+                About InfoQ
+            </a>
+        </li>
+        <li>
+            <a href="/infoq-editors" title="InfoQ Editors">
+                InfoQ Editors
+            </a>
+        </li>
+        <li>
+            <a href="/write-for-infoq" title="Write for InfoQ">
+                Write for InfoQ
+            </a>
+        </li>
+        <li>
+            <a href="https://c4media.com/" target="_blank" title="About C4Media">
+                About C4Media
+            </a>
+        </li>
+        <li>
+            <a rel="noreferrer noopener" href="https://c4media.com/diversity" title="Diversity" target="_blank">Diversity</a>
+        </li>
+    </ul>
+</div>
+
+                    
+                    <div>
+                        <h3 class="widget__heading">Choose your language</h3>
+                        
+
+
+
+
+

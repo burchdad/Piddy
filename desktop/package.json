@@ -55,10 +55,21 @@
       "node_modules/mime-db/**/*",
       "node_modules/asynckit/**/*",
       "node_modules/combined-stream/**/*",
-      "node_modules/delayed-stream/**/*",
-      "../frontend/dist/**/*",
-      "../requirements.txt",
-      "../start_piddy.py"
+      "node_modules/delayed-stream/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "../frontend/dist",
+        "to": "frontend/dist"
+      },
+      {
+        "from": "../start_piddy.py",
+        "to": "start_piddy.py"
+      },
+      {
+        "from": "../requirements.txt",
+        "to": "requirements.txt"
+      }
     ],
     "win": {
       "certificateFile": null,

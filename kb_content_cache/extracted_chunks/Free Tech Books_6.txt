@@ -1,0 +1,8 @@
+		    <p><a href="https://www.freetechbooks.com/topics" class="btn btn-primary pull-right">Browse all books <i class="fa fa-arrow-circle-right"></i></a></p>
+		    <br/><br/><br/>
+
+			
+		</div>
+
+		<!-- side navigation column -->
+		<div class="col-lg-4 col-md-4">

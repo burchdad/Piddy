@@ -1,0 +1,25 @@
+<div class="heading__container actions">
+    <div class="actions__left">
+        <h3 class="heading section__heading">Featured in  Culture &amp; Methods</h3>
+    </div>
+</div>
+<ul data-size="large" data-horizontal="true" data-tax="" taxonomy="articles" class="cards no-style">
+    <li>
+        <div class="card__content">
+            <div class="card__data">
+                <h4 class="card__title">
+                    <a href="/presentations/optimal-efficiency-devex">Achieve Optimal Efficiency for Your Developer Experience Teams</a>
+                </h4>
+                <p class="card__excerpt">Fabien Deshayes discusses the strategies behind Monzo’s Developer Velocity squad. He explains the &quot;Platform as a Product&quot; mindset, emphasizing the need for engineers with product acumen and tenure. He shares actionable frameworks for measuring DevEx impact through time, money, and cognitive load, demonstrating how a small, focused team can drive massive results in a regulated environment.</p>
+                <div class="card__footer"></div>
+            </div>
+            
+                <a href="/presentations/optimal-efficiency-devex" class="card__header">
+                    <img loading="lazy" alt="Achieve Optimal Efficiency for Your Developer Experience Teams" src="https://imgopt.infoq.com/fit-in/100x100/filters:quality(80)/presentations/optimal-efficiency-devex/en/smallimage/fabien-deshayes-thumbnail-1771406588152.jpeg" class="card__image"/>
+                </a>
+            
+        </div>
+    </li>
+</ul>
+
+    

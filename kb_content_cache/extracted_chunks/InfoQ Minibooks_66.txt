@@ -1,0 +1,24 @@
+                        Architecture Through Different Lenses 2025
+                    </a>
+
+                </h3>
+                <p class="card__excerpt">
+                    This eMag explores architecture through five distinct lenses: the socio-technical forces that invisibly shape our code, the paradox of infrastructure that succeeds by disappearing, the power of distributed intelligence over centralized control, the evolutionary advantage of iteration over revolution, and the pragmatic reality of designing for inevitable complexity.
+                </p>
+                <div class="card__footer">
+                    <div class="card__details">
+                        <div class="card__authors authors">
+                            
+
+
+
+
+
+
+    
+        
+    
+    <span>
+        
+        <a href="/profile/InfoQ/" data-id="author-InfoQ">InfoQ</a>
+    </span>

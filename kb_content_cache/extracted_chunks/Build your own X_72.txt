@@ -1,0 +1,18 @@
+          <input type="hidden" id="custom_scope_id" name="custom_scope_id" data-target="custom-scopes.customScopesIdField">
+
+          <div class="form-group">
+            <label for="custom_scope_name">Name</label>
+            <auto-check src="/search/custom_scopes/check_name" required>
+              <input
+                type="text"
+                name="custom_scope_name"
+                id="custom_scope_name"
+                data-target="custom-scopes.customScopesNameField"
+                class="form-control"
+                autocomplete="off"
+                placeholder="github-ruby"
+                required
+                maxlength="50">
+              <input type="hidden" data-csrf="true" value="X4b22wPp4rKRfdOVdXFGLHUEF9l6D+L0d9x/0l6orYg/WNj5kqpfeyHZdYie6a0UizuABWxbh3sf3wJdmIKs/w==" />
+            </auto-check>
+          </div>

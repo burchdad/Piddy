@@ -1,0 +1,17 @@
+  <ul class="list-style-none d-flex flex-wrap mb-n2">
+      <li class="mb-2">
+        <div class="Skeleton avatar avatar-user mr-2" style="width:32px;height:32px;"></div>
+      </li>
+      <li class="mb-2">
+        <div class="Skeleton avatar avatar-user mr-2" style="width:32px;height:32px;"></div>
+      </li>
+      <li class="mb-2">
+        <div class="Skeleton avatar avatar-user mr-2" style="width:32px;height:32px;"></div>
+      </li>
+  </ul>
+
+  <div data-show-on-forbidden-error hidden>
+    <div class="Box">
+  <div class="blankslate-container">
+    <div data-view-component="true" class="blankslate blankslate-spacious color-bg-default rounded-2">
+      

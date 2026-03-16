@@ -1,0 +1,26 @@
+ title="Architectures You’ve Always Wondered About 2025">
+
+                        Architectures You’ve Always Wondered About 2025
+                    </a>
+
+                </h3>
+                <p class="card__excerpt">
+                    This eMag explores the challenges of modernizing, migrating, and scaling applications, spotlighting architectures that are redefining what is possible in software today.
+                </p>
+                <div class="card__footer">
+                    <div class="card__details">
+                        <div class="card__authors authors">
+                            
+
+
+
+
+
+
+    
+        
+    
+    <span>
+        
+        <a href="/profile/InfoQ/" data-id="author-InfoQ">InfoQ</a>
+    </span>

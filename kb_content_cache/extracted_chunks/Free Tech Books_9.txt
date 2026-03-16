@@ -1,0 +1,333 @@
+			<div class="list-group">
+  <div class="list-group-item active">Book Categories</div>
+      <a data-toggle="collapse" href="#collapse11" aria-expanded="false" aria-controls="collapse11" class="list-group-item">
+      Computer Science<span class="pull-right"><i class="fa fa-chevron-down fa-lg" aria-hidden="true"></i></span>
+    </a>
+    <div class="collapse" id="collapse11">
+              <a href="https://www.freetechbooks.com/introduction-to-computer-science-f10.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Introduction to Computer Science
+        </a>
+              <a href="https://www.freetechbooks.com/introduction-to-programming-f105.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Introduction to Computer Programming
+        </a>
+              <a href="https://www.freetechbooks.com/algorithms-and-data-structures-f11.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Algorithms and Data Structures
+        </a>
+              <a href="https://www.freetechbooks.com/artificial-intelligence-f55.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Artificial Intelligence
+        </a>
+              <a href="https://www.freetechbooks.com/computer-vision-f69.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Computer Vision
+        </a>
+              <a href="https://www.freetechbooks.com/machine-learning-f76.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Machine Learning
+        </a>
+              <a href="https://www.freetechbooks.com/neural-networks-f58.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Neural Networks
+        </a>
+              <a href="https://www.freetechbooks.com/game-development-and-multimedia-f16.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Game Development and Multimedia
+        </a>
+              <a href="https://www.freetechbooks.com/data-communication-and-networks-f31.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Data Communication and Networks
+        </a>
+              <a href="https://www.freetechbooks.com/coding-theory-f106.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Coding Theory
+        </a>
+              <a href="https://www.freetechbooks.com/computer-security-f99.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Computer Security
+        </a>
+              <a href="https://www.freetechbooks.com/information-security-f52.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Information Security
+        </a>
+              <a href="https://www.freetechbooks.com/cryptography-f107.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Cryptography
+        </a>
+              <a href="https://www.freetechbooks.com/information-theory-f57.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Information Theory
+        </a>
+              <a href="https://www.freetechbooks.com/computer-organization-and-architecture-f56.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Computer Organization and Architecture
+        </a>
+              <a href="https://www.freetechbooks.com/operating-systems-f36.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Operating Systems
+        </a>
+              <a href="https://www.freetechbooks.com/image-processing-f33.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Image Processing
+        </a>
+              <a href="https://www.freetechbooks.com/parallel-computing-f60.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Parallel Computing
+        </a>
+              <a href="https://www.freetechbooks.com/concurrent-programming-f61.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Concurrent Programming
+        </a>
+              <a href="https://www.freetechbooks.com/database-management-system-f82.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Relational Database
+        </a>
+              <a href="https://www.freetechbooks.com/document-oriented-database-f98.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Document-oriented Database
+        </a>
+              <a href="https://www.freetechbooks.com/data-mining-f75.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Data Mining
+        </a>
+              <a href="https://www.freetechbooks.com/big-data-f79.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Big Data
+        </a>
+              <a href="https://www.freetechbooks.com/data-science-f100.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Data Science
+        </a>
+              <a href="https://www.freetechbooks.com/digital-libraries-f32.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Digital Libraries
+        </a>
+              <a href="https://www.freetechbooks.com/compiler-design-and-construction-f14.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Compiler Design and Construction
+        </a>
+              <a href="https://www.freetechbooks.com/functional-programming-f34.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Functional Programming
+        </a>
+              <a href="https://www.freetechbooks.com/logic-programming-f13.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Logic Programming
+        </a>
+              <a href="https://www.freetechbooks.com/object-oriented-programming-f12.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Object Oriented Programming
+        </a>
+              <a href="https://www.freetechbooks.com/formal-methods-f28.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Formal Methods
+        </a>
+              <a href="https://www.freetechbooks.com/software-engineering-f15.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Software Engineering
+        </a>
+              <a href="https://www.freetechbooks.com/agile-software-development-f81.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Agile Software Development
+        </a>
+              <a href="https://www.freetechbooks.com/information-systems-f46.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Information Systems
+        </a>
+              <a href="https://www.freetechbooks.com/geographic-information-system-gis-f109.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Geographic Information System (GIS)
+        </a>
+          </div>
+      <a data-toggle="collapse" href="#collapse16" aria-expanded="false" aria-controls="collapse16" class="list-group-item">
+      Mathematics<span class="pull-right"><i class="fa fa-chevron-down fa-lg" aria-hidden="true"></i></span>
+    </a>
+    <div class="collapse" id="collapse16">
+              <a href="https://www.freetechbooks.com/mathematics-f38.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Mathematics
+        </a>
+              <a href="https://www.freetechbooks.com/algebra-f63.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Algebra
+        </a>
+              <a href="https://www.freetechbooks.com/abstract-algebra-f88.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Abstract Algebra
+        </a>
+              <a href="https://www.freetechbooks.com/linear-algebra-f78.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Linear Algebra
+        </a>
+              <a href="https://www.freetechbooks.com/number-theory-f89.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Number Theory
+        </a>
+              <a href="https://www.freetechbooks.com/numerical-methods-f66.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Numerical Methods
+        </a>
+              <a href="https://www.freetechbooks.com/precalculus-f84.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Precalculus
+        </a>
+              <a href="https://www.freetechbooks.com/calculus-f85.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Calculus
+        </a>
+              <a href="https://www.freetechbooks.com/differential-equations-f86.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Differential Equations
+        </a>
+              <a href="https://www.freetechbooks.com/category-theory-f71.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Category Theory
+        </a>
+              <a href="https://www.freetechbooks.com/proofs-f87.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Proofs
+        </a>
+              <a href="https://www.freetechbooks.com/discrete-mathematics-f65.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Discrete Mathematics
+        </a>
+              <a href="https://www.freetechbooks.com/theory-of-computation-f50.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Theory of Computation
+        </a>
+              <a href="https://www.freetechbooks.com/graph-theory-f67.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Graph Theory
+        </a>
+              <a href="https://www.freetechbooks.com/real-analysis-f90.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Real Analysis
+        </a>
+              <a href="https://www.freetechbooks.com/complex-analysis-f91.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Complex Analysis
+        </a>
+              <a href="https://www.freetechbooks.com/probability-f92.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Probability
+        </a>
+              <a href="https://www.freetechbooks.com/statistics-f77.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Statistics
+        </a>
+              <a href="https://www.freetechbooks.com/game-theory-f108.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Game Theory
+        </a>
+              <a href="https://www.freetechbooks.com/queueing-theory-f94.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Queueing Theory
+        </a>
+              <a href="https://www.freetechbooks.com/operations-research-f54.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Operations Research
+        </a>
+              <a href="https://www.freetechbooks.com/computer-aided-mathematics-f64.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Computer Aided Mathematics
+        </a>
+          </div>
+      <a data-toggle="collapse" href="#collapse15" aria-expanded="false" aria-controls="collapse15" class="list-group-item">
+      Supporting Fields<span class="pull-right"><i class="fa fa-chevron-down fa-lg" aria-hidden="true"></i></span>
+    </a>
+    <div class="collapse" id="collapse15">
+              <a href="https://www.freetechbooks.com/web-design-and-development-f59.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Web Design and Development
+        </a>
+              <a href="https://www.freetechbooks.com/mobile-app-design-and-development-f102.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Mobile App Design and Development
+        </a>
+              <a href="https://www.freetechbooks.com/system-administration-f103.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;System Administration
+        </a>
+              <a href="https://www.freetechbooks.com/cloud-computing-f95.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Cloud Computing
+        </a>
+              <a href="https://www.freetechbooks.com/electric-circuits-f41.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Electric Circuits
+        </a>
+              <a href="https://www.freetechbooks.com/embedded-system-f110.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Embedded System
+        </a>
+              <a href="https://www.freetechbooks.com/signal-processing-f51.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Signal Processing
+        </a>
+              <a href="https://www.freetechbooks.com/integration-and-automation-f39.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Integration and Automation
+        </a>
+              <a href="https://www.freetechbooks.com/network-science-f97.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Network Science
+        </a>
+              <a href="https://www.freetechbooks.com/project-management-f104.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Project Management
+        </a>
+          </div>
+      <a data-toggle="collapse" href="#collapse12" aria-expanded="false" aria-controls="collapse12" class="list-group-item">
+      Operating System<span class="pull-right"><i class="fa fa-chevron-down fa-lg" aria-hidden="true"></i></span>
+    </a>
+    <div class="collapse" id="collapse12">
+              <a href="https://www.freetechbooks.com/unix-f8.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Unix
+        </a>
+              <a href="https://www.freetechbooks.com/gnulinux-f7.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;GNU/Linux
+        </a>
+              <a href="https://www.freetechbooks.com/freebsd-f29.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;FreeBSD
+        </a>
+              <a href="https://www.freetechbooks.com/iphone-ios-f72.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;iPhone iOS
+        </a>
+              <a href="https://www.freetechbooks.com/android-f73.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Android
+        </a>
+              <a href="https://www.freetechbooks.com/windows-f83.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Windows
+        </a>
+          </div>
+      <a data-toggle="collapse" href="#collapse13" aria-expanded="false" aria-controls="collapse13" class="list-group-item">
+      Programming/Scripting<span class="pull-right"><i class="fa fa-chevron-down fa-lg" aria-hidden="true"></i></span>
+    </a>
+    <div class="collapse" id="collapse13">
+              <a href="https://www.freetechbooks.com/ada-f53.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Ada
+        </a>
+              <a href="https://www.freetechbooks.com/assembly-f27.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Assembly
+        </a>
+              <a href="https://www.freetechbooks.com/c-c-f3.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;C / C++
+        </a>
+              <a href="https://www.freetechbooks.com/common-lisp-f40.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Common Lisp
+        </a>
+              <a href="https://www.freetechbooks.com/forth-f70.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Forth
+        </a>
+              <a href="https://www.freetechbooks.com/java-f4.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Java
+        </a>
+              <a href="https://www.freetechbooks.com/javascript-f68.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;JavaScript
+        </a>
+              <a href="https://www.freetechbooks.com/lua-f48.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Lua
+        </a>
+              <a href="https://www.freetechbooks.com/rexx-f96.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Rexx
+        </a>
+              <a href="https://www.freetechbooks.com/microsoft-net-f37.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Microsoft .NET
+        </a>
+              <a href="https://www.freetechbooks.com/perl-f5.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Perl
+        </a>
+              <a href="https://www.freetechbooks.com/php-f43.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;PHP
+        </a>
+              <a href="https://www.freetechbooks.com/r-f101.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;R
+        </a>
+              <a href="https://www.freetechbooks.com/python-f6.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Python
+        </a>
+              <a href="https://www.freetechbooks.com/rebol-f45.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Rebol
+        </a>
+              <a href="https://www.freetechbooks.com/ruby-f49.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Ruby
+        </a>
+              <a href="https://www.freetechbooks.com/scheme-f42.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Scheme
+        </a>
+              <a href="https://www.freetechbooks.com/tcltk-f47.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Tcl/Tk
+        </a>
+          </div>
+      <a data-toggle="collapse" href="#collapse14" aria-expanded="false" aria-controls="collapse14" class="list-group-item">
+      Miscellaneous<span class="pull-right"><i class="fa fa-chevron-down fa-lg" aria-hidden="true"></i></span>
+    </a>
+    <div class="collapse" id="collapse14">
+              <a href="https://www.freetechbooks.com/popular-science-f80.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Popular Science
+        </a>
+              <a href="https://www.freetechbooks.com/open-data-f93.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Open Data
+        </a>
+              <a href="https://www.freetechbooks.com/software-libre-and-open-source-movement-f17.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Software Libre and Open Source
+        </a>
+              <a href="https://www.freetechbooks.com/hackers-and-computer-philosophy-f18.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Hackers and Computer Philosophy
+        </a>
+              <a href="https://www.freetechbooks.com/open-source-productivity-tools-f44.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;Open Source Productivity Tools
+        </a>
+              <a href="https://www.freetechbooks.com/general-interest-f74.html" class="list-group-item">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i> &nbsp;&nbsp;&nbsp;&nbsp;General Interest
+        </a>
+          </div>
+  </div>
+
+
+
+
+			<div class="list-group">
+	<div class="list-group-item active">Browse Books</div>
+    <a href="https://www.freetechbooks.com/topics" class="list-group-item">All Books</a>
+    <a href="https://www.freetechbooks.com/categories" class="list-group-item">By Category</a>
+    <a href="https://www.freetechbooks.com/authors" class="list-group-item">By Author</a>
+    <a href="https://www.freetechbooks.com/publishers" class="list-group-item">By Publisher</a>
+    <a href="https://www.freetechbooks.com/licenses" class="list-group-item">By License</a>
+</div>

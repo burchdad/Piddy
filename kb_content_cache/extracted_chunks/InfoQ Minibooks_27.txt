@@ -1,0 +1,32 @@
+                    
+                </div>
+            </div>
+            <div class="header__middle">
+                <div class="logo header__logo">
+                    <a href="/"  class="logo__symbol active">
+                        Logo - Back to homepage
+                    </a>
+                </div>
+                
+                <div class="content-items">
+                    <a href="/news/" class="icon icon__news">News</a>
+                    <a href="/articles/" class="icon icon__articles">Articles</a>
+                    <a href="/presentations/" class="icon icon__presentations">Presentations</a>
+                    <a href="/podcasts/" class="icon icon__podcasts">Podcasts</a>
+                    <a href="/minibooks/" class="icon icon__guides">Guides</a>
+                </div>
+                <div class="header__items columns">
+
+                    
+                        
+                        
+                        
+                        
+                        
+                        
+                    
+
+
+
+
+

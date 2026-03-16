@@ -1,0 +1,16 @@
+      <meta name="hostname" content="github.com">
+
+        <meta name="expected-hostname" content="github.com">
+
+  <meta http-equiv="x-pjax-version" content="d3218208ed809d157787261b6a1f4dcf8eaca64c0f115342297490e23c210242" data-turbo-track="reload">
+  <meta http-equiv="x-pjax-csp-version" content="568c098497d98702bac1642a2a853732a047a6ced28eabd3e15d50041a890235" data-turbo-track="reload">
+  <meta http-equiv="x-pjax-css-version" content="3e3d57ec9049e6e455709d22f33588d6ef060e9c5850bdcd182fa28f6844a438" data-turbo-track="reload">
+  <meta http-equiv="x-pjax-js-version" content="0f2e03b238e876526b9605dd56eab04d0691bae288da15a93722b73af091389d" data-turbo-track="reload">
+
+  <meta name="turbo-cache-control" content="no-preview" data-turbo-transient="">
+
+      <meta name="turbo-cache-control" content="no-cache" data-turbo-transient>
+
+    <meta data-hydrostats="publish">
+
+  <meta name="go-import" content="github.com/revolunet/JSbooks git https://github.com/revolunet/JSbooks.git">

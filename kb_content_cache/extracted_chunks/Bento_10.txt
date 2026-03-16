@@ -1,0 +1,14 @@
+    <div class="min-h-screen flex flex-col px-5 md:px-0">
+        <!-- Hero Section -->
+        <div class="min-h-screen flex flex-col items-center justify-center relative bg-white dark:bg-neutral-900">
+            <h1 class="text-4xl font-light font-gt-super uppercase tracking-wider animate-fade-in-up opacity-0 text-neutral-900 dark:text-neutral-50 md:text-8xl">Jon H.M. Chan</h1>
+        </div>
+
+        <!-- Content Section -->
+        <div class="max-w-3xl mx-auto px-4 py-16 animate-fade-in-delayed -mt-60 md:-mt-80">
+            <!-- Introduction Section -->
+            <section class="mb-24">
+                <h2 class="text-4xl text-neutral-700 dark:text-neutral-200 mb-12 leading-tight font-gt-super font-light">
+                    I am an artist and founder using storytelling and AI to deepen human connection at scale.
+                </h2>
+            </section>

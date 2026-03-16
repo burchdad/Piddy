@@ -1,0 +1,30 @@
+                    </div>
+                    <div class="items__content">
+                        <div>
+                            <ul data-size="large" data-tax="guides" data-cols="4" class="cards no-style boxes" data-trk-ref="hover_index">
+                                
+
+
+
+
+
+
+    
+        
+    
+    <li  data-id="1ca068cc-d4e9-4377-a237-7f73c306a4bd" data-path="/minibooks/architecture-age-ai-opportunity">
+        <div class="card__content">
+            <div class="card__data">
+                <div class="card__topics topics">
+                    <span>
+                        
+                        <a href="/architecture-design/" data-id="6816">Architecture &amp; Design</a>
+                    </span>
+                </div>
+                <h3 class="card__title">
+                    
+                    <a
+	
+	href="/minibooks/architecture-age-ai-opportunity/"
+
+ title="Architecture in the Age of AI: Change and Opportunity">
