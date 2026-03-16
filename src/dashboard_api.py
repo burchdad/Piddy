@@ -348,18 +348,25 @@ async def system_overview() -> Dict:
     """Get system overview from real data"""
     try:
         from pathlib import Path
-        import psutil
         import os
+        
+        # Try to import psutil, but provide fallback if not available
+        try:
+            import psutil
+            process = psutil.Process(os.getpid())
+            memory_info = process.memory_info()
+            cpu_percent = process.cpu_percent(interval=0.1)
+            memory_mb = memory_info.rss / 1024 / 1024
+        except ImportError:
+            print("[WARNING] psutil not installed - using fallback values")
+            psutil = None
+            memory_mb = 0
+            cpu_percent = 0
         
         # FORCE VISIBLE OUTPUT
         print("\n" + "="*60)
         print("[SYSTEM_OVERVIEW] Endpoint called")
         print("="*60)
-        
-        # Get real system info
-        process = psutil.Process(os.getpid())
-        memory_info = process.memory_info()
-        cpu_percent = process.cpu_percent(interval=0.1)
         
         # DEBUG: Log current working directory
         cwd = os.getcwd()
@@ -402,9 +409,18 @@ async def system_overview() -> Dict:
         logger.info(f"[DEBUG] Final data counts - agents: {agent_count}, decisions: {decision_count}, missions: {mission_count}, approvals: {approval_count}")
         print("="*60 + "\n")
         
+        # Get uptime - fallback to 0 if psutil not available
+        uptime_seconds = 0
+        if psutil:
+            try:
+                process = psutil.Process(os.getpid())
+                uptime_seconds = int(process.create_time())
+            except:
+                uptime_seconds = 0
+        
         return {
             "status": "operational",
-            "uptime_seconds": int(process.create_time()),
+            "uptime_seconds": uptime_seconds,
             "agents_online": agent_count,
             "missions_active": mission_count,
             "decisions_pending": decision_count,
@@ -420,7 +436,7 @@ async def system_overview() -> Dict:
                 "tests_failed": 0
             },
             "process": {
-                "memory_mb": memory_info.rss / 1024 / 1024,
+                "memory_mb": memory_mb,
                 "cpu_percent": cpu_percent
             },
             "timestamp": datetime.utcnow().isoformat()
