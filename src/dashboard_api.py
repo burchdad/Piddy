@@ -363,27 +363,12 @@ async def system_overview() -> Dict:
             memory_mb = 0
             cpu_percent = 0
         
-        # FORCE VISIBLE OUTPUT
-        print("\n" + "="*60)
-        print("[SYSTEM_OVERVIEW] Endpoint called")
-        print("="*60)
-        
-        # DEBUG: Log current working directory
-        cwd = os.getcwd()
-        print(f"[DEBUG] Current working directory: {cwd}")
-        logger.info(f"[DEBUG] Current working directory: {cwd}")
-        
         # Count real approval data
         # Find data directory: it's at the package root, not in src/
         # Use __file__ to get absolute path to this script
-        import os
         script_dir = Path(__file__).parent  # src/ directory
         package_root = script_dir.parent    # package root (one level up from src)
         data_dir = package_root / "data"
-        
-        print(f"[DEBUG] Script location: {script_dir}")
-        print(f"[DEBUG] Package root: {package_root}")
-        print(f"[DEBUG] Data directory: {data_dir}, exists={data_dir.exists()}")
         
         approval_count = 0
         decision_count = 0
@@ -391,8 +376,6 @@ async def system_overview() -> Dict:
         agent_count = 0
         
         workflow_file = data_dir / "approval_workflow_state.json"
-        print(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
-        logger.info(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
         if workflow_file.exists():
             with open(workflow_file, 'r') as f:
                 workflows = json.load(f)
@@ -416,9 +399,7 @@ async def system_overview() -> Dict:
                 agents = json.load(f)
                 agent_count = len(agents) if isinstance(agents, list) else len(agents)
         
-        print(f"[DEBUG] Final data counts - agents: {agent_count}, decisions: {decision_count}, missions: {mission_count}, approvals: {approval_count}")
-        logger.info(f"[DEBUG] Final data counts - agents: {agent_count}, decisions: {decision_count}, missions: {mission_count}, approvals: {approval_count}")
-        print("="*60 + "\n")
+        logger.info(f"System overview: agents={agent_count}, decisions={decision_count}, missions={mission_count}, approvals={approval_count}")
         
         # Get uptime - fallback to 0 if psutil not available
         uptime_seconds = 0
