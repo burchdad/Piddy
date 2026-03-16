@@ -122,6 +122,9 @@ class DashboardManager:
                 return False
         else:
             try:
+                # Ensure data directory exists
+                Path("data").mkdir(parents=True, exist_ok=True)
+                
                 # Run as daemon
                 with open(cls.DASHBOARD_LOG_FILE, 'a') as log_file:
                     log_file.write(f"\n{'='*80}\n")
@@ -129,13 +132,20 @@ class DashboardManager:
                     log_file.write(f"URL: http://{host}:{port}\n")
                     log_file.write(f"{'='*80}\n\n")
                 
-                process = subprocess.Popen(
-                    uvicorn_cmd,
-                    cwd="src",
-                    stdout=open(cls.DASHBOARD_LOG_FILE, 'a'),
-                    stderr=subprocess.STDOUT,
-                    start_new_session=True
-                )
+                # Use platform-specific flags for daemon mode
+                popen_kwargs = {
+                    'cwd': 'src',
+                    'stdout': open(cls.DASHBOARD_LOG_FILE, 'a'),
+                    'stderr': subprocess.STDOUT,
+                }
+                
+                # On Windows, use CREATE_NEW_PROCESS_GROUP; on Unix, use start_new_session
+                if sys.platform == 'win32':
+                    popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+                else:
+                    popen_kwargs['start_new_session'] = True
+                
+                process = subprocess.Popen(uvicorn_cmd, **popen_kwargs)
                 
                 # Save PID
                 with open(cls.DASHBOARD_PID_FILE, 'w') as f:
