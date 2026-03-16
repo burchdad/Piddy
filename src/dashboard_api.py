@@ -374,12 +374,14 @@ async def system_overview() -> Dict:
         logger.info(f"[DEBUG] Current working directory: {cwd}")
         
         # Count real approval data
+        # Data folder is one level up from src/ (at package root)
+        data_dir = Path("../data").resolve()
         approval_count = 0
         decision_count = 0
         mission_count = 0
         agent_count = 0
         
-        workflow_file = Path("data/approval_workflow_state.json")
+        workflow_file = data_dir / "approval_workflow_state.json"
         print(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
         logger.info(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
         if workflow_file.exists():
@@ -387,19 +389,19 @@ async def system_overview() -> Dict:
                 workflows = json.load(f)
                 approval_count = len(workflows)
         
-        decisions_file = Path("data/decision_logs.json")
+        decisions_file = data_dir / "decision_logs.json"
         if decisions_file.exists():
             with open(decisions_file, 'r') as f:
                 decisions = json.load(f)
                 decision_count = len(decisions) if isinstance(decisions, list) else len(decisions)
         
-        missions_file = Path("data/mission_telemetry.json")
+        missions_file = data_dir / "mission_telemetry.json"
         if missions_file.exists():
             with open(missions_file, 'r') as f:
                 missions = json.load(f)
                 mission_count = len(missions) if isinstance(missions, list) else len(missions)
         
-        agents_file = Path("data/agent_state.json")
+        agents_file = data_dir / "agent_state.json"
         if agents_file.exists():
             with open(agents_file, 'r') as f:
                 agents = json.load(f)
