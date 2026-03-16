@@ -369,14 +369,21 @@ function findPython() {
   return null;
 }
 
+/**
+ * Spawn the Python backend process
+ */
 function startPythonBackend() {
   return new Promise((resolve, reject) => {
+    console.log('[PROMISE] startPythonBackend promise created');
     log.info('Starting Python backend...');
+    console.log('[PROMISE] Logged "Starting Python backend"');
 
     try {
       // Find python executable
+      console.log('[PROMISE] About to call findPython()');
       log.info('Step 1: Searching for Python...');
       const pythonExe = findPython();
+      console.log('[PROMISE] findPython() returned:', pythonExe);
       log.info(`Step 2: findPython() returned: ${pythonExe}`);
       
       if (!pythonExe) {
@@ -514,6 +521,7 @@ app.on('activate', () => {
 // Handle any uncaught exceptions
 process.on('uncaughtException', (err) => {
   log.error(`Uncaught exception: ${err}`);
+  console.error('[UNCAUGHT]', err);
   if (mainWindow) {
     dialog.showErrorBox('Error', `An error occurred: ${err.message}`);
   }
