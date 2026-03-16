@@ -105,8 +105,8 @@ class DashboardManager:
             "--port", str(port),
         ]
         
-        # Only add --reload in foreground mode (development)
-        if foreground:
+        # Only add --reload in foreground mode (development) - but NOT on Windows (causes socket errors)
+        if foreground and sys.platform != "win32":
             uvicorn_cmd.append("--reload")
         
         if foreground:
