@@ -24,10 +24,23 @@ from datetime import datetime, timedelta
 import asyncio
 import json
 import logging
+import sys
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# Setup logging - explicitly configure to output to console
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(levelname)s] %(message)s',
+    stream=sys.stdout,
+    force=True
+)
 logger = logging.getLogger(__name__)
+
+# Add console handler explicitly
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(levelname)s] %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 # ============================================================================
@@ -338,6 +351,11 @@ async def system_overview() -> Dict:
         import psutil
         import os
         
+        # FORCE VISIBLE OUTPUT
+        print("\n" + "="*60)
+        print("[SYSTEM_OVERVIEW] Endpoint called")
+        print("="*60)
+        
         # Get real system info
         process = psutil.Process(os.getpid())
         memory_info = process.memory_info()
@@ -345,6 +363,7 @@ async def system_overview() -> Dict:
         
         # DEBUG: Log current working directory
         cwd = os.getcwd()
+        print(f"[DEBUG] Current working directory: {cwd}")
         logger.info(f"[DEBUG] Current working directory: {cwd}")
         
         # Count real approval data
@@ -354,6 +373,7 @@ async def system_overview() -> Dict:
         agent_count = 0
         
         workflow_file = Path("data/approval_workflow_state.json")
+        print(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
         logger.info(f"[DEBUG] Checking workflow_file: {workflow_file.absolute()}, exists={workflow_file.exists()}")
         if workflow_file.exists():
             with open(workflow_file, 'r') as f:
@@ -378,7 +398,9 @@ async def system_overview() -> Dict:
                 agents = json.load(f)
                 agent_count = len(agents) if isinstance(agents, list) else len(agents)
         
+        print(f"[DEBUG] Final data counts - agents: {agent_count}, decisions: {decision_count}, missions: {mission_count}, approvals: {approval_count}")
         logger.info(f"[DEBUG] Final data counts - agents: {agent_count}, decisions: {decision_count}, missions: {mission_count}, approvals: {approval_count}")
+        print("="*60 + "\n")
         
         return {
             "status": "operational",
