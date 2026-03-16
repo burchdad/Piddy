@@ -335,12 +335,13 @@ function findPython() {
     
     for (const pythonPath of windowsPaths) {
       try {
+        log.debug(`  Checking: ${pythonPath}`);
         if (fs.existsSync(pythonPath)) {
           log.info(`✅ Found Python at: ${pythonPath}`);
           return pythonPath;
         }
       } catch (err) {
-        // Continue searching
+        log.debug(`    Error checking path: ${err.message}`);
       }
     }
   } else {
@@ -348,6 +349,7 @@ function findPython() {
     const unixPaths = ['python3', 'python', '/usr/bin/python3', '/usr/bin/python'];
     for (const pythonPath of unixPaths) {
       try {
+        log.debug(`  Checking: ${pythonPath}`);
         const result = require('child_process').spawnSync(pythonPath, ['--version'], { 
           stdio: 'pipe',
           timeout: 2000 
@@ -357,7 +359,7 @@ function findPython() {
           return pythonPath;
         }
       } catch (err) {
-        // Continue searching
+        log.debug(`    Error checking path: ${err.message}`);
       }
     }
   }
@@ -367,16 +369,16 @@ function findPython() {
   return null;
 }
 
-/**
- * Spawn the Python backend process
- */
 function startPythonBackend() {
   return new Promise((resolve, reject) => {
     log.info('Starting Python backend...');
 
     try {
       // Find python executable
+      log.info('Step 1: Searching for Python...');
       const pythonExe = findPython();
+      log.info(`Step 2: findPython() returned: ${pythonExe}`);
+      
       if (!pythonExe) {
         const errorMsg = 'Python not found on system. Please ensure Python 3.9+ is installed and in PATH.';
         log.error(errorMsg);
@@ -400,15 +402,18 @@ function startPythonBackend() {
       const scriptDir = path.dirname(scriptPath);
       log.info(`Backend working directory: ${scriptDir}`);
       
-      log.info(`Spawning: ${pythonExe} ${scriptPath} --desktop`);
+      log.info(`Step 3: About to spawn: ${pythonExe} ${scriptPath} --desktop`);
+      log.info(`Step 3b: Working dir: ${scriptDir}`);
+      log.info(`Step 3c: Stdio config: ['ignore', 'pipe', 'pipe']`);
       
       pythonProcess = spawn(pythonExe, [scriptPath, '--desktop'], {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
         cwd: scriptDir,
-        // Important: pass environment to ensure PATH is set for subprocess calls within start_piddy.py
         env: { ...process.env }
       });
+
+      log.info(`Step 4: Process spawned, PID: ${pythonProcess ? pythonProcess.pid : 'null'}`);
 
       let backendOutput = '';
       let backendErrors = '';
