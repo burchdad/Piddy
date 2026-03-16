@@ -374,8 +374,17 @@ async def system_overview() -> Dict:
         logger.info(f"[DEBUG] Current working directory: {cwd}")
         
         # Count real approval data
-        # Data folder is one level up from src/ (at package root)
-        data_dir = Path("../data").resolve()
+        # Find data directory: it's at the package root, not in src/
+        # Use __file__ to get absolute path to this script
+        import os
+        script_dir = Path(__file__).parent  # src/ directory
+        package_root = script_dir.parent    # package root (one level up from src)
+        data_dir = package_root / "data"
+        
+        print(f"[DEBUG] Script location: {script_dir}")
+        print(f"[DEBUG] Package root: {package_root}")
+        print(f"[DEBUG] Data directory: {data_dir}, exists={data_dir.exists()}")
+        
         approval_count = 0
         decision_count = 0
         mission_count = 0
