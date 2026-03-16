@@ -69,6 +69,10 @@
       {
         "from": "../requirements.txt",
         "to": "requirements.txt"
+      },
+      {
+        "from": "../src",
+        "to": "src"
       }
     ],
     "win": {
