@@ -299,9 +299,9 @@ def show_status():
     log_header("🚀 Piddy Unified Startup Complete!")
     
     print("""
-    📊 Dashboard:     http://localhost:8000/
+    📊 Dashboard:     http://localhost:8001/
     🎨 Frontend:      http://localhost:5173/ (dev server)
-    📋 Approvals:     http://localhost:8000/#/approvals
+    📋 Approvals:     http://localhost:8001/#/approvals
     
     ✨ Key Features:
     • Market gap detection & reporting
@@ -311,7 +311,7 @@ def show_status():
     • Real-time system metrics
     
     📝 Next Steps:
-    1. Open http://localhost:8000 in your browser
+    1. Open http://localhost:8001 in your browser
     2. Click on "Approvals" tab in the sidebar
     3. Review pending market gaps
     4. Approve/reject gaps based on security & business needs
@@ -329,8 +329,8 @@ def show_status():
     
     💡 Tips:
     • Monitor logs: tail -f data/service.log
-    • Check health: curl http://localhost:8000/api/system/overview
-    • View approvals: curl http://localhost:8000/api/approvals
+    • Check health: curl http://localhost:8001/api/system/overview
+    • View approvals: curl http://localhost:8001/api/approvals
     • Stop services: python src/service_manager.py --stop
     
     """)
