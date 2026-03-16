@@ -57,7 +57,7 @@
       "node_modules/combined-stream/**/*",
       "node_modules/delayed-stream/**/*"
     ],
-    "extraFiles": [
+    "extraResources": [
       {
         "from": "../frontend/dist",
         "to": "frontend/dist"

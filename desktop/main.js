@@ -47,16 +47,16 @@ const isDevelopment = process.env.NODE_ENV === 'development' || process.env.ELEC
 /**
  * Resolve file paths correctly for both dev and packaged modes
  * In dev: files are relative to ../
- * In packaged: files are in the same directory as the executable
+ * In packaged: files are in the resources/ directory (not inside asar)
  */
 function getResourcePath(relativePath) {
   if (isDevelopment) {
     // In development, files are outside the app directory
     return path.join(__dirname, '..', relativePath);
   } else {
-    // In packaged app with extraFiles, they're copied to the app root
-    // __dirname points to /resources/app, so use app.getAppPath()
-    return path.join(app.getAppPath(), relativePath);
+    // In packaged app with extraResources, files are in resources/ directory
+    // app.getAppPath() returns /resources/app.asar, so go up one level
+    return path.join(app.getAppPath(), '..', relativePath);
   }
 }
 
