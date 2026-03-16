@@ -8,6 +8,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const axios = require('axios');
+const http = require('http');
 
 // Handle ES Module imports - fix-path is an ES module
 let fixPath;
@@ -39,8 +40,93 @@ try {
 let mainWindow;
 let pythonProcess = null;
 let backendReady = false;
+let staticServerReady = false;
 
 const isDevelopment = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV_LAUNCH === 'true';
+
+/**
+ * Start a simple static file server for the frontend
+ * Avoids file:// CORS issues in Electron
+ */
+function startStaticServer() {
+  return new Promise((resolve, reject) => {
+    const distPath = path.join(__dirname, '../frontend/dist');
+    
+    if (!fs.existsSync(distPath)) {
+      log.warn('Frontend dist directory not found, UI may not load');
+      resolve(null);
+      return;
+    }
+    
+    const server = http.createServer((req, res) => {
+      // Remove query string and decode URL
+      let filePath = path.join(distPath, req.url === '/' ? 'index.html' : req.url);
+      
+      // Prevent directory traversal
+      if (!filePath.startsWith(distPath)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+      
+      // Try to serve the file
+      fs.stat(filePath, (err, stats) => {
+        if (err || !stats.isFile()) {
+          // If not found, serve index.html (SPA routing)
+          filePath = path.join(distPath, 'index.html');
+        }
+        
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            res.writeHead(404);
+            res.end('Not Found');
+            return;
+          }
+          
+          // Set appropriate content type
+          const ext = path.extname(filePath);
+          const contentTypes = {
+            '.html': 'text/html',
+            '.js': 'application/javascript',
+            '.css': 'text/css',
+            '.json': 'application/json',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+          };
+          
+          const contentType = contentTypes[ext] || 'application/octet-stream';
+          res.writeHead(200, { 'Content-Type': contentType });
+          res.end(data);
+        });
+      });
+    });
+    
+    // Find an available port
+    let port = 4000;
+    const tryPort = () => {
+      server.listen(port, 'localhost', () => {
+        log.info(`Static server running on http://localhost:${port}`);
+        staticServerReady = true;
+        resolve(`http://localhost:${port}`);
+      }).on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          port++;
+          if (port < 4100) {
+            tryPort();
+          } else {
+            reject(new Error('Could not find available port for static server'));
+          }
+        } else {
+          reject(err);
+        }
+      });
+    };
+    
+    tryPort();
+  });
+}
 
 /**
  * Create the main browser window
@@ -63,17 +149,35 @@ function createWindow() {
     icon: path.join(__dirname, 'assets', 'icon.png')
   });
 
-  // Load the app
-  const startUrl = isDevelopment
-    ? 'http://localhost:3000'
-    : `file://${path.join(__dirname, '../frontend/dist/index.html')}`;
-
-  mainWindow.loadURL(startUrl);
+  // Use static server for production to avoid file:// CORS issues
+  if (isDevelopment) {
+    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.webContents.openDevTools();
+  } else {
+    // For production, use the static server we started earlier
+    const setupUI = async () => {
+      try {
+        const serverUrl = await startStaticServer();
+        if (serverUrl) {
+          mainWindow.loadURL(serverUrl);
+        } else {
+          log.error('Failed to start static server, falling back');
+          mainWindow.loadURL(`file://${path.join(__dirname, '../frontend/dist/index.html')}`);
+        }
+      } catch (err) {
+        log.error(`Error starting static server: ${err}`);
+        mainWindow.loadURL(`file://${path.join(__dirname, '../frontend/dist/index.html')}`);
+      }
+    };
+    setupUI();
+  }
 
   // Always open dev tools for debugging (can be disabled later)
   // Open with delay to ensure window is ready
   setTimeout(() => {
-    mainWindow.webContents.openDevTools();
+    if (!isDevelopment) {
+      mainWindow.webContents.openDevTools();
+    }
   }, 1000);
 
   mainWindow.on('closed', () => {
