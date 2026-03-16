@@ -31,4 +31,4 @@ backendUrl: 'http://localhost:8001',
 });
 
 console.log('[Preload] Piddy API exposed to renderer');
-console.log('[Preload] Backend URL:', 'http://localhost:8000');
+console.log('[Preload] Backend URL:', 'http://localhost:8001');
