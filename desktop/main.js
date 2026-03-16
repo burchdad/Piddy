@@ -322,12 +322,25 @@ function findPython() {
     const windowsPaths = [
       'python.exe',
       'python3.exe',
+      // Root-level Python installations (most common for standalone installs)
+      'C:\\Python313\\python.exe',
+      'C:\\Python312\\python.exe',
+      'C:\\Python311\\python.exe',
+      'C:\\Python310\\python.exe',
+      'C:\\Python39\\python.exe',
+      // Program Files installations
+      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python313', 'python.exe'),
+      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python312', 'python.exe'),
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python311', 'python.exe'),
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python310', 'python.exe'),
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python39', 'python.exe'),
+      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python313', 'python.exe'),
+      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python312', 'python.exe'),
       path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python311', 'python.exe'),
       path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python310', 'python.exe'),
       path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python39', 'python.exe'),
+      path.join(process.env.APPDATA || '', 'Python', 'Python313', 'python.exe'),
+      path.join(process.env.APPDATA || '', 'Python', 'Python312', 'python.exe'),
       path.join(process.env.APPDATA || '', 'Python', 'Python311', 'python.exe'),
     ];
     
