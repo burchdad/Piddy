@@ -277,6 +277,60 @@ function createMenu() {
 }
 
 /**
+ * Find Python executable path
+ * Try multiple locations and methods
+ */
+function findPython() {
+  log.info('🔍 Searching for Python executable...');
+  
+  // On Windows, try multiple common paths
+  if (process.platform === 'win32') {
+    const windowsPaths = [
+      'python.exe',
+      'python3.exe',
+      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python311', 'python.exe'),
+      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python310', 'python.exe'),
+      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python39', 'python.exe'),
+      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python311', 'python.exe'),
+      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python310', 'python.exe'),
+      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python39', 'python.exe'),
+      path.join(process.env.APPDATA || '', 'Python', 'Python311', 'python.exe'),
+    ];
+    
+    for (const pythonPath of windowsPaths) {
+      try {
+        if (fs.existsSync(pythonPath)) {
+          log.info(`✅ Found Python at: ${pythonPath}`);
+          return pythonPath;
+        }
+      } catch (err) {
+        // Continue searching
+      }
+    }
+  } else {
+    // On macOS/Linux, try common paths
+    const unixPaths = ['python3', 'python', '/usr/bin/python3', '/usr/bin/python'];
+    for (const pythonPath of unixPaths) {
+      try {
+        const result = require('child_process').spawnSync(pythonPath, ['--version'], { 
+          stdio: 'pipe',
+          timeout: 2000 
+        });
+        if (result.status === 0) {
+          log.info(`✅ Found Python at: ${pythonPath}`);
+          return pythonPath;
+        }
+      } catch (err) {
+        // Continue searching
+      }
+    }
+  }
+  
+  log.error('❌ Python executable not found!');
+  return null;
+}
+
+/**
  * Spawn the Python backend process
  */
 function startPythonBackend() {
@@ -284,45 +338,74 @@ function startPythonBackend() {
     log.info('Starting Python backend...');
 
     try {
-      // Determine python executable
-      const pythonExe = process.platform === 'win32' ? 'python' : 'python3';
+      // Find python executable
+      const pythonExe = findPython();
+      if (!pythonExe) {
+        const errorMsg = 'Python not found on system. Please ensure Python 3.9+ is installed and in PATH.';
+        log.error(errorMsg);
+        reject(new Error(errorMsg));
+        return;
+      }
+
       const scriptPath = getResourcePath('start_piddy.py');
       log.info(`Python script path: ${scriptPath}`);
       
       if (!fs.existsSync(scriptPath)) {
-        log.warn(`⚠️  start_piddy.py not found at ${scriptPath}`);
-      } else {
-        log.info(`✅ Found start_piddy.py`);
+        const errorMsg = `start_piddy.py not found at ${scriptPath}. Backend files may be missing from distribution.`;
+        log.error(errorMsg);
+        reject(new Error(errorMsg));
+        return;
       }
+      
+      log.info(`✅ Found start_piddy.py`);
 
-      // Set working directory to the parent directory containing start_piddy.py
-      // This ensures Python can import dashboard_api from src/ subdirectory
+      // Set working directory to the directory containing start_piddy.py
       const scriptDir = path.dirname(scriptPath);
+      log.info(`Backend working directory: ${scriptDir}`);
+      
+      log.info(`Spawning: ${pythonExe} ${scriptPath} --desktop`);
       
       pythonProcess = spawn(pythonExe, [scriptPath, '--desktop'], {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
-        cwd: scriptDir
+        cwd: scriptDir,
+        // Important: pass environment to ensure PATH is set for subprocess calls within start_piddy.py
+        env: { ...process.env }
       });
 
+      let backendOutput = '';
+      let backendErrors = '';
+
       pythonProcess.stdout.on('data', (data) => {
-        log.info(`[Backend] ${data}`);
+        const output = data.toString();
+        backendOutput += output;
+        log.info(`[Backend] ${output}`);
       });
 
       pythonProcess.stderr.on('data', (data) => {
-        log.warn(`[Backend Error] ${data}`);
+        const error = data.toString();
+        backendErrors += error;
+        log.warn(`[Backend Error] ${error}`);
       });
 
       pythonProcess.on('error', (err) => {
-        log.error(`Failed to start backend: ${err}`);
+        log.error(`❌ Failed to spawn backend process: ${err.message}`);
+        log.error(`   Error code: ${err.code}`);
+        if (err.code === 'ENOENT') {
+          log.error(`   Python executable not found at: ${pythonExe}`);
+        }
         reject(err);
       });
 
-      pythonProcess.on('exit', (code) => {
-        log.warn(`Backend exited with code ${code}`);
+      pythonProcess.on('exit', (code, signal) => {
+        log.warn(`Backend process exited with code ${code}, signal ${signal}`);
+        log.warn(`Last output: ${backendOutput.slice(-200)}`);
+        if (backendErrors) {
+          log.error(`Last error: ${backendErrors.slice(-200)}`);
+        }
         backendReady = false;
         if (mainWindow) {
-          mainWindow.webContents.send('backend-stopped', { code });
+          mainWindow.webContents.send('backend-stopped', { code, signal });
         }
       });
 

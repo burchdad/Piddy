@@ -189,18 +189,38 @@ def start_background_service(foreground=False):
     try:
         if foreground:
             log_info("Starting background service in foreground...")
-            subprocess.run(
-                ["python", "src/service_manager.py", "--start-fg"],
-                check=True
+            result = subprocess.run(
+                [sys.executable, "src/service_manager.py", "--start-fg"],
+                cwd="."
             )
+            if result.returncode != 0:
+                log_error(f"Background service exited with code {result.returncode}")
+                return False
         else:
             log_info("Starting background service in background...")
-            subprocess.Popen(
-                ["python", "src/service_manager.py", "--start"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+            # Capture output for debugging
+            proc = subprocess.Popen(
+                [sys.executable, "src/service_manager.py", "--start"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd="."
             )
+            
+            # Give it a moment to start
             time.sleep(2)
+            
+            # Check if it's still running
+            if proc.poll() is not None:
+                # Process exited already
+                stdout, stderr = proc.communicate()
+                log_error(f"Background service failed to start (exit code {proc.returncode})")
+                if stdout:
+                    log_error(f"STDOUT: {stdout}")
+                if stderr:
+                    log_error(f"STDERR: {stderr}")
+                return False
+            
             log_success("Background service started")
     except FileNotFoundError:
         log_error("service_manager.py not found")
@@ -218,8 +238,8 @@ def start_dashboard(foreground=False):
     try:
         log_info("Starting dashboard...")
         
-        # Build command
-        cmd = ["python", "src/dashboard_manager.py"]
+        # Build command - use sys.executable to get the same Python that's running this script
+        cmd = [sys.executable, "src/dashboard_manager.py"]
         if foreground:
             cmd.append("--start-fg")  # Use --start-fg for foreground
         else:
@@ -227,19 +247,38 @@ def start_dashboard(foreground=False):
         
         # If foreground mode, don't suppress output
         if foreground:
-            subprocess.run(cmd, cwd=".")
+            log_info(f"Running in foreground: {' '.join(cmd)}")
+            result = subprocess.run(cmd, cwd=".")
+            if result.returncode != 0:
+                log_error(f"Dashboard exited with code {result.returncode}")
+                return False
         else:
-            subprocess.Popen(
+            log_info(f"Running in background: {' '.join(cmd)}")
+            # For background mode, capture output for debugging
+            proc = subprocess.Popen(
                 cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
             )
-        
-        if not foreground:
-            time.sleep(3)
+            
+            # Give it a moment to start
+            time.sleep(2)
+            
+            # Check if it's still running
+            if proc.poll() is not None:
+                # Process exited already
+                stdout, stderr = proc.communicate()
+                log_error(f"Dashboard failed to start (exit code {proc.returncode})")
+                if stdout:
+                    log_error(f"STDOUT: {stdout}")
+                if stderr:
+                    log_error(f"STDERR: {stderr}")
+                return False
+            
             log_success("Dashboard started")
-    except FileNotFoundError:
-        log_error("dashboard_manager.py not found")
+    except FileNotFoundError as e:
+        log_error(f"dashboard_manager.py not found: {e}")
         return False
     except Exception as e:
         log_error(f"Failed to start dashboard: {e}")
@@ -470,14 +509,16 @@ Examples:
         log_info("Running from Electron desktop app")
         log_info("Frontend already built and served via HTTP static server in Electron")
         
-        # Install frontend dependencies (skip npm, frontend is built)
-        install_frontend_dependencies()
+        # Skip frontend dependency installation - frontend is bundled
+        log_info("Frontend already bundled in distribution")
         
         # Start only backend services (Electron provides frontend)
-        start_background_service(args.foreground)
-        start_dashboard(foreground=args.foreground)
+        # Use background mode for both (not foreground)
+        service_ok = start_background_service(foreground=False)
+        dashboard_ok = start_dashboard(foreground=False)
         
-        # Skip frontend dev server - Electron's HTTP server handles it
+        if not (service_ok and dashboard_ok):
+            log_error("⚠️  Some backend services failed to start, but continuing...")
         
         # Health checks
         if not args.no_health_check:
