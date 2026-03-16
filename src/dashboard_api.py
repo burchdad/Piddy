@@ -1346,8 +1346,21 @@ async def system_overview() -> Dict:
 
 @app.get("/api/agents")
 async def get_agents() -> List[AgentStatus]:
-    """Get all agent statuses"""
-    return generator.get_agents()
+    """Get all agent statuses from real data"""
+    try:
+        from pathlib import Path
+        agent_file = Path("data/agent_state.json")
+        
+        if agent_file.exists():
+            with open(agent_file, 'r') as f:
+                agents_data = json.load(f)
+                return [AgentStatus(**agent) for agent in agents_data] if isinstance(agents_data, list) else []
+        
+        # No real agent data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching agents: {e}")
+        return []
 
 
 @app.get("/api/agents/{agent_id}")
@@ -1366,9 +1379,22 @@ async def get_agent(agent_id: str) -> AgentStatus:
 
 @app.get("/api/messages")
 async def get_messages(limit: int = 100) -> List[AgentMessage]:
-    """Get recent agent messages"""
-    messages = generator.get_agent_messages()
-    return messages[:limit]
+    """Get recent agent messages from real data"""
+    try:
+        from pathlib import Path
+        messages_file = Path("data/message_log.json")
+        
+        if messages_file.exists():
+            with open(messages_file, 'r') as f:
+                messages_data = json.load(f)
+                messages = [AgentMessage(**msg) for msg in messages_data] if isinstance(messages_data, list) else []
+                return messages[:limit]
+        
+        # No real message data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching messages: {e}")
+        return []
 
 
 @app.get("/api/messages/{agent_id}")
@@ -1406,8 +1432,21 @@ async def websocket_messages(websocket: WebSocket):
 
 @app.get("/api/phases")
 async def get_phases() -> List[PhaseStatus]:
-    """Get all phase statuses"""
-    return generator.get_phases()
+    """Get all phase statuses from real data"""
+    try:
+        from pathlib import Path
+        phases_file = Path("data/phase_status.json")
+        
+        if phases_file.exists():
+            with open(phases_file, 'r') as f:
+                phases_data = json.load(f)
+                return [PhaseStatus(**phase) for phase in phases_data] if isinstance(phases_data, list) else []
+        
+        # No real phase data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching phases: {e}")
+        return []
 
 
 @app.get("/api/phases/{phase_id}")
@@ -1426,8 +1465,35 @@ async def get_phase(phase_id: str) -> PhaseStatus:
 
 @app.get("/api/security/audit")
 async def get_security_audit() -> SecurityAuditResult:
-    """Get latest security audit results"""
-    return generator.get_security_info()
+    """Get latest security audit results from real data"""
+    try:
+        from pathlib import Path
+        audit_file = Path("data/security_audit.json")
+        
+        if audit_file.exists():
+            with open(audit_file, 'r') as f:
+                audit_data = json.load(f)
+                return SecurityAuditResult(**audit_data)
+        
+        # Default if no audit data
+        return SecurityAuditResult(
+            audit_id="none",
+            passed_checks=0,
+            failed_checks=0,
+            critical_failures=[],
+            is_production_safe=False,
+            timestamp=datetime.utcnow().isoformat()
+        )
+    except Exception as e:
+        logger.error(f"Error fetching security audit: {e}")
+        return SecurityAuditResult(
+            audit_id="error",
+            passed_checks=0,
+            failed_checks=0,
+            critical_failures=[str(e)],
+            is_production_safe=False,
+            timestamp=datetime.utcnow().isoformat()
+        )
 
 
 @app.get("/api/security/issues")
@@ -1448,8 +1514,21 @@ async def get_security_issues() -> Dict:
 
 @app.get("/api/metrics/performance")
 async def get_performance_metrics() -> List[PerformanceMetric]:
-    """Get all performance metrics"""
-    return generator.get_performance_metrics()
+    """Get all performance metrics from real data"""
+    try:
+        from pathlib import Path
+        metrics_file = Path("data/performance_metrics.json")
+        
+        if metrics_file.exists():
+            with open(metrics_file, 'r') as f:
+                metrics_data = json.load(f)
+                return [PerformanceMetric(**metric) for metric in metrics_data] if isinstance(metrics_data, list) else []
+        
+        # No real metrics data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching metrics: {e}")
+        return []
 
 
 @app.get("/api/metrics/graph")
@@ -1472,11 +1551,40 @@ async def get_metric_graph(metric_name: str, period_hours: int = 24) -> Dict:
 
 @app.get("/api/logs")
 async def get_logs(limit: int = 50, level: Optional[str] = None) -> List[LogEntry]:
-    """Get logs"""
-    logs = generator.get_logs(limit)
-    if level:
-        logs = [l for l in logs if l.level == level]
-    return logs
+    """Get logs from real data"""
+    try:
+        from pathlib import Path
+        
+        # Try multiple log sources
+        log_files = [
+            Path("data/service.log"),
+            Path("data/dashboard.log"),
+        ]
+        
+        logs = []
+        for log_file in log_files:
+            if log_file.exists():
+                try:
+                    with open(log_file, 'r') as f:
+                        for line in f:
+                            try:
+                                log_entry = json.loads(line)
+                                logs.append(LogEntry(**log_entry))
+                            except:
+                                # Skip non-JSON lines
+                                pass
+                except:
+                    pass
+        
+        if level:
+            logs = [l for l in logs if l.level == level]
+        
+        # Sort by timestamp descending and limit
+        logs = sorted(logs, key=lambda x: x.timestamp, reverse=True)[:limit]
+        return logs
+    except Exception as e:
+        logger.error(f"Error fetching logs: {e}")
+        return []
 
 
 @app.get("/api/logs/{source}")
@@ -1511,8 +1619,21 @@ async def websocket_logs(websocket: WebSocket):
 
 @app.get("/api/tests")
 async def get_tests() -> List[TestResult]:
-    """Get test results"""
-    return generator.get_test_results()
+    """Get test results from real data"""
+    try:
+        from pathlib import Path
+        tests_file = Path("data/test_results.json")
+        
+        if tests_file.exists():
+            with open(tests_file, 'r') as f:
+                tests_data = json.load(f)
+                return [TestResult(**test) for test in tests_data] if isinstance(tests_data, list) else []
+        
+        # No real test data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching tests: {e}")
+        return []
 
 
 @app.get("/api/tests/summary")
@@ -1601,8 +1722,24 @@ async def get_deployment_history() -> Dict:
 
 @app.get("/api/decisions")
 async def get_decisions() -> List[Decision]:
-    """Get AI decisions with reasoning chains and validation"""
-    return MockDataGenerator.get_decisions()
+    """Get AI decisions with reasoning chains from real data"""
+    try:
+        from pathlib import Path
+        decisions_file = Path("data/decision_logs.json")
+        
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions_data = json.load(f)
+                if isinstance(decisions_data, list):
+                    return [Decision(**d) for d in decisions_data]
+                elif isinstance(decisions_data, dict):
+                    return [Decision(**d) for d in decisions_data.values()]
+        
+        # No real decision data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching decisions: {e}")
+        return []
 
 
 @app.post("/api/decisions/{decision_id}/approve")
@@ -1671,8 +1808,24 @@ async def reject_decision(decision_id: str, rejected_by: str = "user", reason: s
 
 @app.get("/api/missions")
 async def get_missions() -> List[Mission]:
-    """Get mission timelines with stage progression"""
-    return MockDataGenerator.get_missions()
+    """Get mission timelines from real data"""
+    try:
+        from pathlib import Path
+        missions_file = Path("data/mission_telemetry.json")
+        
+        if missions_file.exists():
+            with open(missions_file, 'r') as f:
+                missions_data = json.load(f)
+                if isinstance(missions_data, list):
+                    return [Mission(**m) for m in missions_data]
+                elif isinstance(missions_data, dict):
+                    return [Mission(**m) for m in missions_data.values()]
+        
+        # No real mission data
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching missions: {e}")
+        return []
 
 
 @app.get("/api/missions/{mission_id}/replay")
@@ -1683,8 +1836,29 @@ async def get_mission_replay(mission_id: str) -> MissionReplayData:
 
 @app.get("/api/graph/dependencies")
 async def get_dependency_graph() -> DependencyGraph:
-    """Get system dependency graph"""
-    return MockDataGenerator.get_dependency_graph()
+    """Get system dependency graph from real data"""
+    try:
+        from pathlib import Path
+        graph_file = Path("data/dependency_graph.json")
+        
+        if graph_file.exists():
+            with open(graph_file, 'r') as f:
+                graph_data = json.load(f)
+                return DependencyGraph(**graph_data)
+        
+        # Return empty graph if no data
+        return DependencyGraph(
+            nodes=[],
+            edges=[],
+            timestamp=datetime.utcnow().isoformat()
+        )
+    except Exception as e:
+        logger.error(f"Error fetching dependency graph: {e}")
+        return DependencyGraph(
+            nodes=[],
+            edges=[],
+            timestamp=datetime.utcnow().isoformat()
+        )
 
 
 # ============================================================================
@@ -1927,7 +2101,7 @@ async def verify_system_ready() -> Dict:
 
 @app.get("/api/approvals")
 async def list_approvals() -> Dict:
-    """List all pending and historical approval requests"""
+    """List all pending and historical approval requests from real data"""
     try:
         from pathlib import Path
         workflow_file = Path("data/approval_workflow_state.json")
@@ -1941,38 +2115,11 @@ async def list_approvals() -> Dict:
                     "timestamp": datetime.utcnow().isoformat()
                 }
         
-        # Return mock approval requests if file doesn't exist
-        mock_requests = {
-            "req_001": {
-                "request_id": "req_001",
-                "status": "pending",
-                "created_at": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
-                "deadline": (datetime.utcnow() + timedelta(days=1)).isoformat(),
-                "sent_to_emails": ["user@example.com"],
-                "high_risk_count": 1,
-                "medium_risk_count": 2,
-                "low_risk_count": 3,
-                "gaps": [
-                    {
-                        "gap_id": "gap_001",
-                        "title": "Real-time Dashboard Analytics",
-                        "category": "Analytics",
-                        "market_need": "Customer demand for real-time visibility",
-                        "frequency": 15,
-                        "estimated_impact": 0.35,
-                        "complexity_score": 7,
-                        "estimated_build_time_hours": 40,
-                        "security_risk_level": "HIGH",
-                        "security_concerns": ["Data exposure", "Rate limiting needed"],
-                        "integration_points": ["Database", "WebSocket API", "Authentication"]
-                    }
-                ]
-            }
-        }
-        
+        # No real approval data yet
         return {
-            "requests": mock_requests,
-            "count": len(mock_requests),
+            "requests": {},
+            "count": 0,
+            "message": "No approval requests yet",
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -2110,23 +2257,23 @@ async def reject_gap(request_id: str, gap_id: str, reason: Optional[str] = None)
 
 @app.get("/api/approvals/summary/stats")
 async def get_approval_stats() -> Dict:
-    """Get approval summary statistics"""
+    """Get approval summary statistics from real data"""
     try:
         from pathlib import Path
-        
-        decisions_file = Path("data/approval_decisions.json")
-        workflow_file = Path("data/approval_workflow_state.json")
         
         total_decisions = 0
         approved_count = 0
         rejected_count = 0
         pending_requests = 0
         
+        workflow_file = Path("data/approval_workflow_state.json")
+        decisions_file = Path("data/approval_decisions.json")
+        
         if workflow_file.exists():
             with open(workflow_file, 'r') as f:
                 workflows = json.load(f)
                 for req_id, workflow in workflows.items():
-                    if workflow.get("status") == "waiting":
+                    if isinstance(workflow, dict) and workflow.get("status") in ["waiting", "pending"]:
                         pending_requests += 1
         
         if decisions_file.exists():
@@ -2150,7 +2297,15 @@ async def get_approval_stats() -> Dict:
         }
     except Exception as e:
         logger.error(f"Error getting approval stats: {e}")
-        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+        return {
+            "total_decisions": 0,
+            "approved_count": 0,
+            "rejected_count": 0,
+            "pending_requests": 0,
+            "approval_rate": 0,
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 
 # ============================================================================
