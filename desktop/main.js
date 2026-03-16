@@ -70,9 +70,11 @@ function createWindow() {
 
   mainWindow.loadURL(startUrl);
 
-  if (isDevelopment) {
+  // Always open dev tools for debugging (can be disabled later)
+  // Open with delay to ensure window is ready
+  setTimeout(() => {
     mainWindow.webContents.openDevTools();
-  }
+  }, 1000);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
