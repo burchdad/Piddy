@@ -492,6 +492,23 @@ class AgentCoordinator:
             "workflows": self.completed_workflows[-10:],  # Last 10 workflows
         }
 
+    def get_stats(self) -> Dict[str, Any]:
+        """Alias for get_status() - for backward compatibility."""
+        return self.get_status()
+
+    def get_all_agents(self) -> List[Agent]:
+        """Get all registered agents."""
+        return list(self.agents.values())
+
+    def get_agent(self, agent_id: str) -> Optional[Agent]:
+        """Get a specific agent by ID."""
+        return self.agents.get(agent_id)
+
+    def get_recent_messages(self, limit: int = 50) -> List[CoordinationMessage]:
+        """Get recent messages (most recent first)."""
+        sorted_messages = sorted(self.messages, key=lambda m: m.created_at, reverse=True)
+        return sorted_messages[:limit]
+
 
 # Global coordinator instance
 _coordinator_instance: Optional[AgentCoordinator] = None

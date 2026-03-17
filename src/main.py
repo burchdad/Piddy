@@ -68,6 +68,28 @@ def create_app() -> FastAPI:
     telemetry_collector = MissionTelemetryCollector('.piddy_telemetry.db')
     logger.info("✅ Coordinator and Telemetry Collector initialized")
     
+    # Bootstrap: Register all agents on startup
+    from src.coordination.agent_coordinator import AgentRole
+    agents_to_register = [
+        ("Guardian", AgentRole.SECURITY_SPECIALIST, ["security_scan", "vulnerability_detection", "threat_analysis"]),
+        ("Architect", AgentRole.ARCHITECT, ["design_review", "system_planning", "scalability_analysis"]),
+        ("CodeMaster", AgentRole.BACKEND_DEVELOPER, ["code_generation", "bug_fixing", "optimization"]),
+        ("Reviewer", AgentRole.CODE_REVIEWER, ["code_review", "quality_assurance", "performance_review"]),
+        ("DevOps Pro", AgentRole.DEVOPS_ENGINEER, ["deployment", "infrastructure", "monitoring"]),
+        ("Data Expert", AgentRole.DATA_ENGINEER, ["data_pipeline", "analytics", "optimization"]),
+        ("Coordinator", AgentRole.COORDINATOR, ["task_distribution", "orchestration", "communication"]),
+        ("Perf Analyst", AgentRole.PERFORMANCE_ANALYST, ["profiling", "optimization", "bottleneck_detection"]),
+        ("Tech Debt Hunter", AgentRole.TECH_DEBT_HUNTER, ["code_debt_detection", "refactoring", "cleanup"]),
+        ("API Compat", AgentRole.API_COMPATIBILITY, ["api_testing", "compatibility_check", "versioning"]),
+        ("DB Migration", AgentRole.DATABASE_MIGRATION, ["schema_migration", "data_migration", "optimization"]),
+        ("Arch Reviewer", AgentRole.ARCHITECTURE_REVIEWER, ["architecture_review", "design_patterns", "best_practices"]),
+    ]
+    
+    for agent_name, agent_role, capabilities in agents_to_register:
+        coordinator.register_agent(agent_name, agent_role, capabilities)
+    
+    logger.info(f"✅ Registered {len(agents_to_register)} agents with coordinator")
+    
     # Setup real-time dashboard with live data
     setup_realtime_dashboard(app, coordinator, telemetry_collector)
     logger.info("✅ Real-time Dashboard API endpoints active")

@@ -107,6 +107,33 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
             logger.error(f"Error fetching agent {agent_id}: {e}")
             return {"error": str(e)}
     
+    @app.post("/api/agents/create-test")
+    async def create_test_agent(name: str = None, role: str = "backend_developer"):
+        """Create a test agent to verify live data integration."""
+        try:
+            from src.coordination.agent_coordinator import AgentRole
+            
+            test_name = name or f"Test Agent #{len(coordinator.agents) + 1}"
+            agent_role = AgentRole(role)
+            
+            agent = coordinator.register_agent(
+                name=test_name,
+                role=agent_role,
+                capabilities=["testing", "verification", "live_data_validation"]
+            )
+            
+            return {
+                "success": True,
+                "agent_id": agent.id,
+                "name": agent.name,
+                "role": agent.role.value,
+                "total_agents_now": len(coordinator.agents),
+                "message": f"Test agent created! Total agents: {len(coordinator.agents)}"
+            }
+        except Exception as e:
+            logger.error(f"Error creating test agent: {e}")
+            return {"success": False, "error": str(e)}
+    
     # ====================================================================
     # MESSAGES - REAL DATA FROM COORDINATOR
     # ====================================================================
