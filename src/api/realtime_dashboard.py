@@ -8,7 +8,7 @@ from datetime import datetime
 import logging
 import asyncio
 import sqlite3
-from typing import Set
+from typing import Set, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
             return {"error": str(e)}
     
     @app.get("/api/test/create-agent")
-    async def create_test_agent(name: str = None, role: str = "backend_developer"):
+    async def create_test_agent(name: Optional[str] = None, role: str = "backend_developer"):
         """Create a test agent to verify live data integration."""
         try:
             from src.coordination.agent_coordinator import AgentRole
