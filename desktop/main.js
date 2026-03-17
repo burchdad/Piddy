@@ -481,6 +481,11 @@ function startPythonBackend() {
 
       log.info(`Step 4: Process spawned, PID: ${pythonProcess ? pythonProcess.pid : 'null'}`);
 
+      // ✅ CRITICAL FIX: Resolve immediately after spawn succeeds - don't wait for process exit!
+      // The backend runs indefinitely, so we resolve here to allow the UI to start
+      backendReady = true;
+      resolve('Backend process spawned and running');
+
       let backendOutput = '';
       let backendErrors = '';
 
@@ -502,7 +507,9 @@ function startPythonBackend() {
         if (err.code === 'ENOENT') {
           log.error(`   Python executable not found at: ${pythonExe}`);
         }
-        reject(err);
+        if (!backendReady) {
+          reject(err);
+        }
       });
 
       pythonProcess.on('exit', (code, signal) => {
