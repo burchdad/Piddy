@@ -72,6 +72,7 @@ try {
 }
 
 let mainWindow;
+let splashWindow;
 let pythonProcess = null;
 let backendReady = false;
 let staticServerReady = false;
@@ -91,6 +92,89 @@ function getResourcePath(relativePath) {
     // In packaged app with extraResources, files are in resources/ directory
     // app.getAppPath() returns /resources/app.asar, so go up one level
     return path.join(app.getAppPath(), '..', relativePath);
+  }
+}
+
+/**
+ * Create a splash screen window showing loading progress
+ */
+function createSplashScreen() {
+  log.info('Creating splash screen...');
+  
+  splashWindow = new BrowserWindow({
+    width: 500,
+    height: 650,
+    minWidth: 400,
+    minHeight: 500,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      sandbox: true
+    },
+    frame: false,  // Frameless window for clean look
+    alwaysOnTop: true,  // Keep on top during loading
+    skipTaskbar: true,  // Don't show in taskbar
+    show: true,  // Show immediately
+    transparent: false,
+    icon: path.join(__dirname, 'assets', 'icon.png')
+  });
+
+  const splashPath = isDevelopment 
+    ? path.join(__dirname, 'splash.html')
+    : path.join(app.getAppPath(), '..', 'splash.html');
+
+  log.info(`Loading splash from: ${splashPath}`);
+  
+  try {
+    splashWindow.loadURL(`file://${splashPath}`);
+  } catch (err) {
+    log.error(`Failed to load splash screen: ${err}`);
+  }
+
+  // Optional: Open dev tools for splash during development
+  // if (isDevelopment) {
+  //   splashWindow.webContents.openDevTools();
+  // }
+
+  return splashWindow;
+}
+
+/**
+ * Send status update to splash screen
+ */
+function updateSplashStatus(message, progress = 10) {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    try {
+      splashWindow.webContents.send('splash-status', { message, progress });
+      log.debug(`Splash: ${message}`);
+    } catch (err) {
+      log.debug(`Could not update splash: ${err.message}`);
+    }
+  }
+}
+
+/**
+ * Complete splash screen and close it
+ */
+function completeSplash() {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    try {
+      splashWindow.webContents.send('splash-complete');
+      setTimeout(() => {
+        if (splashWindow && !splashWindow.isDestroyed()) {
+          splashWindow.close();
+          splashWindow = null;
+        }
+      }, 500);
+    } catch (err) {
+      log.debug(`Error completing splash: ${err.message}`);
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.close();
+      }
+      splashWindow = null;
+    }
   }
 }
 
@@ -270,6 +354,14 @@ function createWindow() {
     mainWindow.webContents.on('did-finish-load', () => {
       log.info('Window loaded, checking backend status');
       console.log('[WINDOW] did-finish-load event fired');
+      updateSplashStatus('Dashboard ready!', 95);
+      
+      // Close splash screen and show main window
+      setTimeout(() => {
+        completeSplash();
+        log.info('Splash screen closed, main window visible');
+      }, 500);
+      
       mainWindow.webContents.send('window-loaded');
     });
 
@@ -436,11 +528,13 @@ function startPythonBackend() {
     console.log('[PROMISE] startPythonBackend promise created');
     log.info('Starting Python backend...');
     console.log('[PROMISE] Logged "Starting Python backend"');
+    updateSplashStatus('Locating Python...', 5);
 
     try {
       // Find python executable
       console.log('[PROMISE] About to call findPython()');
       log.info('Step 1: Searching for Python...');
+      updateSplashStatus('Finding Python executable...', 8);
       const pythonExe = findPython();
       console.log('[PROMISE] findPython() returned:', pythonExe);
       log.info(`Step 2: findPython() returned: ${pythonExe}`);
@@ -448,21 +542,25 @@ function startPythonBackend() {
       if (!pythonExe) {
         const errorMsg = 'Python not found on system. Please ensure Python 3.9+ is installed and in PATH.';
         log.error(errorMsg);
+        updateSplashStatus('❌ Python not found', 100);
         reject(new Error(errorMsg));
         return;
       }
 
+      updateSplashStatus('Validating backend files...', 12);
       const scriptPath = getResourcePath('start_piddy.py');
       log.info(`Python script path: ${scriptPath}`);
       
       if (!fs.existsSync(scriptPath)) {
         const errorMsg = `start_piddy.py not found at ${scriptPath}. Backend files may be missing from distribution.`;
         log.error(errorMsg);
+        updateSplashStatus('❌ Backend files missing', 100);
         reject(new Error(errorMsg));
         return;
       }
       
       log.info(`✅ Found start_piddy.py`);
+      updateSplashStatus('Spawning backend process...', 20);
 
       // Set working directory to the directory containing start_piddy.py
       const scriptDir = path.dirname(scriptPath);
@@ -484,6 +582,7 @@ function startPythonBackend() {
       // ✅ CRITICAL FIX: Resolve immediately after spawn succeeds - don't wait for process exit!
       // The backend runs indefinitely, so we resolve here to allow the UI to start
       backendReady = true;
+      updateSplashStatus('Backend services running...', 30);
       resolve('Backend process spawned and running');
 
       let backendOutput = '';
@@ -557,16 +656,32 @@ app.on('ready', async () => {
   log.info(`App path: ${app.getAppPath()}`);
 
   try {
+    // Create splash screen immediately
+    createSplashScreen();
+    updateSplashStatus('Starting Python backend...', 15);
+
     // Start Python backend first
     await startPythonBackend();
+    updateSplashStatus('Backend started successfully', 35);
     log.info('✅ Backend started successfully');
 
-    // Then create the window
+    updateSplashStatus('Initializing static server...', 50);
+    
+    // Then create the main window
     createWindow();
+    updateSplashStatus('Loading frontend...', 75);
+    
   } catch (err) {
     log.error(`Failed to start app: ${err}`);
-    dialog.showErrorBox('Error', `Failed to start Piddy backend: ${err}`);
-    app.quit();
+    updateSplashStatus(`Error: ${err}`, 100);
+    
+    setTimeout(() => {
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.close();
+      }
+      dialog.showErrorBox('Error', `Failed to start Piddy backend: ${err}`);
+      app.quit();
+    }, 1500);
   }
 });
 
