@@ -137,10 +137,31 @@ def create_app() -> FastAPI:
         status_dict = monitor.get_status_dict()
         return status_dict
     
+    # Define agents list once to use in multiple endpoints
+    AGENTS_LIST = [
+        {"id": "agent-1", "name": "Guardian", "status": "online", "reputation": 0.95},
+        {"id": "agent-2", "name": "Validator", "status": "online", "reputation": 0.87},
+        {"id": "agent-3", "name": "Performance Analyst", "status": "online", "reputation": 0.82},
+        {"id": "agent-4", "name": "Tech Debt Hunter", "status": "idle", "reputation": 0.79},
+        {"id": "agent-5", "name": "Architecture Reviewer", "status": "online", "reputation": 0.88},
+        {"id": "agent-6", "name": "Cost Optimizer", "status": "online", "reputation": 0.84},
+    ]
+    
+    MISSIONS_LIST = [
+        {"id": "mission-1", "title": "Security Audit", "status": "in_progress", "progress": 65},
+        {"id": "mission-2", "title": "Performance Optimization", "status": "in_progress", "progress": 42},
+    ]
+
     # Dashboard API Endpoints
     @app.get("/api/system/overview")
     async def system_overview():
         """Get system overview for dashboard."""
+        # Count actual online agents
+        agents_online = len([a for a in AGENTS_LIST if a.get('status') == 'online'])
+        
+        # Count actual in-progress missions
+        missions_active = len([m for m in MISSIONS_LIST if m.get('status') == 'in_progress'])
+        
         # Count actual pending decisions from dashboard API
         try:
             from src.dashboard_api import MockDataGenerator
@@ -156,8 +177,8 @@ def create_app() -> FastAPI:
         return {
             "status": "operational",
             "uptime_seconds": 3600,
-            "agents_online": 12,
-            "missions_active": 2,
+            "agents_online": agents_online,
+            "missions_active": missions_active,
             "decisions_pending": pending_count,
             "last_updated": datetime.utcnow().isoformat(),
         }
@@ -165,14 +186,7 @@ def create_app() -> FastAPI:
     @app.get("/api/agents")
     async def get_agents():
         """Get all agents."""
-        return [
-            {"id": "agent-1", "name": "Guardian", "status": "online", "reputation": 0.95},
-            {"id": "agent-2", "name": "Validator", "status": "online", "reputation": 0.87},
-            {"id": "agent-3", "name": "Performance Analyst", "status": "online", "reputation": 0.82},
-            {"id": "agent-4", "name": "Tech Debt Hunter", "status": "idle", "reputation": 0.79},
-            {"id": "agent-5", "name": "Architecture Reviewer", "status": "online", "reputation": 0.88},
-            {"id": "agent-6", "name": "Cost Optimizer", "status": "online", "reputation": 0.84},
-        ]
+        return AGENTS_LIST
     
     @app.get("/api/messages")
     async def get_messages():
