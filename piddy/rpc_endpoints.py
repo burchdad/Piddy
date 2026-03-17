@@ -547,6 +547,185 @@ def approvals_list(limit: int = 50) -> Dict:
 
 
 # ============================================================================
+# TASKS ENDPOINTS
+# ============================================================================
+
+def tasks_create(name: str, task_type: str, **kwargs) -> Dict:
+    """Create a new task"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        task = executor.create_task(name, task_type, **kwargs)
+        
+        return {
+            "success": True,
+            "task_id": task.id,
+            "task": task.to_dict()
+        }
+    except Exception as e:
+        logger.error(f"Error creating task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_list() -> Dict:
+    """Get all tasks"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        tasks = list(executor.tasks.values())
+        
+        return {
+            "tasks": [t.to_dict() for t in tasks],
+            "total": len(tasks),
+            "stats": executor.get_stats()
+        }
+    except Exception as e:
+        logger.error(f"Error listing tasks: {e}")
+        return {"tasks": [], "total": 0, "error": str(e)}
+
+
+def tasks_get(task_id: str) -> Dict:
+    """Get task details"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        task = executor.get_task(task_id)
+        
+        if not task:
+            return {"error": "Task not found"}
+        
+        return task.to_dict()
+    except Exception as e:
+        logger.error(f"Error getting task: {e}")
+        return {"error": str(e)}
+
+
+def tasks_start(task_id: str) -> Dict:
+    """Start a task"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.start_task(task_id)
+        
+        if success:
+            task = executor.get_task(task_id)
+            return {"success": True, "task": task.to_dict()}
+        else:
+            return {"success": False, "error": "Failed to start task"}
+    except Exception as e:
+        logger.error(f"Error starting task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_update_progress(task_id: str, current_step: int, total_steps: int, 
+                         estimated_remaining: int = 0) -> Dict:
+    """Update task progress"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.update_progress(task_id, current_step, total_steps, estimated_remaining)
+        
+        if success:
+            task = executor.get_task(task_id)
+            return {"success": True, "progress_percent": task.progress_percent}
+        else:
+            return {"success": False, "error": "Failed to update progress"}
+    except Exception as e:
+        logger.error(f"Error updating progress: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_complete(task_id: str, result: Optional[Dict] = None) -> Dict:
+    """Mark task as completed"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.complete_task(task_id, result)
+        
+        if success:
+            return {"success": True, "task_id": task_id}
+        else:
+            return {"success": False, "error": "Failed to complete task"}
+    except Exception as e:
+        logger.error(f"Error completing task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_fail(task_id: str, error: str) -> Dict:
+    """Mark task as failed"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.fail_task(task_id, error)
+        
+        if success:
+            return {"success": True, "task_id": task_id}
+        else:
+            return {"success": False, "error": "Failed to mark task as failed"}
+    except Exception as e:
+        logger.error(f"Error failing task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_cancel(task_id: str) -> Dict:
+    """Cancel a task"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.cancel_task(task_id)
+        
+        if success:
+            return {"success": True, "task_id": task_id}
+        else:
+            return {"success": False, "error": "Failed to cancel task"}
+    except Exception as e:
+        logger.error(f"Error cancelling task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_pause(task_id: str) -> Dict:
+    """Pause a task"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.pause_task(task_id)
+        
+        if success:
+            return {"success": True, "task_id": task_id}
+        else:
+            return {"success": False, "error": "Failed to pause task"}
+    except Exception as e:
+        logger.error(f"Error pausing task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def tasks_resume(task_id: str) -> Dict:
+    """Resume a paused task"""
+    try:
+        from piddy.task_engine import get_task_executor
+        
+        executor = get_task_executor()
+        success = executor.resume_task(task_id)
+        
+        if success:
+            return {"success": True, "task_id": task_id}
+        else:
+            return {"success": False, "error": "Failed to resume task"}
+    except Exception as e:
+        logger.error(f"Error resuming task: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ============================================================================
 # RPC ENDPOINT REGISTRY
 # ============================================================================
 # Each entry maps the RPC function name to the Python callable
@@ -582,6 +761,18 @@ RPC_ENDPOINTS = {
     
     # Approvals
     "approvals.list": approvals_list,
+    
+    # Tasks (Phase 3.3)
+    "tasks.create": tasks_create,
+    "tasks.list": tasks_list,
+    "tasks.get": tasks_get,
+    "tasks.start": tasks_start,
+    "tasks.update_progress": tasks_update_progress,
+    "tasks.complete": tasks_complete,
+    "tasks.fail": tasks_fail,
+    "tasks.cancel": tasks_cancel,
+    "tasks.pause": tasks_pause,
+    "tasks.resume": tasks_resume,
 }
 
 
