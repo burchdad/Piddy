@@ -19,6 +19,19 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Import Nova executor for code execution endpoints
+try:
+    from piddy.nova_executor import execute_task, get_execution_status, get_all_executions
+    logger.info("✅ Nova executor available for RPC")
+except ImportError:
+    logger.warning("⚠️ Nova executor not available")
+    def execute_task(*args, **kwargs):
+        return {"error": "Nova executor not available"}
+    def get_execution_status(*args, **kwargs):
+        return {"error": "Nova executor not available"}
+    def get_all_executions(*args, **kwargs):
+        return {"error": "Nova executor not available"}
+
 # ============================================================================
 # GLOBAL STATE - Initialize on first call
 # ============================================================================
@@ -831,6 +844,11 @@ RPC_ENDPOINTS = {
     "tasks.cancel": tasks_cancel,
     "tasks.pause": tasks_pause,
     "tasks.resume": tasks_resume,
+    
+    # Nova Execution (Full Stack)
+    "nova.execute_task": execute_task,
+    "nova.get_execution_status": get_execution_status,
+    "nova.get_all_executions": get_all_executions,
 }
 
 
