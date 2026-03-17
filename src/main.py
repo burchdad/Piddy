@@ -15,6 +15,9 @@ from src.api.slack_commands import router as slack_router
 from src.api.responses import router as responses_router
 from src.api.autonomous import router as autonomous_router
 from src.api.self_healing import router as self_healing_router
+from src.coordination.agent_coordinator import AgentCoordinator
+from src.phase34_mission_telemetry import MissionTelemetryCollector
+from src.api.realtime_dashboard import setup_realtime_dashboard
 
 
 def create_app() -> FastAPI:
@@ -33,6 +36,20 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
     
+    # ========================================================================
+    # GLOBAL STATE - Real Data Sources
+    # ========================================================================
+    # Initialize global coordinator for real agent tracking
+    coordinator = AgentCoordinator()
+    
+    # Initialize telemetry collector for mission tracking
+    telemetry_collector = MissionTelemetryCollector('.piddy_telemetry.db')
+    
+    # WebSocket connection manager for real-time updates
+    active_connections: Set[WebSocket] = set()
+    
+    logger.info("✅ Real data systems initialized: Coordinator, Telemetry, WebSocket")
+    
     # Add CORS middleware FIRST - must be before all other middleware
     # Use wildcard for maximum compatibility since this is the backend
     app.add_middleware(
@@ -43,6 +60,17 @@ def create_app() -> FastAPI:
         allow_headers=["*"],  # Allow all headers
         max_age=3600,
     )
+    
+    # ========================================================================
+    # INITIALIZE REAL DATA SYSTEMS
+    # ========================================================================
+    coordinator = AgentCoordinator()
+    telemetry_collector = MissionTelemetryCollector('.piddy_telemetry.db')
+    logger.info("✅ Coordinator and Telemetry Collector initialized")
+    
+    # Setup real-time dashboard with live data
+    setup_realtime_dashboard(app, coordinator, telemetry_collector)
+    logger.info("✅ Real-time Dashboard API endpoints active")
     
     # Include routers
     app.include_router(agent_router)
@@ -137,143 +165,13 @@ def create_app() -> FastAPI:
         status_dict = monitor.get_status_dict()
         return status_dict
     
-    # Define agents list once to use in multiple endpoints
-    AGENTS_LIST = [
-        {"id": "agent-1", "name": "Guardian", "status": "online", "reputation": 0.95},
-        {"id": "agent-2", "name": "Validator", "status": "online", "reputation": 0.87},
-        {"id": "agent-3", "name": "Performance Analyst", "status": "online", "reputation": 0.82},
-        {"id": "agent-4", "name": "Tech Debt Hunter", "status": "idle", "reputation": 0.79},
-        {"id": "agent-5", "name": "Architecture Reviewer", "status": "online", "reputation": 0.88},
-        {"id": "agent-6", "name": "Cost Optimizer", "status": "online", "reputation": 0.84},
-    ]
-    
-    MISSIONS_LIST = [
-        {"id": "mission-1", "title": "Security Audit", "status": "in_progress", "progress": 65},
-        {"id": "mission-2", "title": "Performance Optimization", "status": "in_progress", "progress": 42},
-    ]
-
-    # Dashboard API Endpoints
-    @app.get("/api/system/overview")
-    async def system_overview():
-        """Get system overview for dashboard."""
-        # Count actual online agents
-        agents_online = len([a for a in AGENTS_LIST if a.get('status') == 'online'])
-        
-        # Count actual in-progress missions
-        missions_active = len([m for m in MISSIONS_LIST if m.get('status') == 'in_progress'])
-        
-        # Count actual pending decisions from dashboard API
-        try:
-            from src.dashboard_api import MockDataGenerator
-            decisions = MockDataGenerator.get_decisions()
-            pending_count = len([d for d in decisions if hasattr(d, 'status') and d.status == 'pending']) if decisions else 0
-            # If no status field, default to 0 to avoid confusion
-            if pending_count == 0:
-                pending_count = 0
-        except Exception as e:
-            logger.debug(f"Could not count pending decisions: {e}")
-            pending_count = 0
-        
-        return {
-            "status": "operational",
-            "uptime_seconds": 3600,
-            "agents_online": agents_online,
-            "missions_active": missions_active,
-            "decisions_pending": pending_count,
-            "last_updated": datetime.utcnow().isoformat(),
-        }
-    
-    @app.get("/api/agents")
-    async def get_agents():
-        """Get all agents."""
-        return AGENTS_LIST
-    
-    @app.get("/api/messages")
-    async def get_messages():
-        """Get recent messages."""
-        return {
-            "messages": [
-                {"timestamp": datetime.utcnow().isoformat(), "agent": "Guardian", "text": "Security check passed", "level": "info"},
-                {"timestamp": datetime.utcnow().isoformat(), "agent": "Validator", "text": "Code quality score: 92", "level": "info"},
-            ],
-            "total": 2,
-        }
-    
-    @app.get("/api/decisions")
-    async def get_decisions():
-        """Get recent decisions."""
-        return [
-            {
-                "id": "dec-1",
-                "task": "Analyze code quality",
-                "agent": "Guardian",
-                "confidence": 0.98,
-                "action": "Approved for production",
-                "reasoning_chain": [
-                    {"thought": "Code follows all security standards"},
-                    {"thought": "Performance metrics within acceptable range"},
-                    {"thought": "No critical issues found"}
-                ]
-            },
-            {
-                "id": "dec-2",
-                "task": "Review PR changes",
-                "agent": "Validator",
-                "confidence": 0.85,
-                "action": "Approved with minor suggestions",
-                "reasoning_chain": [
-                    {"thought": "Most code standards followed"},
-                    {"thought": "One performance optimization suggested"},
-                    {"thought": "Documentation could be improved"}
-                ]
-            }
-        ]
-    
-    @app.get("/api/missions")
-    async def get_missions():
-        """Get active missions."""
-        return [
-            {
-                "id": "mission-1",
-                "name": "Deploy Service",
-                "description": "Deploy latest version of core service",
-                "goal": "Successfully deploy v2.0 to production",
-                "progress_percent": 75,
-                "status": "in_progress",
-                "quality_score": 94.2,
-                "efficiency_score": 87.5,
-                "agents_involved": [
-                    {"name": "Guardian"},
-                    {"name": "Validator"},
-                    {"name": "Performance Analyst"}
-                ],
-                "success_criteria": [
-                    "All tests passing",
-                    "Performance benchmarks met",
-                    "Zero security issues",
-                    "Code review approved"
-                ]
-            },
-            {
-                "id": "mission-2",
-                "name": "Code Review",
-                "description": "Review and approve recent PRs",
-                "goal": "Complete review of 5 pending PRs",
-                "progress_percent": 100,
-                "status": "completed",
-                "quality_score": 96.8,
-                "efficiency_score": 92.1,
-                "agents_involved": [
-                    {"name": "Architecture Reviewer"},
-                    {"name": "Tech Debt Hunter"}
-                ],
-                "success_criteria": [
-                    "All PRs reviewed",
-                    "Feedback provided",
-                    "Issues documented"
-                ]
-            }
-        ]
+    # ========================================================================
+    # DASHBOARD API ENDPOINTS
+    # Note: All dashboard endpoints now use REAL data from coordinator and
+    # telemetry database. See src/api/realtime_dashboard.py for implementation.
+    # ========================================================================
+    # Endpoints: /api/system/overview, /api/agents, /api/messages, /api/decisions,
+    # /api/missions, /api/metrics/performance, /ws/dashboard (WebSocket)
     
     @app.get("/api/graph/dependencies")
     async def get_dependencies():
@@ -314,74 +212,6 @@ def create_app() -> FastAPI:
                 {"source": "svc-1", "target": "svc-3", "weight": 1}
             ]
         }
-    
-    @app.get("/api/missions/{mission_id}/replay")
-    async def get_mission_replay(mission_id: str):
-        """Get mission replay data."""
-        return {
-            "id": mission_id,
-            "name": "Code Review Session",
-            "stages": [
-                {
-                    "type": "agent_action",
-                    "title": "Initialize review process",
-                    "description": "Preparing to analyze code changes",
-                    "timestamp": datetime.utcnow().isoformat()
-                },
-                {
-                    "type": "service_call",
-                    "title": "Fetch repository data",
-                    "description": "Retrieving code from Git repository",
-                    "timestamp": datetime.utcnow().isoformat()
-                },
-                {
-                    "type": "decision",
-                    "title": "Review decision",
-                    "description": "Code review approved with suggestions",
-                    "timestamp": datetime.utcnow().isoformat()
-                },
-                {
-                    "type": "deployment",
-                    "title": "Deploy changes",
-                    "description": "Deploying approved changes to staging",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            ]
-        }
-    
-    @app.get("/api/metrics/performance")
-    async def get_metrics():
-        """Get performance metrics."""
-        return [
-            {
-                "metric_name": "CPU Usage",
-                "value": 45.2,
-                "unit": "%",
-                "status": "ok",
-                "threshold": 80
-            },
-            {
-                "metric_name": "Memory Usage",
-                "value": 62.1,
-                "unit": "%",
-                "status": "ok",
-                "threshold": 85
-            },
-            {
-                "metric_name": "Response Time",
-                "value": 124,
-                "unit": "ms",
-                "status": "ok",
-                "threshold": 500
-            },
-            {
-                "metric_name": "Requests/sec",
-                "value": 234,
-                "unit": "req/s",
-                "status": "ok",
-                "threshold": 10000
-            }
-        ]
     
     @app.get("/api/logs")
     async def get_logs():
