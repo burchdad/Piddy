@@ -187,66 +187,112 @@ function startStaticServer() {
  */
 function createWindow() {
   log.info('Creating main window...');
+  console.log('[WINDOW] Starting BrowserWindow creation');
   
-  mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 1024,
-    minHeight: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      enableRemoteModule: false,
-      sandbox: true
-    },
-    icon: path.join(__dirname, 'assets', 'icon.png')
-  });
+  try {
+    mainWindow = new BrowserWindow({
+      width: 1400,
+      height: 900,
+      minWidth: 1024,
+      minHeight: 600,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        nodeIntegration: false,
+        contextIsolation: true,
+        enableRemoteModule: false,
+        sandbox: true
+      },
+      icon: path.join(__dirname, 'assets', 'icon.png')
+    });
 
-  // Use static server for production to avoid file:// CORS issues
-  if (isDevelopment) {
-    mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
-  } else {
-    // For production, use the static server we started earlier
-    const setupUI = async () => {
-      try {
-        const serverUrl = await startStaticServer();
-        if (serverUrl) {
-          mainWindow.loadURL(serverUrl);
-        } else {
-          log.error('Failed to start static server, falling back');
-          mainWindow.loadURL(`file://${path.join(__dirname, '../frontend/dist/index.html')}`);
-        }
-      } catch (err) {
-        log.error(`Error starting static server: ${err}`);
-        mainWindow.loadURL(`file://${path.join(__dirname, '../frontend/dist/index.html')}`);
-      }
-    };
-    setupUI();
-  }
+    log.info('BrowserWindow created successfully');
+    console.log('[WINDOW] BrowserWindow created, PID:', mainWindow.webContents.getProcessId?.());
 
-  // Always open dev tools for debugging (can be disabled later)
-  // Open with delay to ensure window is ready
-  setTimeout(() => {
-    if (!isDevelopment) {
+    // Use static server for production to avoid file:// CORS issues
+    if (isDevelopment) {
+      log.info('Development mode - loading from localhost:3000');
+      mainWindow.loadURL('http://localhost:3000');
       mainWindow.webContents.openDevTools();
+    } else {
+      log.info('Production mode - starting static server');
+      console.log('[WINDOW] About to setup UI with static server');
+      
+      // For production, use the static server we started earlier
+      const setupUI = async () => {
+        try {
+          console.log('[WINDOW] setupUI starting');
+          const serverUrl = await startStaticServer();
+          console.log('[WINDOW] setupUI got serverUrl:', serverUrl);
+          
+          if (serverUrl) {
+            log.info(`Loading UI from: ${serverUrl}`);
+            console.log('[WINDOW] Loading URL:', serverUrl);
+            mainWindow.loadURL(serverUrl);
+          } else {
+            log.error('Failed to start static server, falling back to file://');
+            const fallbackPath = `file://${path.join(__dirname, '../frontend/dist/index.html')}`;
+            log.info(`Loading from: ${fallbackPath}`);
+            mainWindow.loadURL(fallbackPath);
+          }
+        } catch (err) {
+          log.error(`setupUI error: ${err}`);
+          console.error('[WINDOW] setupUI error:', err);
+          const fallbackPath = `file://${path.join(__dirname, '../frontend/dist/index.html')}`;
+          mainWindow.loadURL(fallbackPath);
+        }
+      };
+      
+      console.log('[WINDOW] Calling setupUI');
+      setupUI().catch(err => {
+        log.error(`setupUI promise error: ${err}`);
+        console.error('[WINDOW] setupUI promise error:', err);
+      });
     }
-  }, 1000);
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-    if (pythonProcess) {
-      pythonProcess.kill();
-    }
-  });
+    log.info('Window loading initiated');
+    console.log('[WINDOW] Window loading initiated');
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    log.info('Window loaded, checking backend status');
-    mainWindow.webContents.send('window-loaded');
-  });
+    // Always open dev tools for debugging
+    setTimeout(() => {
+      if (!isDevelopment && mainWindow) {
+        mainWindow.webContents.openDevTools();
+      }
+    }, 1000);
 
-  createMenu();
+    mainWindow.on('closed', () => {
+      log.info('Window closed by user');
+      mainWindow = null;
+      if (pythonProcess) {
+        pythonProcess.kill();
+      }
+    });
+
+    mainWindow.webContents.on('did-finish-load', () => {
+      log.info('Window loaded, checking backend status');
+      console.log('[WINDOW] did-finish-load event fired');
+      mainWindow.webContents.send('window-loaded');
+    });
+
+    mainWindow.webContents.on('crashed', () => {
+      log.error('Renderer process crashed!');
+      console.error('[WINDOW] Renderer crashed');
+    });
+
+    mainWindow.on('unresponsive', () => {
+      log.warn('Window became unresponsive');
+      console.warn('[WINDOW] Window unresponsive');
+    });
+
+    mainWindow.webContents.on('console-message', (level, message, line, sourceId) => {
+      console.log(`[RENDERER ${level}] ${message} (${sourceId}:${line})`);
+    });
+
+    createMenu();
+  } catch (err) {
+    log.error(`Error creating window: ${err}`);
+    console.error('[WINDOW] Error creating window:', err);
+    throw err;
+  }
 }
 
 /**
