@@ -912,6 +912,63 @@ def offline_clear_completed_missions(older_than_hours: int = 24) -> Dict:
 
 
 # ============================================================================
+# NOVA COORDINATOR ENDPOINTS (Integrated Pipeline)
+# ============================================================================
+
+def nova_execute_with_consensus(task: str, requester: str = "system") -> Dict:
+    """
+    Execute a mission end-to-end with Phase 40 planning, Phase 50 voting, 
+    code execution, PR generation, and GitHub push.
+    
+    This is the main entry point for AI-driven code execution.
+    """
+    try:
+        from src.nova_coordinator import get_nova_coordinator
+        coordinator = get_nova_coordinator()
+        
+        # Run async function synchronously
+        coro = coordinator.execute_with_consensus(task, requester)
+        result = _run_async(coro)
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error in nova_execute_with_consensus: {e}", exc_info=True)
+        return {
+            "status": "failed",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+def nova_get_mission_status(mission_id: str) -> Dict:
+    """Get the status and details of a specific mission."""
+    try:
+        from src.nova_coordinator import get_nova_coordinator
+        coordinator = get_nova_coordinator()
+        
+        result = coordinator.get_mission_status(mission_id)
+        if result:
+            return result
+        else:
+            return {"error": f"Mission {mission_id} not found", "mission_id": mission_id}
+    except Exception as e:
+        logger.error(f"Error in nova_get_mission_status: {e}")
+        return {"error": str(e), "mission_id": mission_id}
+
+
+def nova_list_recent_missions(limit: int = 10) -> List[Dict]:
+    """List recent mission executions."""
+    try:
+        from src.nova_coordinator import get_nova_coordinator
+        coordinator = get_nova_coordinator()
+        
+        return coordinator.list_recent_missions(limit)
+    except Exception as e:
+        logger.error(f"Error in nova_list_recent_missions: {e}")
+        return []
+
+
+# ============================================================================
 # RPC ENDPOINT REGISTRY
 # ============================================================================
 # Each entry maps the RPC function name to the Python callable
@@ -964,6 +1021,11 @@ RPC_ENDPOINTS = {
     "nova.execute_task": execute_task,
     "nova.get_execution_status": get_execution_status,
     "nova.get_all_executions": get_all_executions,
+    
+    # Nova Coordinator (Integrated Pipeline - Phase 40 → 50 → Execute → PR → Push)
+    "nova.execute_with_consensus": nova_execute_with_consensus,
+    "nova.get_mission_status": nova_get_mission_status,
+    "nova.list_recent_missions": nova_list_recent_missions,
     
     # Offline Support (Full Stack)
     "offline.queue_mission": offline_queue_mission,
