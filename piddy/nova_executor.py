@@ -22,6 +22,13 @@ from typing import Dict, List, Optional, Tuple
 import logging
 from enum import Enum
 
+try:
+    from piddy.persistence import get_persistence
+    HAS_PERSISTENCE = True
+except ImportError:
+    HAS_PERSISTENCE = False
+    get_persistence = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -52,6 +59,7 @@ class CodeExecutionResult:
     
     def to_dict(self) -> Dict:
         return {
+            "mission_id": self.task_id,  # Alias for persistence layer
             "task_id": self.task_id,
             "agent": self.agent,
             "status": self.status.value,
@@ -63,7 +71,8 @@ class CodeExecutionResult:
             "files_changed": self.files_changed,
             "commits": self.commits,
             "pr_url": self.pr_url,
-            "result": self.result_data
+            "result": self.result_data,
+            "task": "Mission from Nova executor"  # Required by persistence schema
         }
 
 
@@ -362,7 +371,19 @@ class NovaExecutor:
             result.end_time = datetime.utcnow()
             logger.error(f"❌ Mission failed: {e}")
         
+        # Store in memory
         self.execution_history[mission_id] = result
+        
+        # Persist to database (if available)
+        if HAS_PERSISTENCE and get_persistence:
+            try:
+                persistence = get_persistence()
+                mission_dict = result.to_dict()
+                persistence.save_mission(mission_dict)
+                logger.info(f"💾 Mission persisted to database: {mission_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to persist mission: {e}")
+        
         return result
     
     def _parse_task(self, task: str) -> str:
@@ -469,8 +490,30 @@ Task: Generate code for task
             }
     
     def get_execution_history(self) -> List[Dict]:
-        """Get all execution history"""
-        return [result.to_dict() for result in self.execution_history.values()]
+        """
+        Get all execution history from memory and persistence
+        Priority: Memory first (in-flight), then disk (persisted)
+        """
+        results = []
+        
+        # First: Add in-memory executions (most recent)
+        for result in self.execution_history.values():
+            results.append(result.to_dict())
+        
+        # Second: Add from persistence (historical records)
+        if HAS_PERSISTENCE and get_persistence:
+            try:
+                persistence = get_persistence()
+                persisted_missions = persistence.get_missions(limit=100)
+                if persisted_missions:
+                    for mission in persisted_missions:
+                        # Skip if already in memory
+                        if mission.get("task_id") not in self.execution_history:
+                            results.append(mission)
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to retrieve persisted missions: {e}")
+        
+        return results
 
 
 # ============================================================================
