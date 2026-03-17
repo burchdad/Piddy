@@ -297,15 +297,23 @@ def register_default_endpoints():
     """Register all default API endpoints for RPC"""
     try:
         from piddy.rpc_endpoints import RPC_ENDPOINTS
+        from piddy.stream_handlers import STREAM_FUNCTIONS
+        
         server = get_rpc_server()
         
+        # Register regular endpoints
         for name, func in RPC_ENDPOINTS.items():
             server.register(name, func)
         
-        logger.info(f"✅ Registered {len(RPC_ENDPOINTS)} API endpoints for RPC")
+        # Register streaming endpoints
+        for name, func in STREAM_FUNCTIONS.items():
+            server.register_stream(name, func)
+        
+        total = len(RPC_ENDPOINTS) + len(STREAM_FUNCTIONS)
+        logger.info(f"✅ Registered {len(RPC_ENDPOINTS)} API endpoints + {len(STREAM_FUNCTIONS)} stream functions (total: {total})")
         return True
     except ImportError as e:
-        logger.error(f"❌ Failed to import RPC endpoints: {e}")
+        logger.error(f"❌ Failed to import RPC endpoints/streams: {e}")
         return False
     except Exception as e:
         logger.error(f"❌ Failed to register endpoints: {e}")

@@ -14,6 +14,7 @@ const http = require('http');
 const setupIPCBridge = require('./ipc-bridge');
 const { getPort } = require('./port-finder');
 const PythonBridge = require('./python-bridge');
+const { StreamManager } = require('./stream-manager');
 
 // Handle ES Module imports - fix-path is an ES module
 let fixPath;
@@ -654,6 +655,11 @@ function startPythonBackend() {
       
       // Store bridge for later use
       global.pythonBridge = pythonBridge;
+      
+      // Initialize stream manager for real-time updates
+      global.streamManager = new StreamManager(pythonBridge);
+      log.info("✅ Stream manager initialized for real-time updates");
+      
       resolve({ process: pythonProcess, bridge: pythonBridge });
 
       let backendOutput = '';
