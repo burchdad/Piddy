@@ -1,6 +1,7 @@
 /**
  * IPC Bridge for API Communication
- * Replaces HTTP calls with Electron IPC for zero-port architecture
+ * Now uses direct RPC calls instead of HTTP
+ * Zero network hops, direct Python function execution
  * 
  * Usage in frontend:
  *   const data = await window.piddy.api.system.overview();
@@ -9,17 +10,19 @@
 
 const { ipcMain } = require('electron');
 
+let pythonBridge = null;
+
 // Setup IPC handlers for all backend APIs
-function setupIPCBridge() {
-  console.log('[IPC Bridge] Initializing API handlers...');
+function setupIPCBridge(bridge) {
+  pythonBridge = bridge;
+  console.log('[IPC Bridge] Initializing API handlers with RPC bridge...');
   
   /**
-   * System Endpoints
+   * System Endpoints - Direct RPC calls
    */
   ipcMain.handle('api:system:overview', async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/system/overview');
-      return await response.json();
+      return await pythonBridge.call('system.overview');
     } catch (err) {
       console.error('[IPC] system:overview failed:', err.message);
       throw err;
@@ -28,8 +31,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:system:health', async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/system/health');
-      return await response.json();
+      return await pythonBridge.call('system.health');
     } catch (err) {
       console.error('[IPC] system:health failed:', err.message);
       throw err;
@@ -38,8 +40,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:system:config', async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/system/config');
-      return await response.json();
+      return await pythonBridge.call('system.config');
     } catch (err) {
       console.error('[IPC] system:config failed:', err.message);
       throw err;
@@ -48,8 +49,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:system:metrics', async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/system/metrics');
-      return await response.json();
+      return await pythonBridge.call('system.metrics');
     } catch (err) {
       console.error('[IPC] system:metrics failed:', err.message);
       throw err;
@@ -58,12 +58,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:system:logs', async (event, filters) => {
     try {
-      const response = await fetch('http://localhost:8000/api/system/logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filters)
-      });
-      return await response.json();
+      return await pythonBridge.call('system.logs', [filters]);
     } catch (err) {
       console.error('[IPC] system:logs failed:', err.message);
       throw err;
@@ -72,8 +67,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:system:status', async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/system/status');
-      return await response.json();
+      return await pythonBridge.call('system.status');
     } catch (err) {
       console.error('[IPC] system:status failed:', err.message);
       throw err;
@@ -81,12 +75,11 @@ function setupIPCBridge() {
   });
 
   /**
-   * Agent Endpoints
+   * Agent Endpoints - Direct RPC calls
    */
   ipcMain.handle('api:agents:list', async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/agents');
-      return await response.json();
+      return await pythonBridge.call('agents.list');
     } catch (err) {
       console.error('[IPC] agents:list failed:', err.message);
       throw err;
@@ -95,8 +88,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:agents:get', async (event, agentId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/agents/${agentId}`);
-      return await response.json();
+      return await pythonBridge.call('agents.get', [agentId]);
     } catch (err) {
       console.error('[IPC] agents:get failed:', err.message);
       throw err;
@@ -105,12 +97,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:agents:create', async (event, config) => {
     try {
-      const response = await fetch('http://localhost:8000/api/agents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
-      return await response.json();
+      return await pythonBridge.call('agents.create', [config]);
     } catch (err) {
       console.error('[IPC] agents:create failed:', err.message);
       throw err;
@@ -119,12 +106,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:agents:update', async (event, agentId, config) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/agents/${agentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
-      return await response.json();
+      return await pythonBridge.call('agents.update', [agentId, config]);
     } catch (err) {
       console.error('[IPC] agents:update failed:', err.message);
       throw err;
@@ -133,10 +115,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:agents:delete', async (event, agentId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/agents/${agentId}`, {
-        method: 'DELETE'
-      });
-      return await response.json();
+      return await pythonBridge.call('agents.delete', [agentId]);
     } catch (err) {
       console.error('[IPC] agents:delete failed:', err.message);
       throw err;
@@ -144,16 +123,11 @@ function setupIPCBridge() {
   });
 
   /**
-   * Message Endpoints
+   * Message Endpoints - Direct RPC calls
    */
   ipcMain.handle('api:messages:list', async (event, filters) => {
     try {
-      const response = await fetch('http://localhost:8000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filters)
-      });
-      return await response.json();
+      return await pythonBridge.call('messages.list', [filters]);
     } catch (err) {
       console.error('[IPC] messages:list failed:', err.message);
       throw err;
@@ -162,8 +136,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:messages:get', async (event, messageId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/messages/${messageId}`);
-      return await response.json();
+      return await pythonBridge.call('messages.get', [messageId]);
     } catch (err) {
       console.error('[IPC] messages:get failed:', err.message);
       throw err;
@@ -172,12 +145,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:messages:send', async (event, message) => {
     try {
-      const response = await fetch('http://localhost:8000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(message)
-      });
-      return await response.json();
+      return await pythonBridge.call('messages.send', [message]);
     } catch (err) {
       console.error('[IPC] messages:send failed:', err.message);
       throw err;
@@ -185,16 +153,11 @@ function setupIPCBridge() {
   });
 
   /**
-   * Decision Endpoints
+   * Decision Endpoints - Direct RPC calls
    */
   ipcMain.handle('api:decisions:list', async (event, filters) => {
     try {
-      const response = await fetch('http://localhost:8000/api/decisions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filters)
-      });
-      return await response.json();
+      return await pythonBridge.call('decisions.list', [filters]);
     } catch (err) {
       console.error('[IPC] decisions:list failed:', err.message);
       throw err;
@@ -203,8 +166,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:decisions:get', async (event, decisionId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/decisions/${decisionId}`);
-      return await response.json();
+      return await pythonBridge.call('decisions.get', [decisionId]);
     } catch (err) {
       console.error('[IPC] decisions:get failed:', err.message);
       throw err;
@@ -213,12 +175,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:decisions:create', async (event, decision) => {
     try {
-      const response = await fetch('http://localhost:8000/api/decisions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(decision)
-      });
-      return await response.json();
+      return await pythonBridge.call('decisions.create', [decision]);
     } catch (err) {
       console.error('[IPC] decisions:create failed:', err.message);
       throw err;
@@ -227,12 +184,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:decisions:update', async (event, decisionId, decision) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/decisions/${decisionId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(decision)
-      });
-      return await response.json();
+      return await pythonBridge.call('decisions.update', [decisionId, decision]);
     } catch (err) {
       console.error('[IPC] decisions:update failed:', err.message);
       throw err;
@@ -240,16 +192,11 @@ function setupIPCBridge() {
   });
 
   /**
-   * Mission Endpoints
+   * Mission Endpoints - Direct RPC calls
    */
   ipcMain.handle('api:missions:list', async (event, filters) => {
     try {
-      const response = await fetch('http://localhost:8000/api/missions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filters)
-      });
-      return await response.json();
+      return await pythonBridge.call('missions.list', [filters]);
     } catch (err) {
       console.error('[IPC] missions:list failed:', err.message);
       throw err;
@@ -258,8 +205,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:missions:get', async (event, missionId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/missions/${missionId}`);
-      return await response.json();
+      return await pythonBridge.call('missions.get', [missionId]);
     } catch (err) {
       console.error('[IPC] missions:get failed:', err.message);
       throw err;
@@ -268,12 +214,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:missions:create', async (event, mission) => {
     try {
-      const response = await fetch('http://localhost:8000/api/missions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mission)
-      });
-      return await response.json();
+      return await pythonBridge.call('missions.create', [mission]);
     } catch (err) {
       console.error('[IPC] missions:create failed:', err.message);
       throw err;
@@ -282,12 +223,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:missions:update', async (event, missionId, mission) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/missions/${missionId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mission)
-      });
-      return await response.json();
+      return await pythonBridge.call('missions.update', [missionId, mission]);
     } catch (err) {
       console.error('[IPC] missions:update failed:', err.message);
       throw err;
@@ -296,10 +232,7 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:missions:execute', async (event, missionId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/missions/${missionId}/execute`, {
-        method: 'POST'
-      });
-      return await response.json();
+      return await pythonBridge.call('missions.execute', [missionId]);
     } catch (err) {
       console.error('[IPC] missions:execute failed:', err.message);
       throw err;
@@ -311,13 +244,9 @@ function setupIPCBridge() {
    */
   ipcMain.handle('api:get', async (event, endpoint, queryParams) => {
     try {
-      let url = `http://localhost:8000${endpoint}`;
-      if (queryParams && Object.keys(queryParams).length > 0) {
-        const qs = new URLSearchParams(queryParams).toString();
-        url += `?${qs}`;
-      }
-      const response = await fetch(url);
-      return await response.json();
+      // Create function name from endpoint
+      const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
+      return await pythonBridge.call(funcName, [], queryParams);
     } catch (err) {
       console.error('[IPC] generic GET failed:', err.message);
       throw err;
@@ -326,12 +255,8 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:post', async (event, endpoint, data) => {
     try {
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      return await response.json();
+      const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
+      return await pythonBridge.call(funcName, [data]);
     } catch (err) {
       console.error('[IPC] generic POST failed:', err.message);
       throw err;
@@ -340,12 +265,8 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:put', async (event, endpoint, data) => {
     try {
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      return await response.json();
+      const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
+      return await pythonBridge.call(funcName, [data]);
     } catch (err) {
       console.error('[IPC] generic PUT failed:', err.message);
       throw err;
@@ -354,17 +275,15 @@ function setupIPCBridge() {
 
   ipcMain.handle('api:delete', async (event, endpoint) => {
     try {
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'DELETE'
-      });
-      return await response.json();
+      const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
+      return await pythonBridge.call(funcName, []);
     } catch (err) {
       console.error('[IPC] generic DELETE failed:', err.message);
       throw err;
     }
   });
 
-  console.log('[IPC Bridge] All API handlers registered successfully');
+  console.log('[IPC Bridge] All API handlers registered successfully with RPC');
 }
 
 module.exports = setupIPCBridge;

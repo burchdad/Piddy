@@ -13,6 +13,7 @@ const http = require('http');
 // IPC Bridge and port finding for zero-port architecture
 const setupIPCBridge = require('./ipc-bridge');
 const { getPort } = require('./port-finder');
+const PythonBridge = require('./python-bridge');
 
 // Handle ES Module imports - fix-path is an ES module
 let fixPath;
@@ -617,7 +618,7 @@ function startPythonBackend() {
         spawnArgs = []; // Binary runs standalone, no args needed
       } else {
         log.info(`Using Python interpreter: ${pythonExe}`);
-        spawnArgs = [scriptPath, '--desktop'];
+        spawnArgs = [scriptPath, '--desktop', '--rpc-mode'];  // Add --rpc-mode for direct RPC communication
       }
       
       log.info(`Step 3: About to spawn: ${spawnCmd} ${spawnArgs.join(' ')}`);
@@ -625,7 +626,7 @@ function startPythonBackend() {
       log.info(`Step 3c: Stdio config: ['ignore', 'pipe', 'pipe']`);
       
       pythonProcess = spawn(spawnCmd, spawnArgs, {
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ['pipe', 'pipe', 'pipe'],  // Changed to 'pipe' for stdin to support RPC communication
         windowsHide: true,
         cwd: scriptDir,
         env: { ...process.env }
@@ -633,11 +634,27 @@ function startPythonBackend() {
 
       log.info(`Step 4: Process spawned, PID: ${pythonProcess ? pythonProcess.pid : 'null'}`);
 
+      // Initialize Python RPC bridge
+      console.log('[BRIDGE] Initializing Python RPC bridge...');
+      let pythonBridge;
+      try {
+        pythonBridge = new PythonBridge(pythonProcess);
+        console.log('[BRIDGE] Python RPC bridge created');
+      } catch (err) {
+        log.error(`Failed to initialize Python bridge: ${err}`);
+        pythonProcess.kill();
+        reject(err);
+        return;
+      }
+
       // ✅ CRITICAL FIX: Resolve immediately after spawn succeeds - don't wait for process exit!
       // The backend runs indefinitely, so we resolve here to allow the UI to start
       backendReady = true;
       updateSplashStatus('Backend services running...', 30);
-      resolve('Backend process spawned and running');
+      
+      // Store bridge for later use
+      global.pythonBridge = pythonBridge;
+      resolve({ process: pythonProcess, bridge: pythonBridge });
 
       let backendOutput = '';
       let backendErrors = '';
@@ -726,8 +743,8 @@ app.on('ready', async () => {
     
     // Setup IPC bridge for zero-port API communication
     log.info('Setting up IPC bridge for zero-port architecture...');
-    setupIPCBridge();
-    log.info('✅ IPC bridge initialized');
+    setupIPCBridge(global.pythonBridge);
+    log.info('✅ IPC bridge initialized with RPC');
     
     updateSplashStatus('Loading frontend...', 75);
     

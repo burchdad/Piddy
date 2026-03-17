@@ -460,6 +460,8 @@ Examples:
                        help="Configure email before starting")
     parser.add_argument("--desktop", action="store_true",
                        help="Run in desktop app mode (called from Electron)")
+    parser.add_argument("--rpc-mode", action="store_true",
+                       help="Run in RPC mode (direct IPC, no HTTP ports)")
     
     args = parser.parse_args()
     
@@ -483,6 +485,33 @@ Examples:
     if args.configure:
         configure_email()
         time.sleep(1)
+    
+    # RPC Mode - Initialize RPC server instead of HTTP
+    if args.rpc_mode:
+        log_header("🔌 Starting RPC Mode (Zero-Port IPC)")
+        log_info("Initializing RPC server for direct Python-Electron communication...")
+        
+        try:
+            from piddy.rpc_server import get_rpc_server, register_default_endpoints, start_rpc_server
+            
+            # Register all API endpoints
+            if not register_default_endpoints():
+                log_error("❌ Failed to register RPC endpoints")
+                sys.exit(1)
+            
+            log_success("✅ RPC server initialized with all endpoints")
+            log_info("RPC Server listening on stdin/stdout (zero external ports)")
+            
+            # Start RPC server - this blocks until shutdown
+            start_rpc_server()
+            
+        except Exception as e:
+            log_error(f"❌ RPC mode initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+        
+        return
     
     # Start specific components
     if args.dashboard_only:
