@@ -106,6 +106,36 @@ npm run build
 
 Output will be in the `dist/` directory.
 
+## Deployment
+
+### Web Deployment (Static Files)
+
+1. Build the project: `npm run build`
+2. Upload contents of `dist/` to your web server
+3. Configure API endpoint in environment variables (see Configuration)
+4. Ensure CORS is properly configured on backend
+
+### Docker Deployment
+
+```bash
+# Build Docker image
+docker build -t piddy-frontend:latest .
+
+# Run container
+docker run -p 3000:3000 \
+  -e VITE_API_URL=http://backend:8000 \
+  piddy-frontend:latest
+```
+
+### Electron/Desktop Deployment
+
+For desktop app deployment:
+
+1. Build frontend: `npm run build`
+2. See [DESKTOP_BUILD_GUIDE.md](../DESKTOP_BUILD_GUIDE.md) for desktop packaging
+3. Pre-load API is configured in Electron preload script
+4. Backend URL is injected via `window.piddy.backendUrl`
+
 ## Testing
 
 Run tests:

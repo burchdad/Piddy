@@ -2,6 +2,34 @@
 
 An intelligent, comprehensive backend developer AI agent capable of handling all aspects of backend development. Piddy integrates seamlessly with Slack for team communication and accepts commands from other AI agents through a robust API interface.
 
+## Quick Start
+
+```bash
+# Install backend dependencies
+pip install -r requirements.txt
+
+# Start the backend API server (port 8000)
+python -m src.main
+
+# In another terminal, start the frontend dashboard
+cd frontend
+npm install
+npm run dev  # Opens at http://localhost:3000
+
+# Access the dashboard
+# Backend: http://localhost:8000
+# Frontend: http://localhost:3000
+```
+
+See [Frontend README](frontend/README.md) for detailed frontend setup and [KB Setup Guide](KB_SEPARATE_REPO_GUIDE.md) for knowledge base configuration.
+
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Architecture](#architecture)
+- [Contributing](#contributing)
+
 ## Features
 
 ### Core Capabilities (Phases 1-4)
