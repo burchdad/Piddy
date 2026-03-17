@@ -10,6 +10,10 @@ const fs = require('fs');
 const axios = require('axios');
 const http = require('http');
 
+// IPC Bridge and port finding for zero-port architecture
+const setupIPCBridge = require('./ipc-bridge');
+const { getPort } = require('./port-finder');
+
 // Handle ES Module imports - fix-path is an ES module
 let fixPath;
 try {
@@ -719,6 +723,12 @@ app.on('ready', async () => {
     
     // Then create the main window
     createWindow();
+    
+    // Setup IPC bridge for zero-port API communication
+    log.info('Setting up IPC bridge for zero-port architecture...');
+    setupIPCBridge();
+    log.info('✅ IPC bridge initialized');
+    
     updateSplashStatus('Loading frontend...', 75);
     
   } catch (err) {
