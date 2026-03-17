@@ -40,7 +40,7 @@ function App() {
           console.log('🖥️ Using Electron backend URL:', apiUrl);
         } else {
           // Running in browser or vite dev server
-          apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+          apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
           console.log('🌐 Using web backend URL:', apiUrl);
         }
         
