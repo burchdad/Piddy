@@ -449,10 +449,47 @@ function createMenu() {
 }
 
 /**
- * Find Python executable path
- * Try multiple locations and methods
+ * Find Python executable path or bundled backend
+ * Priority: bundled backend > Python executable > system Python
  */
 function findPython() {
+  log.info('🔍 Searching for backend executable...');
+  
+  // FIRST: Try to find bundled backend executable
+  const bundledNames = process.platform === 'win32' 
+    ? ['piddy-backend.exe', 'piddy-backend']
+    : ['piddy-backend', 'piddy-backend.exe'];
+  
+  // Check in resources directory (packaged app)
+  const resourcesPath = getResourcePath('');
+  for (const name of bundledNames) {
+    const bundledPath = path.join(resourcesPath, name);
+    try {
+      if (fs.existsSync(bundledPath)) {
+        log.info(`✅ Found bundled backend: ${bundledPath}`);
+        return bundledPath;
+      }
+    } catch (err) {
+      log.debug(`  Error checking bundled path: ${err.message}`);
+    }
+  }
+  
+  // Check in app root (development mode)
+  for (const name of bundledNames) {
+    const devPath = path.join(__dirname, '..', name);
+    try {
+      if (fs.existsSync(devPath)) {
+        log.info(`✅ Found bundled backend (dev): ${devPath}`);
+        return devPath;
+      }
+    } catch (err) {
+      log.debug(`  Error checking dev path: ${err.message}`);
+    }
+  }
+  
+  log.info('ℹ️  Bundled backend not found, searching for Python...');
+  
+  // FALLBACK: Search for Python executable
   log.info('🔍 Searching for Python executable...');
   
   // On Windows, try multiple common paths
@@ -566,11 +603,24 @@ function startPythonBackend() {
       const scriptDir = path.dirname(scriptPath);
       log.info(`Backend working directory: ${scriptDir}`);
       
-      log.info(`Step 3: About to spawn: ${pythonExe} ${scriptPath} --desktop`);
+      // Determine if we're using bundled binary or Python
+      const isBundledBinary = pythonExe.includes('piddy-backend');
+      let spawnArgs = [];
+      let spawnCmd = pythonExe;
+      
+      if (isBundledBinary) {
+        log.info(`Using bundled backend binary: ${pythonExe}`);
+        spawnArgs = []; // Binary runs standalone, no args needed
+      } else {
+        log.info(`Using Python interpreter: ${pythonExe}`);
+        spawnArgs = [scriptPath, '--desktop'];
+      }
+      
+      log.info(`Step 3: About to spawn: ${spawnCmd} ${spawnArgs.join(' ')}`);
       log.info(`Step 3b: Working dir: ${scriptDir}`);
       log.info(`Step 3c: Stdio config: ['ignore', 'pipe', 'pipe']`);
       
-      pythonProcess = spawn(pythonExe, [scriptPath, '--desktop'], {
+      pythonProcess = spawn(spawnCmd, spawnArgs, {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
         cwd: scriptDir,

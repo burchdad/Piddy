@@ -12,7 +12,8 @@
     "start": "electron .",
     "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"npm run start-react\"",
     "start-react": "cd ../frontend && npm start",
-    "build": "npm run build-react && electron-builder",
+    "build-backend": "cd .. && python build_backend.py",
+    "build": "npm run build-react && npm run build-backend && electron-builder",
     "build-react": "cd ../frontend && npm run build",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
@@ -46,6 +47,8 @@
     "files": [
       "main.js",
       "preload.js",
+      "piddy-backend.exe",
+      "piddy-backend",
       "node_modules/fix-path/**/*",
       "node_modules/axios/**/*",
       "node_modules/follow-redirects/**/*",
@@ -73,6 +76,11 @@
       {
         "from": "../src",
         "to": "src"
+      },
+      {
+        "from": "../resources",
+        "to": "resources",
+        "filter": ["piddy-backend*"]
       }
     ],
     "win": {
