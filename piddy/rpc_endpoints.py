@@ -32,6 +32,19 @@ except ImportError:
     def get_all_executions(*args, **kwargs):
         return {"error": "Nova executor not available"}
 
+# Import offline support for mission queueing when offline
+try:
+    from piddy.offline_sync import get_offline_queue, get_sync_manager
+    HAS_OFFLINE_SUPPORT = True
+    logger.info("✅ Offline support available for RPC")
+except ImportError:
+    HAS_OFFLINE_SUPPORT = False
+    logger.warning("⚠️ Offline support not available")
+    def get_offline_queue(*args, **kwargs):
+        return None
+    def get_sync_manager(*args, **kwargs):
+        return None
+
 # ============================================================================
 # GLOBAL STATE - Initialize on first call
 # ============================================================================
@@ -797,6 +810,108 @@ def tasks_resume(task_id: str) -> Dict:
 
 
 # ============================================================================
+# OFFLINE SUPPORT - Mission Queueing for Offline Mode
+# ============================================================================
+
+def offline_queue_mission(mission_id: str, agent: str, task: str, metadata: Optional[Dict] = None) -> Dict:
+    """
+    Queue a mission for execution (typically when offline)
+    
+    Returns mission in queue with status and timestamps
+    """
+    try:
+        if not HAS_OFFLINE_SUPPORT:
+            return {"error": "Offline support not available"}
+        
+        queue = get_offline_queue()
+        result = queue.queue_mission(mission_id, agent, task, metadata)
+        
+        return {
+            "success": True,
+            "queued": result,
+        }
+    except Exception as e:
+        logger.error(f"Error queuing mission: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def offline_get_queue_status() -> Dict:
+    """Get status of offline mission queue"""
+    try:
+        if not HAS_OFFLINE_SUPPORT:
+            return {"error": "Offline support not available"}
+        
+        queue = get_offline_queue()
+        stats = queue.get_queue_stats()
+        
+        return {
+            "success": True,
+            "queue_status": stats,
+        }
+    except Exception as e:
+        logger.error(f"Error getting queue status: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def offline_get_pending_missions(limit: int = 50) -> Dict:
+    """Get list of pending missions in queue"""
+    try:
+        if not HAS_OFFLINE_SUPPORT:
+            return {"error": "Offline support not available"}
+        
+        queue = get_offline_queue()
+        missions = queue.get_pending_missions(limit)
+        
+        return {
+            "success": True,
+            "pending_missions": missions,
+            "count": len(missions),
+        }
+    except Exception as e:
+        logger.error(f"Error getting pending missions: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def offline_set_connectivity_status(is_online: bool) -> Dict:
+    """Update connectivity status (online/offline)"""
+    try:
+        if not HAS_OFFLINE_SUPPORT:
+            return {"error": "Offline support not available"}
+        
+        queue = get_offline_queue()
+        sync_manager = get_sync_manager(queue)
+        
+        sync_manager.set_connectivity_status(is_online)
+        
+        return {
+            "success": True,
+            "is_online": is_online,
+            "queue_status": queue.get_queue_stats(),
+        }
+    except Exception as e:
+        logger.error(f"Error setting connectivity status: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def offline_clear_completed_missions(older_than_hours: int = 24) -> Dict:
+    """Clean up old completed missions from queue"""
+    try:
+        if not HAS_OFFLINE_SUPPORT:
+            return {"error": "Offline support not available"}
+        
+        queue = get_offline_queue()
+        deleted_count = queue.clear_completed_missions(older_than_hours)
+        
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+        }
+    except Exception as e:
+        logger.error(f"Error clearing completed missions: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ============================================================================
 # RPC ENDPOINT REGISTRY
 # ============================================================================
 # Each entry maps the RPC function name to the Python callable
@@ -849,6 +964,13 @@ RPC_ENDPOINTS = {
     "nova.execute_task": execute_task,
     "nova.get_execution_status": get_execution_status,
     "nova.get_all_executions": get_all_executions,
+    
+    # Offline Support (Full Stack)
+    "offline.queue_mission": offline_queue_mission,
+    "offline.get_queue_status": offline_get_queue_status,
+    "offline.get_pending_missions": offline_get_pending_missions,
+    "offline.set_connectivity_status": offline_set_connectivity_status,
+    "offline.clear_completed_missions": offline_clear_completed_missions,
 }
 
 
