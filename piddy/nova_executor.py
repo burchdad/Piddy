@@ -331,6 +331,9 @@ class NovaExecutor:
                 self._run_command('git init', cwd=repo_path)
                 success, error = self.create_branch(repo_path, branch_name)
             
+            # Store branch name in result for PR creation
+            result.result_data['branch_name'] = branch_name
+            
             # Phase 4: Generate code
             code_files = self._generate_code(task)
             if code_files:

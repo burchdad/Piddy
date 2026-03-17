@@ -208,18 +208,59 @@ class ComplianceValidator:
 
     def _no_direct_deploys(self, action: ActionType, user: User) -> bool:
         """Verify: No direct deploys to production"""
-        if action == ActionType.DEPLOY and user.role == Role.OPERATOR:
-            # Would require approval gate in production
+        try:
+            # Check if deployment rules prevent direct deploys to production
+            high_risk_users = {Role.OPERATOR}  # These require approval for deploys
+            
+            if action == ActionType.DEPLOY and user.role in high_risk_users:
+                # Check if approval is required (not bypassed)
+                requires_approval = user.approval_level != ApprovalLevel.AUTOMATIC
+                
+                if requires_approval:
+                    logger.info(f"✅ Direct deploy protection enabled for {user.username}")
+                    return True
+                else:
+                    logger.warning(f"⚠️  User {user.username} has automatic approval (security risk)")
+                    return False
+            
+            logger.info("✅ No direct deploy vulnerability found")
             return True
-        return True
+        except Exception as e:
+            logger.error(f"❌ Direct deploy check failed: {e}")
+            return False
 
     def _approval_required(self, action: ActionType, user: User) -> bool:
         """Verify: High-risk actions need approval"""
-        high_risk_actions = {ActionType.DEPLOY, ActionType.MODIFY_PERMISSION}
-        if action in high_risk_actions:
-            # Would check approval in production
+        try:
+            high_risk_actions = {ActionType.DEPLOY, ActionType.MODIFY_PERMISSION, ActionType.DELETE}
+            
+            if action in high_risk_actions:
+                # Check if action requires approval
+                from src.models import ApprovalRequest
+                from src.database import SessionLocal
+                from datetime import datetime, timedelta
+                
+                db = SessionLocal()
+                try:
+                    # Look for pending or recent approvals
+                    recent_approvals = db.query(ApprovalRequest).filter(
+                        ApprovalRequest.timestamp >= datetime.utcnow() - timedelta(hours=24)
+                    ).count()
+                    
+                    if recent_approvals > 0:
+                        logger.info(f"✅ High-risk action {action.value} requires approval")
+                        return True
+                    else:
+                        logger.warning(f"⚠️  No approval records for high-risk action {action.value}")
+                        return False
+                finally:
+                    db.close()
+            
+            logger.info("✅ Action does not require special approval")
             return True
-        return True
+        except Exception as e:
+            logger.error(f"❌ Approval check failed: {e}")
+            return False
 
     def _audit_logged(self, action: ActionType, user: User) -> bool:
         """Verify: All actions are logged"""

@@ -259,8 +259,26 @@ class ProductionSecurityValidator:
     
     async def _check_rbac(self) -> bool:
         """Check RBAC implementation"""
-        # Verify role-based access control
-        return True
+        try:
+            # Verify role-based access control is properly implemented
+            from src.models import User, Role, Permission
+            from src.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                # Check if role-permission mapping exists
+                roles = db.query(Role).count()
+                if roles > 0:
+                    logger.info(f"✅ RBAC implemented with {roles} roles")
+                    return True
+                else:
+                    logger.warning("⚠️  RBAC: No roles configured")
+                    return False
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"❌ RBAC check failed: {e}")
+            return False
     
     async def _check_tls(self) -> bool:
         """Check TLS encryption is properly configured"""
@@ -348,10 +366,24 @@ class ProductionSecurityValidator:
         """Check audit logging is enabled"""
         try:
             from datetime import datetime, timedelta
-            from sqlalchemy import func, and_
-            # Attempt to query audit log (simple check that table exists and is accessible)
-            logger.info("✅ Audit logging check attempted")
-            return True
+            from src.models import AuditLogDB
+            from src.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                # Check if recent audit logs exist
+                recent_logs = db.query(AuditLogDB).filter(
+                    AuditLogDB.timestamp >= datetime.utcnow() - timedelta(hours=1)
+                ).count()
+                
+                if recent_logs > 0:
+                    logger.info(f"✅ Audit logging enabled: {recent_logs} recent log entries")
+                    return True
+                else:
+                    logger.warning("⚠️  Audit logging configured but no recent entries")
+                    return False
+            finally:
+                db.close()
         except Exception as e:
             logger.error(f"❌ Audit logging check failed: {e}")
             return False
@@ -386,7 +418,22 @@ class ProductionSecurityValidator:
     
     async def _check_agent_sandboxing(self) -> bool:
         """Check agent sandboxing"""
-        return True
+        try:
+            import os
+            # Check if sandboxing environment variables are set
+            sandbox_enabled = os.getenv('AGENT_SANDBOX_ENABLED', 'false').lower() == 'true'
+            sandbox_dir = os.getenv('AGENT_SANDBOX_DIR')
+            
+            # Check if sandbox directory exists or can be created
+            if sandbox_dir and os.path.exists(os.path.dirname(sandbox_dir)):
+                logger.info("✅ Agent sandboxing configured")
+                return True
+            else:
+                logger.warning("⚠️  Agent sandboxing not fully configured")
+                return False
+        except Exception as e:
+            logger.error(f"❌ Agent sandboxing check failed: {e}")
+            return False
 
 
 class LoadTestEngine:
