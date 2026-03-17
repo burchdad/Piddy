@@ -6,6 +6,8 @@ function Sidebar({ currentPage, onPageChange }) {
 
   const menuItems = [
     { id: 'overview', icon: '📊', label: 'Overview', page: 'overview' },
+    { id: 'live-chat', icon: '💬🔴', label: 'Live Chat', page: 'live-chat' },
+    { id: 'live-activity', icon: '🔴📡', label: 'Live Activity', page: 'live-activity' },
     { id: 'approvals', icon: '📋', label: 'Approvals', page: 'approvals' },
     { id: 'agents', icon: '🤖', label: 'Agents', page: 'agents' },
     { id: 'messages', icon: '💬', label: 'Messages', page: 'messages' },

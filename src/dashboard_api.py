@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 import asyncio
 import json
 import logging
@@ -557,6 +558,102 @@ async def websocket_messages(websocket: WebSocket):
             await asyncio.sleep(2)
     except WebSocketDisconnect:
         pass
+
+
+@app.post("/api/messages/send")
+async def send_message(
+    sender_id: str,
+    receiver_id: Optional[str] = None,
+    content: str = "",
+    priority: int = 1,
+) -> Dict:
+    """
+    Send a message and process commands to Piddy.
+    
+    Supports:
+    - Direct messages to agents
+    - Commands to Piddy (create mission, execute task, etc.)
+    - User queries
+    
+    Returns live feedback on message processing
+    """
+    try:
+        from pathlib import Path
+        import uuid
+        
+        message_id = str(uuid.uuid4())
+        timestamp = datetime.utcnow().isoformat()
+        
+        # Create message object
+        message_obj = {
+            "message_id": message_id,
+            "sender_id": sender_id,
+            "receiver_id": receiver_id or "broadcast",
+            "message_type": "text",
+            "content": {
+                "text": content,
+                "priority": priority,
+                "action": "general"
+            },
+            "timestamp": timestamp,
+            "priority": priority
+        }
+        
+        # Determine action based on content
+        cmd = content.strip().lower()
+        
+        if any(x in cmd for x in ["create mission", "start mission", "new mission"]):
+            message_obj["content"]["action"] = "create_mission"
+            logger.info(f"[LIVE] Mission creation requested: {content}")
+            
+        elif any(x in cmd for x in ["what's happening", "status", "show me", "activity"]):
+            message_obj["content"]["action"] = "status_query"
+            logger.info(f"[LIVE] Status query: {content}")
+            
+        elif any(x in cmd for x in ["execute", "run", "do this"]):
+            message_obj["content"]["action"] = "execute_task"
+            logger.info(f"[LIVE] Task execution requested: {content}")
+            
+        else:
+            message_obj["content"]["action"] = "general_query"
+            logger.info(f"[LIVE] Message from {sender_id}: {content}")
+        
+        # Append to message log
+        try:
+            messages_file = Path("data/message_log.json")
+            messages_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            existing_messages = []
+            if messages_file.exists():
+                with open(messages_file, 'r') as f:
+                    existing_messages = json.load(f)
+            
+            existing_messages.append(message_obj)
+            
+            # Keep last 1000 messages
+            if len(existing_messages) > 1000:
+                existing_messages = existing_messages[-1000:]
+            
+            with open(messages_file, 'w') as f:
+                json.dump(existing_messages, f, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving message: {e}")
+        
+        return {
+            "status": "sent",
+            "message_id": message_id,
+            "timestamp": timestamp,
+            "action": message_obj["content"]["action"],
+            "live": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in send_message: {e}")
+        return {
+            "error": str(e),
+            "live": False
+        }
+
 
 
 # ============================================================================

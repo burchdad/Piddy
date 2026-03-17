@@ -338,22 +338,80 @@ def messages_list(limit: int = 50) -> Dict:
 
 
 def messages_send(sender_id: str, content: str, receiver_id: Optional[str] = None, priority: int = 1) -> Dict:
-    """Send a message between agents."""
+    """
+    Send a message and handle direct commands to Piddy.
+    
+    Supports:
+    - Direct messages to agents
+    - Commands to Piddy (e.g., "create mission", "analyze data")
+    - Broadcast messages
+    """
     try:
         coordinator = _get_coordinator()
         if not coordinator:
             return {"error": "Coordinator not initialized"}
         
-        # For now, just log the message
-        logger.info(f"Message from {sender_id} to {receiver_id or 'broadcast'}: {content}")
+        # Generate message ID
+        message_id = f"msg_{datetime.utcnow().timestamp()}"
+        timestamp = datetime.utcnow().isoformat()
+        
+        # Store message in coordinator
+        message_obj = {
+            "id": message_id,
+            "sender": sender_id,
+            "receiver": receiver_id or "broadcast",
+            "content": content,
+            "timestamp": timestamp,
+            "priority": priority,
+            "status": "received"
+        }
+        
+        # If sender is "user" (from dashboard) and no specific receiver, route to Piddy
+        if sender_id == "user" and (receiver_id is None or receiver_id == "Piddy"):
+            # Parse command or query
+            user_command = content.strip().lower()
+            
+            # Handle common Piddy commands
+            if any(cmd in user_command for cmd in ["create mission", "start mission", "new mission"]):
+                message_obj["status"] = "processing"
+                message_obj["action"] = "create_mission"
+                # Coordinator will handle mission creation
+                coordinator.enqueue_mission_from_user(content)
+                
+            elif any(cmd in user_command for cmd in ["what's happening", "status", "show me what you're doing"]):
+                message_obj["status"] = "processing"
+                message_obj["action"] = "status_query"
+                # Will be handled with activity stream
+                
+            elif any(cmd in user_command for cmd in ["execute", "run", "do this"]):
+                message_obj["status"] = "processing"
+                message_obj["action"] = "execute_task"
+                coordinator.enqueue_task_from_user(content)
+                
+            else:
+                message_obj["status"] = "processing"
+                message_obj["action"] = "general_query"
+        
+        # Store the message
+        try:
+            coordinator.add_message(message_obj)
+        except:
+            # Fallback if coordinator doesn't have add_message
+            pass
+        
+        # Log for debugging
+        logger.info(f"[LIVE] Message from {sender_id} → {receiver_id or 'broadcast'}: {content}")
+        
         return {
             "status": "sent",
-            "message_id": f"msg_{datetime.utcnow().timestamp()}",
-            "timestamp": datetime.utcnow().isoformat()
+            "message_id": message_id,
+            "timestamp": timestamp,
+            "action": message_obj.get("action"),
+            "live": True
         }
     except Exception as e:
         logger.error(f"Error in messages_send: {e}")
-        return {"error": str(e)}
+        return {"error": str(e), "live": False}
 
 
 # ============================================================================

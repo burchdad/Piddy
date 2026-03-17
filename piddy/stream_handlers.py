@@ -291,6 +291,164 @@ def stream_system_metrics(interval: float = 1.0, duration: float = 60.0) -> Gene
 
 
 # ============================================================================
+# MESSAGE STREAMING - Real-time conversation with Piddy
+# ============================================================================
+
+def stream_messages(since: Optional[float] = None, max_items: int = 100) -> Generator[Dict, None, None]:
+    """
+    Stream messages in real-time as they arrive.
+    
+    Args:
+        since: Unix timestamp to get messages since
+        max_items: Maximum messages per batch
+        
+    Yields:
+        Message dictionaries with sender, content, timestamp
+    """
+    try:
+        from piddy.coordinator import get_coordinator
+        coordinator = get_coordinator()
+        
+        if not coordinator:
+            logger.warning("Coordinator not initialized for stream_messages")
+            return
+        
+        # Send initial batch of recent messages
+        messages = coordinator.get_recent_messages(limit=max_items)
+        for msg in messages:
+            yield {
+                "id": msg.get("id", f"msg_{datetime.utcnow().timestamp()}"),
+                "sender": msg.get("sender", "unknown"),
+                "receiver": msg.get("receiver", "broadcast"),
+                "content": msg.get("content", ""),
+                "timestamp": msg.get("timestamp", datetime.utcnow().isoformat()),
+                "priority": msg.get("priority", 1),
+                "type": "message"
+            }
+        
+        # Stream new messages as they arrive
+        # Poll for new messages every 0.5 seconds
+        last_seen = since or time.time()
+        poll_count = 0
+        max_polls = 120  # Stream for up to 60 seconds at 0.5s intervals
+        
+        while poll_count < max_polls:
+            try:
+                new_messages = coordinator.get_messages_since(last_seen)
+                
+                if new_messages:
+                    for msg in new_messages:
+                        msg_time = msg.get("timestamp", datetime.utcnow().isoformat())
+                        yield {
+                            "id": msg.get("id", f"msg_{datetime.utcnow().timestamp()}"),
+                            "sender": msg.get("sender", "unknown"),
+                            "receiver": msg.get("receiver", "broadcast"),
+                            "content": msg.get("content", ""),
+                            "timestamp": msg_time,
+                            "priority": msg.get("priority", 1),
+                            "type": "message",
+                            "NEW": True  # Flag new messages
+                        }
+                    
+                    # Update last_seen
+                    last_seen = time.time()
+                
+                poll_count += 1
+                time.sleep(0.5)  # Poll every 500ms
+                
+            except Exception as e:
+                logger.debug(f"Error polling for new messages: {e}")
+                poll_count += 1
+                time.sleep(0.5)
+        
+    except Exception as e:
+        logger.error(f"Error streaming messages: {e}")
+        yield {
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat(),
+            "type": "error"
+        }
+
+
+# ============================================================================
+# AGENT ACTIVITY STREAMING - Real-time agent work visualization
+# ============================================================================
+
+def stream_agent_activity(limit: int = 50, duration: float = 60.0) -> Generator[Dict, None, None]:
+    """
+    Stream real agent activity - commands, decisions, completions.
+    Shows actual work happening, not mock data.
+    
+    Args:
+        limit: Maximum activities per batch
+        duration: How long to stream in seconds
+        
+    Yields:
+        Activity dictionaries with agent, action, status, timestamp
+    """
+    try:
+        from piddy.coordinator import get_coordinator
+        coordinator = get_coordinator()
+        
+        if not coordinator:
+            logger.warning("Coordinator not initialized for stream_agent_activity")
+            return
+        
+        # Get recent activities
+        activities = coordinator.get_agent_activities(limit=limit)
+        for activity in activities:
+            yield {
+                "id": activity.get("id", f"act_{datetime.utcnow().timestamp()}"),
+                "agent": activity.get("agent", "unknown"),
+                "action": activity.get("action", "working"),
+                "status": activity.get("status", "in_progress"),
+                "description": activity.get("description", ""),
+                "timestamp": activity.get("timestamp", datetime.utcnow().isoformat()),
+                "result": activity.get("result"),
+                "duration_ms": activity.get("duration_ms"),
+                "type": "activity"
+            }
+        
+        # Stream ongoing activities
+        start_time = time.time()
+        poll_count = 0
+        
+        while (time.time() - start_time) < duration:
+            try:
+                # Get current activities in progress
+                ongoing = coordinator.get_active_activities()
+                
+                for activity in ongoing:
+                    yield {
+                        "id": activity.get("id", f"act_{datetime.utcnow().timestamp()}"),
+                        "agent": activity.get("agent", "unknown"),
+                        "action": activity.get("action", "working"),
+                        "status": activity.get("status", "in_progress"),
+                        "description": activity.get("description", ""),
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "progress_percent": activity.get("progress_percent", 0),
+                        "type": "activity",
+                        "LIVE": True  # Indicate this is live/current
+                    }
+                
+                poll_count += 1
+                time.sleep(0.5)  # Update every 500ms
+                
+            except Exception as e:
+                logger.debug(f"Error streaming agent activity: {e}")
+                poll_count += 1
+                time.sleep(0.5)
+        
+    except Exception as e:
+        logger.error(f"Error streaming agent activity: {e}")
+        yield {
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat(),
+            "type": "error"
+        }
+
+
+# ============================================================================
 # STREAM REGISTRY
 # ============================================================================
 
@@ -299,6 +457,8 @@ STREAM_FUNCTIONS = {
     "stream.agent_thoughts": stream_agent_thoughts,
     "stream.mission_progress": stream_mission_progress,
     "stream.system_metrics": stream_system_metrics,
+    "stream.messages": stream_messages,
+    "stream.agent_activity": stream_agent_activity,
 }
 
 

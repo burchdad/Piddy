@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './styles/App.css';
 import './styles/components.css';
+import './styles/live-components.css';
 
 // Import components
 import Sidebar from './components/Sidebar';
@@ -19,6 +20,8 @@ import DependencyGraph from './components/DependencyGraph';
 import MissionReplay from './components/MissionReplay';
 import { DatabasePerformance } from './components/DatabasePerformance';
 import Approvals from './components/Approvals';
+import LiveChat from './components/LiveChat';
+import LiveActivity from './components/LiveActivity';
 
 function App() {
   const [activePage, setActivePage] = useState('overview');
@@ -99,6 +102,10 @@ function App() {
         return <Agents />;
       case 'messages':
         return <Messages />;
+      case 'live-chat':
+        return <LiveChat />;
+      case 'live-activity':
+        return <LiveActivity />;
       case 'logs':
         return <Logs />;
       case 'tests':
