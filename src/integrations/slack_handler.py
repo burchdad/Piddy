@@ -13,8 +13,15 @@ from src.tools.git_manager import get_git_manager
 from src.utils.error_handler import ErrorHandler, ErrorInfo
 from src.services.response_storage import get_response_storage
 
-
 logger = logging.getLogger(__name__)
+
+# Import Nova bridge for direct code execution
+try:
+    from piddy.slack_nova_bridge import get_slack_nova_integration
+    HAS_NOVA_BRIDGE = True
+except ImportError:
+    HAS_NOVA_BRIDGE = False
+    logger.warning("⚠️ Nova bridge not available - Nova commands will be skipped")
 
 
 class SlackMessageProcessor:
@@ -62,7 +69,19 @@ class SlackMessageProcessor:
                 thread_ts=thread_ts
             )
             
-            # Determine if this is a command or conversational message
+            # CHECK 1: Is this a Nova command? (highest priority)
+            if HAS_NOVA_BRIDGE:
+                nova_bridge = get_slack_nova_integration()
+                is_nova_command, cmd_type, task_desc = nova_bridge.detect_nova_command(text)
+                
+                if is_nova_command:
+                    # Handle as Nova execution command
+                    await self._handle_nova_command(
+                        event, text, user_id, channel_id, thread_ts, ts, nova_bridge
+                    )
+                    return
+            
+            # CHECK 2: Determine if this is a regular command or conversational message
             is_command = self._is_command(text)
             
             if is_command:
@@ -261,6 +280,94 @@ class SlackMessageProcessor:
                 thread_ts=thread_ts or ts,
             )
             await self.slack.add_reaction(channel_id, ts, "confused")
+    
+    async def _handle_nova_command(
+        self,
+        event: Dict[str, Any],
+        text: str,
+        user_id: str,
+        channel_id: str,
+        thread_ts: Optional[str],
+        ts: str,
+        nova_bridge: Any,
+    ) -> None:
+        """
+        Handle Nova code execution command from Slack.
+        
+        Nova commands bypass the LLM and directly execute code:
+        - "nova create test for validation"
+        - "nova generate API endpoint"
+        - "nova fix bug in auth module"
+        """
+        try:
+            # Send acknowledgment
+            ack_text = "🚀 Nova executing code..."
+            await self.slack.send_message(
+                channel=channel_id,
+                text=ack_text,
+                thread_ts=thread_ts or ts,
+            )
+            
+            # Execute Nova command
+            logger.info(f"🚀 Executing Nova command: {text[:50]}")
+            result = await nova_bridge.execute_nova_command(
+                text=text,
+                agent="nova",
+                user_id=user_id,
+                channel_id=channel_id,
+            )
+            
+            # Format result for Slack
+            formatted_response = nova_bridge.format_nova_result_for_slack(result)
+            
+            # Send formatted result
+            await self.slack.send_rich_message(
+                channel=channel_id,
+                blocks=formatted_response,
+                thread_ts=thread_ts or ts,
+            )
+            
+            # Add success/failure reaction
+            if result["status"] == "success":
+                await self.slack.add_reaction(channel_id, ts, "white_check_mark")
+                # Add mission link if available
+                mission_id = result.get("mission_id")
+                if mission_id:
+                    await self.slack.send_message(
+                        channel=channel_id,
+                        text=f"📊 Mission details: `{mission_id}`",
+                        thread_ts=thread_ts or ts,
+                    )
+            else:
+                await self.slack.add_reaction(channel_id, ts, "x")
+            
+            # Add to conversation history
+            self.conversation_manager.add_bot_message(
+                channel_id=channel_id,
+                user_id=user_id,
+                content=f"Nova execution: {result['status']}",
+                thread_ts=thread_ts,
+                metadata={
+                    "nova_command": True,
+                    "mission_id": result.get("mission_id"),
+                    "status": result["status"],
+                }
+            )
+            
+            logger.info(f"✅ Nova command completed: {result['status']}")
+        
+        except Exception as e:
+            logger.error(f"❌ Nova command failed: {str(e)}", exc_info=True)
+            
+            # Send error message
+            await self.slack.send_message(
+                channel=channel_id,
+                text=f"❌ Nova execution failed: {str(e)[:100]}",
+                thread_ts=thread_ts or ts,
+            )
+            
+            # Add X reaction
+            await self.slack.add_reaction(channel_id, ts, "x")
     
     def _parse_message_to_command(
         self,
