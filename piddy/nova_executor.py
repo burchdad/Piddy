@@ -29,6 +29,15 @@ except ImportError:
     HAS_PERSISTENCE = False
     get_persistence = None
 
+try:
+    from src.docker_policy import build_docker_run_command, validate_docker_policy, get_policy_summary
+    HAS_DOCKER_POLICY = True
+except ImportError:
+    HAS_DOCKER_POLICY = False
+    def build_docker_run_command(*args, **kwargs): return []
+    def validate_docker_policy(*args): return True
+    def get_policy_summary(): return {}
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,6 +98,13 @@ class NovaExecutor:
         # Track execution history
         self.execution_history: Dict[str, CodeExecutionResult] = {}
         
+        # Docker policy status
+        self.docker_available = self._check_docker_available()
+        if self.docker_available:
+            logger.info(f"✅ Docker policy enforcement ENABLED")
+        else:
+            logger.warning(f"⚠️ Docker not available - running with reduced sandbox isolation")
+        
         logger.info(f"🚀 Nova Executor initialized (workspace: {self.workspace_dir})")
     
     def _configure_git(self):
@@ -99,6 +115,18 @@ class NovaExecutor:
             logger.info(f"✅ Git configured: {self.git_name} <{self.git_email}>")
         except subprocess.CalledProcessError as e:
             logger.warning(f"⚠️ Git config failed: {e}")
+    
+    def _check_docker_available(self) -> bool:
+        """Check if Docker is available and running"""
+        try:
+            result = subprocess.run(['docker', 'version'], capture_output=True, timeout=5)
+            available = result.returncode == 0
+            if available:
+                logger.info(f"✅ Docker is available for container-based execution")
+            return available
+        except Exception as e:
+            logger.debug(f"Docker check failed: {e}")
+            return False
     
     def _run_command(self, cmd: str, cwd: Optional[Path] = None, env: Optional[Dict] = None) -> Tuple[bool, str, str]:
         """
@@ -206,17 +234,29 @@ class NovaExecutor:
     
     def run_tests(self, repo_path: Path) -> Tuple[bool, str, int]:
         """
-        Run tests in repository
+        Run tests in repository (in sandboxed Docker container if available)
         
         Returns: (success, output, test_count)
         """
+        try:
+            if self.docker_available and HAS_DOCKER_POLICY:
+                return self._run_tests_in_container(repo_path)
+            else:
+                return self._run_tests_local(repo_path)
+        
+        except Exception as e:
+            logger.error(f"❌ Test error: {e}")
+            return False, str(e), 0
+    
+    def _run_tests_local(self, repo_path: Path) -> Tuple[bool, str, int]:
+        """Run tests directly on host (less secure, fallback)"""
         try:
             # Try pytest first
             cmd = 'pytest -v --tb=short 2>&1 | head -100'
             success, stdout, stderr = self._run_command(cmd, cwd=repo_path)
             
             if success:
-                logger.info(f"✅ Tests passed")
+                logger.info(f"✅ Tests passed (local)")
                 return True, stdout, len([l for l in stdout.split('\n') if 'PASSED' in l])
             else:
                 # Fallback to unittest
@@ -230,8 +270,52 @@ class NovaExecutor:
                     return False, f"STDOUT:\n{stdout}\nSTDERR:\n{stderr}", 0
         
         except Exception as e:
-            logger.error(f"❌ Test error: {e}")
+            logger.error(f"❌ Local test error: {e}")
             return False, str(e), 0
+    
+    def _run_tests_in_container(self, repo_path: Path) -> Tuple[bool, str, int]:
+        """
+        Run tests in sandboxed Docker container with enforced security policy
+        
+        Returns: (success, output, test_count)
+        """
+        try:
+            logger.info(f"🐳 Running tests in sandboxed container (network=none)")
+            
+            # Build docker run command with security policy
+            docker_cmd = build_docker_run_command(
+                image="python:3.11-slim",
+                command=["pytest", "-v", "--tb=short", "/workspace/tests"],
+                workspace_dir=str(repo_path),
+                network_enabled=False,  # No network access
+                timeout_seconds=300,    # 5 minute timeout
+            )
+            
+            # Run the command
+            try:
+                result = subprocess.run(
+                    docker_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                )
+                
+                if result.returncode == 0:
+                    logger.info(f"✅ Tests passed in container")
+                    test_count = len([l for l in result.stdout.split('\n') if 'PASSED' in l])
+                    return True, result.stdout[:1000], test_count
+                else:
+                    logger.warning(f"⚠️ Container tests failed")
+                    return False, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}", 0
+            
+            except subprocess.TimeoutExpired:
+                logger.error(f"❌ Container tests timeout (300s)")
+                return False, "Container execution timeout", 0
+        
+        except Exception as e:
+            logger.error(f"❌ Container test error: {e}")
+            logger.info(f"⚠️ Falling back to local test execution")
+            return self._run_tests_local(repo_path)
     
     def commit_changes(self, repo_path: Path, message: str, files: Optional[List[str]] = None) -> Tuple[bool, str, str]:
         """
