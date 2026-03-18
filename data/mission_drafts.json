@@ -1,0 +1,21 @@
+{
+  "6963caf9-1541-491d-b94c-f47f5d931539": {
+    "mission_id": "6963caf9-1541-491d-b94c-f47f5d931539",
+    "mission_name": "Test Code Analysis Mission",
+    "mission_type": "analysis",
+    "description": "Analyze test.py for performance issues",
+    "objectives": [
+      "Analyze code",
+      "Find performance bottlenecks",
+      "Generate report"
+    ],
+    "required_agents": [
+      "performance_analyst",
+      "code_reviewer"
+    ],
+    "priority": 5,
+    "timeout_seconds": 120,
+    "status": "draft",
+    "created_at": "2026-03-18T02:02:22.778484"
+  }
+}

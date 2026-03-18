@@ -229,6 +229,65 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
             logger.debug(f"No mission telemetry available yet: {e}")
             return []
     
+    @app.post("/api/missions")
+    async def create_mission(mission_data: dict):
+        """Create a new mission and route it to agents for execution."""
+        try:
+            from datetime import datetime
+            import uuid
+            
+            mission_id = str(uuid.uuid4())[:12]
+            goal = mission_data.get("goal") or mission_data.get("description") or mission_data.get("task")
+            
+            logger.info(f"🎯 NEW MISSION CREATED: {goal}")
+            logger.info(f"   Mission ID: {mission_id}")
+            
+            # Route to agents via coordinator
+            from src.coordination.agent_coordinator import TaskPriority
+            
+            task = coordinator.submit_task(
+                task_type="user_mission",
+                description=goal,
+                priority=TaskPriority.NORMAL,
+                metadata={
+                    "mission_id": mission_id,
+                    "source": "livechat",
+                    "user_id": mission_data.get("user_id", "user"),
+                }
+            )
+            
+            logger.info(f"   Task created: {task.id}")
+            logger.info(f"   Status: QUEUED for agent assignment")
+            logger.info(f"   🚀 Mission routing to available agents...")
+            
+            # Find suitable agent
+            suitable_agent = coordinator.find_suitable_agent(task)
+            if suitable_agent:
+                coordinator.assign_task(task.id, suitable_agent.id)
+                logger.info(f"   ✅ Assigned to: {suitable_agent.name}")
+                assigned_to = suitable_agent.name
+            else:
+                logger.warning(f"   ⚠️ No suitable agent available, task queued for later")
+                assigned_to = "queued"
+            
+            return {
+                "status": "created",
+                "mission_id": mission_id,
+                "task_id": task.id,
+                "assigned_to": assigned_to,
+                "goal": goal,
+                "timestamp": datetime.utcnow().isoformat(),
+                "message": f"Mission created and assigned to {assigned_to}"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating mission: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "message": "Failed to create mission"
+            }
+    
     @app.get("/api/missions/{mission_id}")
     async def get_mission(mission_id: str):
         """Get specific mission details."""

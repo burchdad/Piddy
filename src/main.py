@@ -108,6 +108,11 @@ def create_app() -> FastAPI:
         logger.info(f"Model: {settings.agent_model}")
         logger.info(f"Environment: {'DEBUG' if settings.debug else 'PRODUCTION'}")
         
+        # MARK ALL AGENTS AS ONLINE 🟢
+        from src.agent_spawner import mark_agents_online
+        online_count = mark_agents_online(coordinator)
+        logger.info(f"🟢 {online_count} agents came ONLINE and ready for missions!")
+        
         # Initialize Knowledge Base if configured
         kb_repo_url = os.getenv('PIDDY_KB_REPO_URL')
         if kb_repo_url:

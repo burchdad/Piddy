@@ -43,6 +43,13 @@ formatter = logging.Formatter('[%(levelname)s] %(message)s')
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+# Import coordinator for mission execution
+try:
+    from src.coordination.agent_coordinator import get_coordinator
+except ImportError:
+    logger.warning("Could not import get_coordinator - missions may not execute properly")
+    get_coordinator = None
+
 
 # ============================================================================
 # DATA MODELS
@@ -303,6 +310,78 @@ class MissionReplayData(BaseModel):
     efficiency_score: float
     quality_score: float
     timestamp: str
+
+
+class ExecuteMissionRequest(BaseModel):
+    """Request to execute a mission"""
+    mission_type: str  # e.g., "research", "analysis", "decision"
+    mission_name: str
+    description: str
+    objectives: List[str]
+    required_agents: List[str]  # Specific agent roles or IDs
+    priority: int = 5  # 1-10, higher is more important
+    timeout_seconds: Optional[int] = 300
+
+
+class ExecuteMissionResponse(BaseModel):
+    """Response from mission execution request"""
+    mission_id: str
+    status: str  # accepted, in_progress, completed, failed
+    coordinator_id: Optional[str]
+    message: str
+    timestamp: str
+
+
+class MissionCreateRequest(BaseModel):
+    """Request to create (but not execute) a mission"""
+    mission_type: str
+    mission_name: str
+    description: str
+    objectives: List[str]
+    required_agents: Optional[List[str]] = None
+    priority: int = 5
+    timeout_seconds: Optional[int] = 300
+
+
+class MissionStatus(BaseModel):
+    """Mission status information"""
+    mission_id: str
+    mission_name: str
+    status: str  # draft, queued, assigned, in_progress, completed, failed
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    assigned_agent: Optional[str] = None
+    progress_percent: int
+    result: Optional[Dict] = None
+    error: Optional[str] = None
+
+
+class LiveChatMessage(BaseModel):
+    """Live chat message"""
+    message_id: str
+    sender_id: str
+    sender_name: str
+    content: str
+    timestamp: str
+    message_type: str  # user, agent, system
+    metadata: Optional[Dict] = None
+
+
+class LiveChatRequest(BaseModel):
+    """Request to send a live chat message"""
+    content: str
+    sender_id: str
+    sender_name: str
+    message_type: str = "user"
+
+
+class LiveChatResponse(BaseModel):
+    """Response to live chat message"""
+    message_id: str
+    status: str  # sent, received, processing, completed
+    timestamp: str
+    response: Optional[str] = None
 
 
 # NOTE: MockDataGenerator class removed - all endpoints now use real data only
@@ -602,15 +681,65 @@ async def send_message(
         # Determine action based on content
         cmd = content.strip().lower()
         
-        if any(x in cmd for x in ["create mission", "start mission", "new mission"]):
+        if any(x in cmd for x in ["create mission", "start mission", "new mission", "execute:", "build me", "create"]):
             message_obj["content"]["action"] = "create_mission"
-            logger.info(f"[LIVE] Mission creation requested: {content}")
+            logger.info(f"🎯 [LIVE] Mission creation requested: {content}")
+            
+            # ROUTE TO MISSION CREATION 🚀
+            from src.coordination.agent_coordinator import TaskPriority
+            
+            try:
+                # Extract mission description (everything after the command)
+                mission_desc = content
+                for cmd_prefix in ["create mission:", "start mission:", "new mission:", "execute:", "build me:"]:
+                    if cmd_prefix in cmd:
+                        mission_desc = content[len(cmd_prefix):].strip()
+                        break
+                
+                # Create task through coordinator
+                coordinator = get_coordinator()
+                task = coordinator.submit_task(
+                    task_type="user_mission",
+                    description=mission_desc or content,
+                    priority=TaskPriority.NORMAL,
+                    metadata={
+                        "mission_id": message_id,
+                        "source": "livechat",
+                        "user_id": sender_id,
+                        "user_command": content,
+                    }
+                )
+                
+                # Find and assign to suitable agent
+                suitable_agent = coordinator.find_suitable_agent(task)
+                if suitable_agent:
+                    coordinator.assign_task(task.id, suitable_agent.id)
+                    logger.info(f"✅ Mission assigned to: {suitable_agent.name}")
+                    mission_result = {
+                        "created_task_id": task.id,
+                        "assigned_to": suitable_agent.name,
+                        "status": "assigned"
+                    }
+                else:
+                    logger.info(f"⏳ Mission queued for agent assignment")
+                    mission_result = {
+                        "created_task_id": task.id,
+                        "assigned_to": "queued",
+                        "status": "queued"
+                    }
+                
+                # Add to message log
+                message_obj["content"]["mission_result"] = mission_result
+                
+            except Exception as mission_err:
+                logger.error(f"❌ Mission creation failed: {mission_err}")
+                message_obj["content"]["mission_error"] = str(mission_err)
             
         elif any(x in cmd for x in ["what's happening", "status", "show me", "activity"]):
             message_obj["content"]["action"] = "status_query"
             logger.info(f"[LIVE] Status query: {content}")
             
-        elif any(x in cmd for x in ["execute", "run", "do this"]):
+        elif any(x in cmd for x in ["run", "do this"]):
             message_obj["content"]["action"] = "execute_task"
             logger.info(f"[LIVE] Task execution requested: {content}")
             
@@ -644,7 +773,9 @@ async def send_message(
             "message_id": message_id,
             "timestamp": timestamp,
             "action": message_obj["content"]["action"],
-            "live": True
+            "live": True,
+            "content": content,
+            **(message_obj.get("content", {}).get("mission_result") or {})
         }
         
     except Exception as e:
@@ -1216,6 +1347,313 @@ async def get_mission_replay(mission_id: str) -> MissionReplayData:
             quality_score=0,
             timestamp=datetime.utcnow().isoformat()
         )
+
+
+@app.post("/api/missions/execute")
+async def execute_mission(request: ExecuteMissionRequest) -> ExecuteMissionResponse:
+    """Execute a new mission using the agent coordinator"""
+    try:
+        logger.info(f"Mission execution request: {request.mission_name}")
+        
+        if not get_coordinator:
+            return ExecuteMissionResponse(
+                mission_id="error",
+                status="failed",
+                coordinator_id=None,
+                message="Coordinator not available",
+                timestamp=datetime.utcnow().isoformat()
+            )
+        
+        # Get the coordinator instance
+        coordinator = get_coordinator()
+        if not coordinator:
+            return ExecuteMissionResponse(
+                mission_id="error",
+                status="failed",
+                coordinator_id=None,
+                message="Failed to initialize coordinator",
+                timestamp=datetime.utcnow().isoformat()
+            )
+        
+        # Import TaskPriority enum
+        from src.coordination.agent_coordinator import TaskPriority
+        
+        # Map priority to TaskPriority enum
+        priority_map = {
+            1: TaskPriority.LOW,
+            2: TaskPriority.NORMAL,
+            3: TaskPriority.HIGH,
+            4: TaskPriority.CRITICAL
+        }
+        task_priority = priority_map.get(min(max(request.priority, 1), 4), TaskPriority.NORMAL)
+        
+        # Create mission task
+        mission_metadata = {
+            "mission_type": request.mission_type,
+            "mission_name": request.mission_name,
+            "objectives": request.objectives,
+            "required_agents": request.required_agents,
+            "timeout_seconds": request.timeout_seconds or 300,
+        }
+        
+        # Submit task to coordinator
+        logger.info(f"Submitting mission task to coordinator: {request.mission_name}")
+        task = coordinator.submit_task(
+            task_type="mission",
+            description=request.description,
+            priority=task_priority,
+            required_capabilities=request.required_agents,
+            metadata=mission_metadata
+        )
+        
+        return ExecuteMissionResponse(
+            mission_id=task.id,
+            status="accepted",
+            coordinator_id=str(id(coordinator)),
+            message=f"Mission '{request.mission_name}' has been submitted for execution with task ID {task.id}",
+            timestamp=datetime.utcnow().isoformat()
+        )
+    except Exception as e:
+        logger.error(f"Error executing mission: {e}", exc_info=True)
+        return ExecuteMissionResponse(
+            mission_id="error",
+            status="failed",
+            coordinator_id=None,
+            message=f"Error: {str(e)}",
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+
+@app.post("/api/missions/create")
+async def create_mission(request: MissionCreateRequest) -> MissionStatus:
+    """Create a mission draft (without executing)"""
+    try:
+        logger.info(f"Mission creation request: {request.mission_name}")
+        
+        from uuid import uuid4
+        mission_id = str(uuid4())
+        
+        mission_status = MissionStatus(
+            mission_id=mission_id,
+            mission_name=request.mission_name,
+            status="draft",
+            created_at=datetime.utcnow().isoformat(),
+            progress_percent=0
+        )
+        
+        # Store mission draft
+        data_dir = Path("data")
+        data_dir.mkdir(exist_ok=True)
+        missions_file = data_dir / "mission_drafts.json"
+        
+        missions = {}
+        if missions_file.exists():
+            with open(missions_file, 'r') as f:
+                missions = json.load(f)
+        
+        missions[mission_id] = {
+            "mission_id": mission_id,
+            "mission_name": request.mission_name,
+            "mission_type": request.mission_type,
+            "description": request.description,
+            "objectives": request.objectives,
+            "required_agents": request.required_agents or [],
+            "priority": request.priority,
+            "timeout_seconds": request.timeout_seconds,
+            "status": "draft",
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        with open(missions_file, 'w') as f:
+            json.dump(missions, f, indent=2)
+        
+        logger.info(f"✅ Mission draft created: {mission_id}")
+        return mission_status
+    except Exception as e:
+        logger.error(f"Error creating mission: {e}", exc_info=True)
+        return MissionStatus(
+            mission_id="error",
+            mission_name="Error",
+            status="failed",
+            created_at=datetime.utcnow().isoformat(),
+            progress_percent=0,
+            error=str(e)
+        )
+
+
+@app.get("/api/missions/{mission_id}/status")
+async def get_mission_status(mission_id: str) -> MissionStatus:
+    """Get the status of a mission"""
+    try:
+        from pathlib import Path
+        
+        # Check mission telemetry first
+        missions_file = Path("data/mission_telemetry.json")
+        if missions_file.exists():
+            with open(missions_file, 'r') as f:
+                missions_data = json.load(f)
+                if isinstance(missions_data, dict) and mission_id in missions_data:
+                    m = missions_data[mission_id]
+                    return MissionStatus(
+                        mission_id=mission_id,
+                        mission_name=m.get("mission_name", "Unknown"),
+                        status=m.get("status", "unknown"),
+                        created_at=m.get("created_at", ""),
+                        started_at=m.get("started_at"),
+                        completed_at=m.get("completed_at"),
+                        assigned_agent=m.get("assigned_agent"),
+                        progress_percent=int(m.get("progress_percent", 0)),
+                        result=m.get("result"),
+                        error=m.get("error")
+                    )
+        
+        # Check drafts
+        drafts_file = Path("data/mission_drafts.json")
+        if drafts_file.exists():
+            with open(drafts_file, 'r') as f:
+                drafts = json.load(f)
+                if mission_id in drafts:
+                    d = drafts[mission_id]
+                    return MissionStatus(
+                        mission_id=mission_id,
+                        mission_name=d.get("mission_name", "Unknown"),
+                        status=d.get("status", "draft"),
+                        created_at=d.get("created_at", ""),
+                        progress_percent=0
+                    )
+        
+        # Mission not found
+        return MissionStatus(
+            mission_id=mission_id,
+            mission_name="Unknown",
+            status="not_found",
+            created_at=datetime.utcnow().isoformat(),
+            progress_percent=0,
+            error="Mission not found"
+        )
+    except Exception as e:
+        logger.error(f"Error getting mission status: {e}")
+        return MissionStatus(
+            mission_id=mission_id,
+            mission_name="Error",
+            status="error",
+            created_at=datetime.utcnow().isoformat(),
+            progress_percent=0,
+            error=str(e)
+        )
+
+
+@app.post("/api/livechat/send")
+async def send_livechat_message(request: LiveChatRequest) -> LiveChatResponse:
+    """Send a message in live chat"""
+    try:
+        from uuid import uuid4
+        message_id = str(uuid4())
+        
+        logger.info(f"LiveChat message from {request.sender_name}: {request.content[:50]}")
+        
+        coordinator = get_coordinator()
+        if not coordinator:
+            return LiveChatResponse(
+                message_id=message_id,
+                status="failed",
+                timestamp=datetime.utcnow().isoformat(),
+                response="Coordinator not available"
+            )
+        
+        # Check if this looks like a mission command
+        command_prefixes = ["create mission", "start mission", "execute", "build", "analyze"]
+        is_mission_command = any(request.content.lower().startswith(prefix) for prefix in command_prefixes)
+        
+        if is_mission_command:
+            # Submit as a mission task
+            from src.coordination.agent_coordinator import TaskPriority
+            
+            task = coordinator.submit_task(
+                task_type="user_mission",
+                description=request.content,
+                priority=TaskPriority.NORMAL,
+                metadata={
+                    "message_id": message_id,
+                    "source": "livechat",
+                    "sender_id": request.sender_id,
+                    "sender_name": request.sender_name,
+                }
+            )
+            
+            # Try to assign to suitable agent
+            suitable_agent = coordinator.find_suitable_agent(task)
+            if suitable_agent:
+                coordinator.assign_task(task.id, suitable_agent.id)
+                response = f"✅ Assigned to agent {suitable_agent.name}"
+            else:
+                response = f"⏳ Task queued for next available agent"
+            
+            return LiveChatResponse(
+                message_id=message_id,
+                status="processing",
+                timestamp=datetime.utcnow().isoformat(),
+                response=response
+            )
+        else:
+            # Regular message - just acknowledge
+            return LiveChatResponse(
+                message_id=message_id,
+                status="received",
+                timestamp=datetime.utcnow().isoformat(),
+                response=f"Message received by Piddy System"
+            )
+    except Exception as e:
+        logger.error(f"Error processing livechat message: {e}", exc_info=True)
+        return LiveChatResponse(
+            message_id="error",
+            status="failed",
+            timestamp=datetime.utcnow().isoformat(),
+            response=f"Error: {str(e)}"
+        )
+
+
+@app.websocket("/ws/livechat/{sender_id}")
+async def websocket_livechat(websocket: WebSocket, sender_id: str):
+    """WebSocket endpoint for live chat"""
+    await websocket.accept()
+    logger.info(f"LiveChat WebSocket connected: {sender_id}")
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            
+            # Parse message
+            try:
+                message_data = json.loads(data)
+            except:
+                message_data = {"content": data}
+            
+            # Send message through HTTP endpoint
+            request = LiveChatRequest(
+                content=message_data.get("content", data),
+                sender_id=sender_id,
+                sender_name=message_data.get("sender_name", "WebSocket User"),
+                message_type=message_data.get("message_type", "user")
+            )
+            
+            response = await send_livechat_message(request)
+            
+            # Send response back
+            await websocket.send_json({
+                "message_id": response.message_id,
+                "status": response.status,
+                "timestamp": response.timestamp,
+                "response": response.response
+            })
+    except WebSocketDisconnect:
+        logger.info(f"LiveChat WebSocket disconnected: {sender_id}")
+    except Exception as e:
+        logger.error(f"LiveChat WebSocket error: {e}")
+        try:
+            await websocket.send_json({"error": str(e)})
+        except:
+            pass
 
 
 @app.get("/api/graph/dependencies")
