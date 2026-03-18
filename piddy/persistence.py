@@ -180,6 +180,26 @@ class PersistenceLayer:
                 )
             """)
             
+            # Mission Approvals table (TRUST LAYER)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS mission_approvals (
+                    mission_id VARCHAR(255) PRIMARY KEY,
+                    task_description TEXT,
+                    risk_level VARCHAR(50),
+                    requester_id VARCHAR(255),
+                    files_changed JSONB,
+                    lines_added INTEGER,
+                    lines_deleted INTEGER,
+                    estimated_execution_time_sec INTEGER,
+                    status VARCHAR(50) DEFAULT 'pending',
+                    approved_by VARCHAR(255),
+                    approval_reason TEXT,
+                    requested_at TIMESTAMP,
+                    approved_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
             self.conn.commit()
             logger.info("✅ PostgreSQL schema created")
         except Exception as e:
@@ -246,6 +266,26 @@ class PersistenceLayer:
                     value REAL,
                     timestamp TEXT,
                     context TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Mission Approvals table (TRUST LAYER)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS mission_approvals (
+                    mission_id TEXT PRIMARY KEY,
+                    task_description TEXT,
+                    risk_level TEXT,
+                    requester_id TEXT,
+                    files_changed TEXT,
+                    lines_added INTEGER,
+                    lines_deleted INTEGER,
+                    estimated_execution_time_sec INTEGER,
+                    status TEXT DEFAULT 'pending',
+                    approved_by TEXT,
+                    approval_reason TEXT,
+                    requested_at TEXT,
+                    approved_at TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
