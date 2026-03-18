@@ -22,6 +22,13 @@ from typing import Dict, Optional, List
 from enum import Enum
 import json
 
+try:
+    from src.scope_validator import validate_mission_scope, ScopeViolation
+    HAS_SCOPE_VALIDATOR = True
+except ImportError:
+    HAS_SCOPE_VALIDATOR = False
+    ScopeViolation = Exception
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +37,7 @@ class MissionStage(Enum):
     PLANNING = "planning"           # Phase 40 simulation
     VOTING = "voting"               # Phase 50 consensus
     APPROVAL = "approval"           # Human approval (if high risk)
+    SCOPE_VALIDATION = "scope_validation"  # Scope control (Phase 4)
     EXECUTION = "execution"         # Nova executor
     PR_GENERATION = "pr_generation" # Phase 37
     PR_PUSH = "pr_push"            # PRManager push
@@ -261,6 +269,28 @@ class NovaCoordinator:
                             "approval": approval_result,
                             "audit_trail": audit_trail
                         }
+                
+                # ============================================================
+                # STAGE 3.5: Scope Validation (Phase 4)
+                # ============================================================
+                
+                logger.info(f"\n[{mission_id}] STAGE 3️⃣ .5️⃣  Scope Validation (Phase 4)")
+                
+                scope_result = await self._run_scope_validation_stage(
+                    task, planning_result, mission_id, audit_trail
+                )
+                
+                if scope_result["status"] != "validated":
+                    logger.warning(f"⚠️  Scope validation failed: {scope_result.get('reason', 'unknown')}")
+                    return {
+                        "mission_id": mission_id,
+                        "status": "rejected",
+                        "reason": "scope_validation_failed",
+                        "planning": planning_result,
+                        "voting": voting_result,
+                        "scope_validation": scope_result,
+                        "audit_trail": audit_trail
+                    }
                 
                 # ============================================================
                 # STAGE 4: Execute Code
@@ -505,6 +535,67 @@ class NovaCoordinator:
         except Exception as e:
             logger.error(f"  ❌ Approval stage error: {e}")
             return {"status": "rejected", "reason": str(e)}
+    
+    async def _run_scope_validation_stage(
+        self, task: str, planning_result: Dict, mission_id: str, audit_trail: List
+    ) -> Dict:
+        """STAGE 3.5: Validate that mission stays within authorized scope (Phase 4)"""
+        try:
+            logger.info("  Validating execution scope...")
+            
+            if not HAS_SCOPE_VALIDATOR:
+                logger.warning("  ⚠️  Scope validator not available, skipping scope check")
+                return {"status": "validated", "warning": "scope_validator_unavailable"}
+            
+            # Extract scope information from planning result
+            repo = planning_result.get("repository", "burchdad/Piddy")
+            files = planning_result.get("affected_files", [])
+            operation = {
+                "files_changed": files,
+                "lines_added": planning_result.get("lines_added", 0),
+                "lines_deleted": planning_result.get("lines_deleted", 0),
+            }
+            risk_level = planning_result.get("risk_level", "MEDIUM").upper()
+            
+            try:
+                # Validate mission scope (raises ScopeViolation if invalid)
+                validate_mission_scope(
+                    mission_id=mission_id,
+                    repo_key=repo,
+                    files_to_modify=files,
+                    operation=operation,
+                    execution_mode="SAFE",  # Always SAFE for first validation
+                )
+                
+                logger.info(f"  ✅ Scope validated:")
+                logger.info(f"     Repository: {repo}")
+                logger.info(f"     Files: {len(files)}")
+                logger.info(f"     Lines: {operation['lines_added'] + operation['lines_deleted']}")
+                
+                audit_trail.append({
+                    "stage": "scope_validation",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "result": {
+                        "status": "validated",
+                        "repository": repo,
+                        "files_count": len(files),
+                        "lines_modified": operation['lines_added'] + operation['lines_deleted'],
+                    }
+                })
+                
+                return {"status": "validated", "repository": repo}
+            
+            except ScopeViolation as e:
+                logger.error(f"  ❌ Scope violation: {e}")
+                return {
+                    "status": "rejected",
+                    "reason": str(e),
+                    "violation_type": str(e.violation_type) if hasattr(e, 'violation_type') else "unknown"
+                }
+        
+        except Exception as e:
+            logger.error(f"  ❌ Scope validation error: {e}")
+            return {"status": "error", "reason": str(e)}
     
     async def _run_execution_stage(
         self, task: str, mission_id: str, agent: str, audit_trail: List
