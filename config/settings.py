@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     agent_temperature: float = 0.7
     agent_max_tokens: int = 4096
     
+    # Local LLM (Ollama) - works completely offline
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "codellama:13b"
+    ollama_enabled: bool = True  # Auto-detected: tries Ollama if cloud LLMs fail
+    
     # Database
     database_url: str = "sqlite:///./piddy.db"
     
@@ -42,6 +47,11 @@ class Settings(BaseSettings):
     
     # Knowledge Base Configuration
     piddy_kb_repo_url: str = ""
+    piddy_kb_repo_branch: str = "main"
+    
+    # Piddy Growth Configuration
+    piddy_growth_repo_url: str = ""
+    piddy_growth_secret: str = ""
     
     class Config:
         env_file = ".env"

@@ -22,7 +22,6 @@ from src.api.realtime_dashboard import setup_realtime_dashboard
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application."""
-    """Create and configure FastAPI application."""
     
     # Setup logging
     setup_logging()
@@ -36,28 +35,13 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
     
-    # ========================================================================
-    # GLOBAL STATE - Real Data Sources
-    # ========================================================================
-    # Initialize global coordinator for real agent tracking
-    coordinator = AgentCoordinator()
-    
-    # Initialize telemetry collector for mission tracking
-    telemetry_collector = MissionTelemetryCollector('.piddy_telemetry.db')
-    
-    # WebSocket connection manager for real-time updates
-    active_connections: Set[WebSocket] = set()
-    
-    logger.info("✅ Real data systems initialized: Coordinator, Telemetry, WebSocket")
-    
     # Add CORS middleware FIRST - must be before all other middleware
-    # Use wildcard for maximum compatibility since this is the backend
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins
-        allow_credentials=False,  # Set to False when using wildcard
-        allow_methods=["*"],  # Allow all methods
-        allow_headers=["*"],  # Allow all headers
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
         max_age=3600,
     )
     
@@ -167,30 +151,99 @@ def create_app() -> FastAPI:
             logger.debug(f"Slack listener cleanup: {str(e)}")
     
     # Health check endpoints
+    _start_time = datetime.utcnow()
+    
     @app.get("/health")
     async def health():
-        """Health check endpoint."""
-        from src.service.health_check import check_health
-        health_status = check_health()
+        """Health check endpoint - checks real system components."""
+        checks = {}
+        status = "healthy"
+        
+        # Check coordinator has agents
+        try:
+            agent_count = len(coordinator.agents)
+            checks["agents_registered"] = agent_count > 0
+        except Exception:
+            checks["agents_registered"] = False
+        
+        # Check database
+        try:
+            import sqlite3
+            conn = sqlite3.connect("piddy.db")
+            conn.execute("SELECT 1")
+            conn.close()
+            checks["database"] = True
+        except Exception:
+            checks["database"] = False
+        
+        # Check LLM configuration
+        checks["llm_configured"] = bool(settings.anthropic_api_key or settings.openai_api_key)
+        
+        # Check telemetry
+        try:
+            telemetry_collector.get_all_stats()
+            checks["telemetry"] = True
+        except Exception:
+            checks["telemetry"] = False
+        
+        if not all(checks.values()):
+            status = "degraded"
+        
         return {
-            "status": health_status.status,
+            "status": status,
             "timestamp": datetime.utcnow().isoformat(),
-            "checks": health_status.checks,
+            "checks": checks,
         }
     
     @app.get("/health/detailed")
     async def health_detailed():
         """Detailed health check with metrics."""
-        from src.service.health_check import get_status
-        return get_status()
+        uptime = (datetime.utcnow() - _start_time).total_seconds()
+        stats = coordinator.get_stats()
+        
+        memory_mb = 0.0
+        try:
+            import psutil
+            process = psutil.Process()
+            memory_mb = process.memory_info().rss / (1024 * 1024)
+        except ImportError:
+            pass
+        
+        return {
+            "health": {
+                "status": "healthy" if stats["agents"]["total"] > 0 else "degraded",
+                "pid": os.getpid(),
+                "uptime": uptime,
+                "agents_online": stats["agents"]["available"],
+                "agents_total": stats["agents"]["total"],
+                "tasks_completed": stats["tasks"]["completed"],
+                "tasks_failed": stats["tasks"]["failed"],
+                "latency_ms": 0,
+                "memory_usage_mb": round(memory_mb, 1),
+                "checks": {
+                    "agents_registered": stats["agents"]["total"] > 0,
+                    "database": True,
+                    "llm_configured": bool(settings.anthropic_api_key),
+                    "telemetry": True,
+                },
+            },
+            "performance": {
+                "success_rate": stats["success_rate"],
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+        }
     
     @app.get("/status")
     async def status():
         """Service status endpoint."""
-        from src.service.health_check import get_monitor
-        monitor = get_monitor()
-        status_dict = monitor.get_status_dict()
-        return status_dict
+        uptime = (datetime.utcnow() - _start_time).total_seconds()
+        return {
+            "status": "running",
+            "uptime_seconds": round(uptime),
+            "model": settings.agent_model,
+            "agents": len(coordinator.agents),
+            "timestamp": datetime.utcnow().isoformat(),
+        }
     
     # ========================================================================
     # DASHBOARD API ENDPOINTS
@@ -202,167 +255,164 @@ def create_app() -> FastAPI:
     
     @app.get("/api/graph/dependencies")
     async def get_dependencies():
-        """Get dependency graph."""
-        return {
-            "nodes": [
-                {
-                    "id": "svc-1",
-                    "name": "API Gateway",
-                    "type": "service",
-                    "inbound_count": 0,
-                    "outbound_count": 2,
-                    "avg_response_time": 142,
-                    "error_rate": 0.01
-                },
-                {
-                    "id": "svc-2",
-                    "name": "Auth Service",
-                    "type": "service",
-                    "inbound_count": 1,
-                    "outbound_count": 1,
-                    "avg_response_time": 89,
-                    "error_rate": 0.005
-                },
-                {
-                    "id": "svc-3",
-                    "name": "Database",
-                    "type": "external",
-                    "inbound_count": 3,
-                    "outbound_count": 0,
-                    "avg_response_time": 234,
-                    "error_rate": 0.002
-                }
-            ],
-            "edges": [
-                {"source": "svc-1", "target": "svc-2", "weight": 1},
-                {"source": "svc-2", "target": "svc-3", "weight": 1},
-                {"source": "svc-1", "target": "svc-3", "weight": 1}
-            ]
-        }
+        """Get dependency graph from real agent registrations."""
+        agents = coordinator.get_all_agents()
+        nodes = []
+        edges = []
+        
+        for agent in agents:
+            nodes.append({
+                "id": agent.id,
+                "name": agent.name,
+                "type": agent.role.value,
+                "inbound_count": 0,
+                "outbound_count": len(agent.capabilities),
+                "status": "online" if agent.is_available else "busy",
+            })
+        
+        # Build edges: Coordinator connects to all agents
+        coord_agents = [a for a in agents if a.role.value == "coordinator"]
+        for coord in coord_agents:
+            for agent in agents:
+                if agent.id != coord.id:
+                    edges.append({"source": coord.id, "target": agent.id, "weight": 1})
+        
+        return {"nodes": nodes, "edges": edges}
+    
+    # In-memory log buffer for the /api/logs endpoint
+    import collections
+    _log_buffer = collections.deque(maxlen=200)
+    
+    class _BufferHandler(logging.Handler):
+        def emit(self, record):
+            _log_buffer.append({
+                "timestamp": datetime.utcfromtimestamp(record.created).isoformat(),
+                "level": record.levelname,
+                "source": record.name,
+                "message": record.getMessage(),
+                "details": None,
+            })
+    
+    logging.getLogger().addHandler(_BufferHandler())
     
     @app.get("/api/logs")
     async def get_logs():
-        """Get recent logs."""
-        return [
-            {
-                "timestamp": datetime.utcnow().isoformat(),
-                "level": "INFO",
-                "source": "System",
-                "message": "System operational and ready for deployments",
-                "details": None
-            },
-            {
-                "timestamp": datetime.utcnow().isoformat(),
-                "level": "INFO",
-                "source": "Agents",
-                "message": "Guardian agent came online",
-                "details": None
-            },
-            {
-                "timestamp": datetime.utcnow().isoformat(),
-                "level": "INFO",
-                "source": "Database",
-                "message": "Database connection pool initialized",
-                "details": None
-            }
-        ]
+        """Get recent logs from real log buffer."""
+        return list(_log_buffer)
     
     @app.get("/api/phases")
     async def get_phases():
-        """Get phase information."""
-        return [
-            {
-                "phase_id": 1,
-                "phase_name": "Core Agent",
+        """Get phase information from actual phase modules."""
+        import glob
+        phase_files = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "phase*")))
+        phases = []
+        for pf in phase_files:
+            name = os.path.basename(pf).replace(".py", "").replace("_", " ").title()
+            phases.append({
+                "phase_id": len(phases) + 1,
+                "phase_name": name,
                 "status": "completed",
                 "progress_percent": 100,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            {
-                "phase_id": 2,
-                "phase_name": "Slack Integration",
-                "status": "completed",
-                "progress_percent": 100,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            {
-                "phase_id": 3,
-                "phase_name": "Rate Limiting",
-                "status": "completed",
-                "progress_percent": 100,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            {
-                "phase_id": 4,
-                "phase_name": "Autonomous Monitoring",
-                "status": "completed",
-                "progress_percent": 100,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            {
-                "phase_id": 5,
-                "phase_name": "Dashboard",
-                "status": "in_progress",
-                "progress_percent": 75,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        ]
+                "file": os.path.basename(pf),
+            })
+        return phases
+    
+    # Store last test run results
+    _last_test_results: List[Dict] = []
     
     @app.get("/api/tests")
     async def get_tests():
-        """Get test results."""
+        """Get test results from last pytest run (or discover test files)."""
+        if _last_test_results:
+            return _last_test_results
+        
+        # Discover test files as fallback
+        import glob
+        test_files = glob.glob(os.path.join(os.path.dirname(os.path.dirname(__file__)), "tests", "*.py"))
         return [
             {
-                "test_id": "test_001",
-                "test_name": "test_core_agent",
-                "status": "passed",
-                "duration_seconds": 1.234,
-                "message": "Core agent initialization successful"
-            },
-            {
-                "test_id": "test_002",
-                "test_name": "test_slack_integration",
-                "status": "passed",
-                "duration_seconds": 2.456,
-                "message": "Slack integration connected"
-            },
-            {
-                "test_id": "test_003",
-                "test_name": "test_rate_limiting",
-                "status": "passed",
-                "duration_seconds": 0.789,
-                "message": "Rate limiting service operational"
-            },
+                "test_id": f"test_{i:03d}",
+                "test_name": os.path.basename(tf).replace(".py", ""),
+                "status": "discovered",
+                "duration_seconds": 0,
+                "message": f"Test file found: {os.path.basename(tf)}",
+            }
+            for i, tf in enumerate(test_files, 1)
         ]
     
     @app.get("/api/tests/summary")
     async def get_tests_summary():
-        """Get test summary statistics."""
+        """Get test summary from real results."""
+        results = _last_test_results
+        if not results:
+            import glob
+            test_count = len(glob.glob(os.path.join(os.path.dirname(os.path.dirname(__file__)), "tests", "*.py")))
+            return {
+                "total": test_count,
+                "passed": 0,
+                "failed": 0,
+                "skipped": 0,
+                "pass_rate": 0,
+                "status": "not_run",
+            }
+        
+        total = len(results)
+        passed = len([r for r in results if r.get("status") == "passed"])
+        failed = len([r for r in results if r.get("status") == "failed"])
+        skipped = total - passed - failed
         return {
-            "total": 15,
-            "passed": 13,
-            "failed": 1,
-            "skipped": 1,
-            "pass_rate": 86.7
+            "total": total,
+            "passed": passed,
+            "failed": failed,
+            "skipped": skipped,
+            "pass_rate": round(passed / max(total, 1) * 100, 1),
         }
     
     @app.get("/api/security/audit")
     async def get_security_audit():
-        """Get security audit results."""
+        """Get security audit from real checks."""
+        checks = []
+        passed = 0
+        failed = 0
+        
+        # Check API key security
+        if settings.anthropic_api_key:
+            checks.append({"name": "LLM API key configured", "status": "passed", "severity": "critical"})
+            passed += 1
+        else:
+            checks.append({"name": "LLM API key missing", "status": "failed", "severity": "critical"})
+            failed += 1
+        
+        # Check CORS
+        checks.append({"name": "CORS middleware active", "status": "passed", "severity": "medium"})
+        passed += 1
+        
+        # Check database
+        try:
+            import sqlite3
+            conn = sqlite3.connect("piddy.db")
+            conn.execute("SELECT 1")
+            conn.close()
+            checks.append({"name": "Database accessible", "status": "passed", "severity": "high"})
+            passed += 1
+        except Exception:
+            checks.append({"name": "Database inaccessible", "status": "failed", "severity": "critical"})
+            failed += 1
+        
+        # Check Slack config
+        if settings.slack_bot_token:
+            checks.append({"name": "Slack bot token configured", "status": "passed", "severity": "medium"})
+            passed += 1
+        else:
+            checks.append({"name": "Slack bot token missing", "status": "warning", "severity": "low"})
+        
         return {
-            "is_production_safe": True,
-            "passed_checks": 42,
-            "failed_checks": 2,
-            "critical_failures": [
-                {
-                    "check_id": "sec_001",
-                    "name": "Database encryption",
-                    "status": "failed",
-                    "severity": "critical",
-                    "description": "Database encryption not properly configured"
-                }
-            ],
-            "last_audit": datetime.utcnow().isoformat()
+            "is_production_safe": failed == 0,
+            "passed_checks": passed,
+            "failed_checks": failed,
+            "critical_failures": [c for c in checks if c["status"] == "failed" and c["severity"] == "critical"],
+            "all_checks": checks,
+            "last_audit": datetime.utcnow().isoformat(),
         }
     
     @app.get("/api/rate-limits/status")
@@ -375,9 +425,8 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.warning(f"Rate limiter not available: {e}")
             return {
-                "status": "healthy",
-                "healthy_providers": 4,
-                "total_providers": 4,
+                "status": "unavailable",
+                "message": "Rate limiter not initialized",
                 "timestamp": datetime.utcnow().isoformat()
             }
     
@@ -395,12 +444,8 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.warning(f"Rate limiter metrics not available: {e}")
             return {
-                "providers": {
-                    "anthropic": {"success_rate": 99.5, "requests_today": 1240},
-                    "openai": {"success_rate": 98.2, "requests_today": 345},
-                    "github": {"success_rate": 100.0, "requests_today": 512},
-                    "slack": {"success_rate": 99.8, "requests_today": 2103},
-                },
+                "providers": {},
+                "status": "unavailable",
                 "timestamp": datetime.utcnow().isoformat()
             }
     
@@ -415,62 +460,18 @@ def create_app() -> FastAPI:
             
             return {
                 "health": health,
-                "providers": metrics.get("providers", {
-                    "anthropic": {"status": "healthy", "throughput": "850 req/min"},
-                    "openai": {"status": "healthy", "throughput": "240 req/min"},
-                    "github": {"status": "healthy", "throughput": "450 req/min"},
-                    "slack": {"status": "healthy", "throughput": "1200 req/min"},
-                }),
+                "providers": metrics.get("providers", {}),
                 "queue_length": metrics.get("queue_length", 0),
                 "timestamp": datetime.utcnow().isoformat()
             }
         except Exception as e:
             logger.warning(f"Rate limiter dashboard data not available: {e}")
             return {
-                "health": {"status": "healthy", "healthy_providers": 4, "total_providers": 4},
-                "providers": {
-                    "anthropic": {"status": "✅ Online", "throughput": "850 req/min", "success_rate": 99.5},
-                    "openai": {"status": "✅ Online", "throughput": "240 req/min", "success_rate": 98.2},
-                    "github": {"status": "✅ Online", "throughput": "450 req/min", "success_rate": 100.0},
-                    "slack": {"status": "✅ Online", "throughput": "1200 req/min", "success_rate": 99.8},
-                },
+                "health": {"status": "unavailable"},
+                "providers": {},
                 "queue_length": 0,
-                "recommendations": [],
                 "timestamp": datetime.utcnow().isoformat()
             }
-    
-    @app.get("/api/logs")
-    async def get_logs(level: str = "all", limit: int = 50):
-        """Get system logs with filtering."""
-        logs = [
-            {
-                "id": "log_001",
-                "level": "INFO",
-                "source": "rate_limiter",
-                "message": "Rate limiting service initialized",
-                "timestamp": datetime.utcnow().isoformat(),
-                "context": {}
-            },
-            {
-                "id": "log_002",
-                "level": "INFO",
-                "source": "dashboard",
-                "message": "Dashboard API endpoints registered",
-                "timestamp": datetime.utcnow().isoformat(),
-                "context": {}
-            },
-            {
-                "id": "log_003",
-                "level": "WARNING",
-                "source": "slack",
-                "message": "Slack Socket Mode connection established",
-                "timestamp": datetime.utcnow().isoformat(),
-                "context": {}
-            },
-        ]
-        if level != "all":
-            logs = [l for l in logs if l["level"] == level.upper()]
-        return logs[:limit]
     
     # ========================================================================
     # MARKET GAP APPROVAL ENDPOINTS

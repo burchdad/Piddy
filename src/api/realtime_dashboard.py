@@ -19,6 +19,7 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
     """Setup real-time dashboard endpoints."""
     
     active_connections: Set[WebSocket] = set()
+    _dashboard_start = datetime.utcnow()
     
     # ====================================================================
     # SYSTEM OVERVIEW - REAL DATA
@@ -29,14 +30,15 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
         """Get system overview with REAL agent and mission counts."""
         try:
             stats = coordinator.get_stats()
-            telemetry_stats = telemetry_collector.get_overall_stats()
+            telemetry_stats = telemetry_collector.get_all_stats()
             agents_online = stats["agents"]["available"]
             total_agents = stats["agents"]["total"]
             missions_active = stats["tasks"]["in_progress"]
+            uptime = (datetime.utcnow() - _dashboard_start).total_seconds()
             
             return {
                 "status": "operational",
-                "uptime_seconds": 3600,
+                "uptime_seconds": round(uptime),
                 "agents_online": agents_online,
                 "agents_total": total_agents,
                 "missions_active": missions_active,
@@ -47,8 +49,8 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
         except Exception as e:
             logger.error(f"Error getting system overview: {e}")
             return {
-                "status": "operational",
-                "uptime_seconds": 3600,
+                "status": "error",
+                "error": str(e),
                 "agents_online": 0,
                 "agents_total": 0,
                 "missions_active": 0,
@@ -361,7 +363,7 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
     async def get_metrics():
         """Get performance metrics."""
         try:
-            telemetry_stats = telemetry_collector.get_overall_stats()
+            telemetry_stats = telemetry_collector.get_all_stats()
             stats = coordinator.get_stats()
             
             return [
@@ -411,7 +413,7 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
                 
                 try:
                     stats = coordinator.get_stats()
-                    telemetry_stats = telemetry_collector.get_overall_stats()
+                    telemetry_stats = telemetry_collector.get_all_stats()
                     
                     update = {
                         "type": "system_update",
