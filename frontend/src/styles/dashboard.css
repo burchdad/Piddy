@@ -314,6 +314,76 @@
   color: #fff;
 }
 
+/* File actions panel */
+.chat-actions-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary, #1a1a2e);
+  border: 1px solid var(--border-color, #2d2d44);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.chat-actions-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--accent-primary, #00d4aa);
+  margin-bottom: 0.5rem;
+}
+
+.chat-actions-icon {
+  font-size: 1rem;
+}
+
+.chat-actions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chat-action-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.8rem;
+}
+
+.chat-action-item.success {
+  background: rgba(0, 212, 170, 0.08);
+}
+
+.chat-action-item.error {
+  background: rgba(255, 82, 82, 0.08);
+}
+
+.chat-action-status {
+  flex-shrink: 0;
+}
+
+.chat-action-path {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.chat-action-size {
+  color: var(--text-secondary);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.chat-action-error {
+  color: var(--error-color, #ff5252);
+  font-size: 0.75rem;
+}
+
 /* Typing indicator */
 .chat-typing-indicator {
   display: flex;

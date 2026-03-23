@@ -567,13 +567,15 @@ Question: {input}
         try:
             logger.info(f"🏠 Tier 2 — Local LLM: {self.settings.ollama_model}")
             
-            # Build a full prompt with system identity + skill context
+            from src.agent.action_parser import AGENTIC_PROMPT_ADDON
+            
+            # Build a full prompt with system identity + agentic capabilities
             system_intro = (
                 "You are Piddy, an expert AI developer assistant. "
-                "Answer the user's question using the knowledge provided below. "
-                "Be concise, accurate, and helpful.\n\n"
+                "You don't just explain code — you BUILD things. "
+                "When asked to create or build something, you produce actual files.\n\n"
             )
-            full_prompt = system_intro + prompt
+            full_prompt = system_intro + AGENTIC_PROMPT_ADDON + "\n\n" + prompt
             
             response = self.local_llm.invoke(full_prompt)
             

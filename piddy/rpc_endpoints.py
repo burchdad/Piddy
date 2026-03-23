@@ -1170,6 +1170,7 @@ def _ensure_agent_imports():
 async def _chat_async(data: Dict) -> Dict:
     """Async chat handler — mirrors /api/chat REST endpoint."""
     from src.agent.core import Command, CommandType, CommandResponse
+    from src.agent.action_parser import parse_file_actions, execute_file_actions, strip_file_markers
 
     message = (data.get("message") or "").strip()
     session_id = data.get("session_id")
@@ -1189,6 +1190,7 @@ async def _chat_async(data: Dict) -> Dict:
 
     reply = None
     source = "fallback"
+    actions_taken: List[Dict] = []
 
     if _agent is not None:
         try:
@@ -1201,8 +1203,17 @@ async def _chat_async(data: Dict) -> Dict:
             )
             response: CommandResponse = await _agent.process_command(cmd)
             if response.success and response.result:
-                reply = str(response.result)
+                raw_reply = str(response.result)
                 source = response.metadata.get("tier", "agent") if response.metadata else "agent"
+
+                # ── Agentic post-processing: extract & execute file actions ──
+                file_actions = parse_file_actions(raw_reply)
+                if file_actions:
+                    actions_taken = execute_file_actions(file_actions)
+                    reply = strip_file_markers(raw_reply)
+                    logger.info(f"🛠️ Executed {len(actions_taken)} file action(s) from chat response")
+                else:
+                    reply = raw_reply
         except Exception as e:
             logger.error(f"Agent error in RPC chat: {e}", exc_info=True)
 
@@ -1220,7 +1231,10 @@ async def _chat_async(data: Dict) -> Dict:
         except Exception:
             pass
 
-    return {"reply": reply, "session_id": session_id, "source": source}
+    result: Dict[str, Any] = {"reply": reply, "session_id": session_id, "source": source}
+    if actions_taken:
+        result["actions"] = actions_taken
+    return result
 
 
 def chat_send(data: Optional[Dict] = None) -> Dict:

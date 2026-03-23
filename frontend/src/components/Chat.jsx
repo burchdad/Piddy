@@ -94,6 +94,7 @@ function Chat({ onOpenSessions }) {
           role: 'assistant',
           content: data.reply,
           source: data.source,
+          actions: data.actions || null,
           timestamp: new Date().toISOString(),
         }]);
       } catch (err) {
@@ -188,6 +189,24 @@ function Chat({ onOpenSessions }) {
                   <React.Fragment key={j}>{line}<br /></React.Fragment>
                 ))}
               </div>
+              {msg.actions && msg.actions.length > 0 && (
+                <div className="chat-actions-panel">
+                  <div className="chat-actions-header">
+                    <span className="chat-actions-icon">🛠️</span>
+                    <span>Files created ({msg.actions.filter(a => a.success).length}/{msg.actions.length})</span>
+                  </div>
+                  <ul className="chat-actions-list">
+                    {msg.actions.map((action, k) => (
+                      <li key={k} className={`chat-action-item ${action.success ? 'success' : 'error'}`}>
+                        <span className="chat-action-status">{action.success ? '✅' : '❌'}</span>
+                        <span className="chat-action-path">{action.path}</span>
+                        {action.size && <span className="chat-action-size">{action.size}B</span>}
+                        {action.error && <span className="chat-action-error">{action.error}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         ))}
