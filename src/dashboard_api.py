@@ -2771,6 +2771,83 @@ async def notion_create(body: Dict) -> Dict:
 
 
 # ============================================================================
+# PHASE 51: AUTONOMOUS LOOP ENDPOINTS
+# ============================================================================
+
+@app.post("/api/autonomous/execute")
+async def autonomous_execute(request: Request):
+    """Execute a task with autonomous retry loop (Phase 51)."""
+    try:
+        body = await request.json()
+        task = body.get("task", "")
+        max_retries = body.get("max_retries", 5)
+        if not task:
+            return {"status": "error", "error": "task is required"}
+        from src.phase51_autonomous_loop import AutonomousLoop
+        loop = AutonomousLoop(max_retries=max_retries)
+        async def mock_execute(t, strategy, ctx):
+            # Delegate to nova coordinator if available
+            try:
+                from src.nova_coordinator import NovaCoordinator
+                coord = NovaCoordinator()
+                return await coord._run_execution_stage(t, f"auto_{id(t)}", "nova_executor", [])
+            except Exception as e:
+                return {"status": "failed", "error": str(e)}
+        result = await loop.run(task, mock_execute)
+        return result.to_dict()
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/api/autonomous/failures")
+async def autonomous_failures(task: str = "", error_type: str = "", limit: int = 20):
+    """Get failure history from Phase 51 memory."""
+    try:
+        from src.phase51_autonomous_loop import FailureMemory
+        fm = FailureMemory()
+        if task:
+            failures = fm.get_past_failures(task, limit=limit)
+        elif error_type:
+            failures = fm.get_all_failures_by_error(error_type, limit=limit)
+        else:
+            failures = fm.get_past_failures("", limit=limit)
+        return {"failures": failures, "count": len(failures)}
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/api/autonomous/summary")
+async def autonomous_summary():
+    """Get failure memory summary stats."""
+    try:
+        from src.phase51_autonomous_loop import FailureMemory
+        fm = FailureMemory()
+        return fm.get_failure_summary()
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/api/autonomous/strategies")
+async def autonomous_strategies(task: str = ""):
+    """Get strategy success rates from failure memory."""
+    try:
+        from src.phase51_autonomous_loop import FailureMemory
+        fm = FailureMemory()
+        stats = fm.get_strategy_stats(task)
+        return {"strategies": stats, "count": len(stats)}
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+# ============================================================================
 # SERVE DASHBOARD FRONTEND
 # ============================================================================
 

@@ -1,59 +1,177 @@
 # Piddy - Complete Capabilities & Features Guide
 
-Comprehensive documentation of all features, modules, and capabilities available in Piddy - the intelligent autonomous backend developer AI agent.
+Comprehensive documentation of all features, modules, and capabilities available in Piddy — the portable, plug-and-play AI assistant.
 
-## 🚀 NOW LIVE - PRODUCTION READY (March 18, 2026)
-
-**Status**: ✅ **FULLY OPERATIONAL IN PRODUCTION**
-
-### Recent Deployment (Just Live!)
-- ✅ All 47+ hardcoded implementations replaced with **real code execution**
-- ✅ **Real security scanning** - bandit security analysis (was hardcoded 0 vulnerabilities!)
-- ✅ **Real test execution** - pytest runs with coverage (was just returning command name)
-- ✅ **Real GitHub integration** - actual PR creation on GitHub
-- ✅ **Real database operations** - live queries and verification (was fake data)
-- ✅ **Real code analysis** - pylint, autopep8, isort (was delegated away)
-- ✅ **Slack integration ACTIVE** - `/nova` commands routing through full pipeline
-- ✅ **Vercel deployment fixed** - JSX parsing resolved, dashboard live
-- ✅ **12-agent consensus** - unanimous voting on every mission
-- ✅ **Local knowledge base** - building and growing with every mission
-- ✅ **Claude/OpenAI fallbacks** - extended knowledge for advanced scenarios
-
-### What's Running Right Now
-| Component | Status | Real-Time | Details |
-|-----------|--------|-----------|---------|
-| Slack Bridge | 🟢 LIVE | Active | Listening for `/nova` commands |
-| Nova Coordinator | 🟢 LIVE | Active | All 6 pipeline stages functional |
-| Phase 40 Planning | 🟢 LIVE | Real | Risk/success simulation working |
-| Phase 50 Voting | 🟢 LIVE | Unanimous | 12 agents voting in real-time |
-| Code Execution | 🟢 LIVE | Real | Files created, tests run, commits made |
-| GitHub Integration | 🟢 LIVE | Real | PRs pushed to actual GitHub |
-| Security Scanning | 🟢 LIVE | Real | bandit + real vulnerability detection |
-| Test Validation | 🟢 LIVE | Real | pytest with coverage reports |
-| DB Operations | 🟢 LIVE | Real | Actual queries and verification |
-| Local KB | 🟢 LIVE | Growing | Learning from every mission |
-
-### Example Live Mission (Just Executed)
-```
-Command: /nova create unit tests for auth module
-Result: ✅ COMPLETE
-
-Timeline:
-├─ Phase 40: Simulation (92% success probability)
-├─ Phase 50: 12-agent consensus voting (UNANIMOUS - 89.7% avg confidence)
-├─ Execute: Created test file, ran pytest ✓
-├─ Commit: 0f84ce0c [Nova] nova create unit tests for auth module
-├─ Push: Pushed to origin/nova/nova_executor/mission_
-└─ Persisted: Mission stored in database for learning
-```
+**Version**: 5.2.0  
+**Status**: ✅ PRODUCTION READY  
+**Last Updated**: March 2026
 
 ---
 
-## Overview
+## System Overview
 
-Piddy is a sophisticated AI backend developer agent capable of handling comprehensive backend development tasks across multiple languages, frameworks, and architectural patterns. It combines advanced AI reasoning with enterprise governance to deliver production-ready solutions.
+Piddy is a fully portable AI development assistant that runs from any directory (USB drive, external drive, local folder) with zero installation. It ships with embedded runtimes, a React dashboard, an Electron desktop app, and a 21-agent consensus system across 51 development phases.
 
-**NOW RUNNING LIVE** with all implementations real, tested, and deployed to production!
+### At a Glance
+
+| Metric | Value |
+|--------|-------|
+| Version | 5.2.0 |
+| Agents | 21 specialized AI agents |
+| Skills | 60 reference skill packs |
+| CLI Commands | 16 (`piddy.py`) |
+| Doctor Checks | 17 system health checks |
+| RPC Endpoints | 43 + 6 stream functions = 49 |
+| REST Endpoints | 4 autonomous loop endpoints |
+| Dashboard Pages | 30 React components |
+| Development Phases | 51 completed |
+| Embedded Runtimes | Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2 |
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│  Electron Desktop App (zero-port stdio IPC)     │
+│  ┌───────────────┐  ┌────────────────────────┐  │
+│  │ React 18 UI   │  │ Python Backend (RPC)   │  │
+│  │ 30 components │◄─┤ 39 endpoints + 6 streams│  │
+│  └───────────────┘  └────────────────────────┘  │
+├─────────────────────────────────────────────────┤
+│  Web Mode (FastAPI on port 8889)                │
+│  ┌───────────────┐  ┌────────────────────────┐  │
+│  │ React 18 UI   │  │ dashboard_api.py       │  │
+│  │ Vite 4.3      │◄─┤ REST + WebSocket       │  │
+│  └───────────────┘  └────────────────────────┘  │
+├─────────────────────────────────────────────────┤
+│  Embedded Runtimes (portable, no install)       │
+│  runtime/python/ │ runtime/node/ │ runtime/ollama│
+├─────────────────────────────────────────────────┤
+│  4-Tier LLM Failover                            │
+│  Local Engine → Ollama → Anthropic → OpenAI     │
+└─────────────────────────────────────────────────┘
+```
+
+### What's Running
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Dashboard API | 🟢 LIVE | FastAPI on port 8889 |
+| Electron Desktop | 🟢 LIVE | Zero-port stdio RPC |
+| Nova Coordinator | 🟢 LIVE | 6-stage mission pipeline |
+| Phase 50 Voting | 🟢 LIVE | 21-agent consensus voting |
+| Code Execution | 🟢 LIVE | Real pytest, bandit, pylint, autopep8 |
+| GitHub Integration | 🟢 LIVE | PR creation and push |
+| Slack Bridge | 🟢 LIVE | `/nova` command routing |
+| Discord Bot | 🟢 READY | discord.py 2.7.1 |
+| Telegram Bot | 🟢 READY | python-telegram-bot 22.7 |
+| Browser Automation | 🟢 READY | Playwright 1.58.0 + Chromium |
+| Productivity | 🟢 READY | Google Calendar, Jira, Notion |
+| Local KB | 🟢 LIVE | Persistent SQLite graph |
+
+---
+
+## Portable Runtime Architecture
+
+Piddy carries its own embedded runtimes — no system-wide installation required:
+
+| Runtime | Version | Path |
+|---------|---------|------|
+| Python | 3.11.9 | `runtime/python/python.exe` |
+| Node.js | 20.19.0 | `runtime/node/node.exe` |
+| Ollama | v0.18.2 | `runtime/ollama/ollama.exe` |
+
+### Electron Desktop App (Zero-Port IPC)
+
+The Electron 28.3.3 desktop shell communicates with the Python backend via **stdio RPC** — no network ports are opened:
+
+```
+Electron main.js
+  └─ spawns python-bridge.js
+       └─ spawns runtime/python/python.exe piddy/rpc_server.py
+            └─ JSON-RPC over stdin/stdout (stdio-protocol.js)
+```
+
+- **39 RPC functions** covering system, agent, skill, mission, and config operations
+- **6 streaming functions** for real-time logs, activity, and chat
+- **IPC bridge** in preload.js exposes `window.piddy.rpc()` / `window.piddy.stream()`
+- Frontend auto-detects Electron vs. web mode via `apiCall()` utility
+
+### Web Mode
+
+```bash
+python piddy.py start          # Starts FastAPI on port 8889
+```
+
+- REST API + WebSocket at `http://localhost:8889`
+- React frontend served from `frontend/dist/`
+- Same 30 dashboard components as Electron
+
+---
+
+## 21 Specialized Agents
+
+All missions go through reputation-weighted consensus voting (Phase 50):
+
+| # | Agent | Specialization |
+|---|-------|---------------|
+| 1 | Guardian | Security, compliance, threat detection |
+| 2 | Architect | System design, scalability, patterns |
+| 3 | CodeMaster | Code quality, best practices, generation |
+| 4 | Reviewer | Code review, PR analysis, standards |
+| 5 | DevOps Pro | CI/CD, infrastructure, deployment |
+| 6 | Data Expert | Database, data pipelines, analytics |
+| 7 | Coordinator | Task orchestration, multi-agent routing |
+| 8 | Perf Analyst | Performance profiling, optimization |
+| 9 | Tech Debt Hunter | Refactoring, cleanup, debt tracking |
+| 10 | API Compat | API versioning, backward compatibility |
+| 11 | DB Migration | Schema migration, data integrity |
+| 12 | Arch Reviewer | Architecture review, pattern validation |
+| 13 | Cost Optimizer | Cloud spend, right-sizing, cost analysis |
+| 14 | Frontend Dev | React, UI/UX, accessibility |
+| 15 | Doc Writer | Documentation, API docs, guides |
+| 16 | SecTool Dev | Security tooling, scanning integration |
+| 17 | Sec Monitor | Runtime security monitoring, alerts |
+| 18 | Load Tester | Performance testing, benchmarking |
+| 19 | Data Guardian | Data privacy, GDPR, data governance |
+| 20 | KB Monitor | Knowledge base health, quality |
+| 21 | Automator | Workflow automation, task scheduling |
+
+---
+
+## CLI Commands (piddy.py)
+
+```bash
+python piddy.py <command>
+```
+
+| Command | Description |
+|---------|-------------|
+| `start` | Start the web dashboard (FastAPI + React) |
+| `stop` | Stop running services |
+| `status` | Show system status and component health |
+| `doctor` | Run 17 diagnostic checks |
+| `config` | View/edit configuration |
+| `export` | Export data, logs, or reports |
+| `agents` | List or manage agents |
+| `skills` | List, reload, or inspect skills |
+| `desktop` | Launch the Electron desktop app |
+| `scan` | Run security or code scanning |
+| `update` | Check for and apply updates |
+| `platform` | Platform information and diagnostics |
+| `discord` | Start the Discord bot integration |
+| `telegram` | Start the Telegram bot integration |
+| `browse` | Launch Playwright browser automation |
+| `productivity` | Manage productivity connectors |
+
+### Doctor Checks (17 total)
+
+```bash
+python piddy.py doctor
+```
+
+Validates: Python version, Node.js availability, Ollama availability, data directory, config file, required packages, frontend build, skills library, database, log directory, API health, runtime directory, Discord library, Telegram library, Browser (Playwright), Productivity connectors, Electron desktop.
+
+---
 
 ## Supported Technologies
 
@@ -445,19 +563,9 @@ Generate production-ready code in 10+ languages with:
 
 ### Reputation-Weighted Consensus Voting
 
-#### 12 Specialized Agent Roles
-1. **Guardian** - Security specialist, vulnerability detection
-2. **Validator** - Quality assurance, testing
-3. **Analyzer** - Code analysis, metrics
-4. **Executor** - Task implementation
-5. **Coordinator** - Task orchestration
-6. **Learner** - Knowledge management
-7. **Performance Analyst** - Performance optimization
-8. **Tech Debt Hunter** - Refactoring suggestions
-9. **API Compatibility** - API versioning, compatibility
-10. **Database Migration** - Schema evolution
-11. **Architecture Reviewer** - System design validation
-12. **Cost Optimizer** - Resource efficiency
+#### 21 Specialized Agent Roles
+
+See [21 Specialized Agents](#21-specialized-agents) above for the full roster.
 
 #### Reputation System
 - Agents earn vote weight 0.5-2.0x based on accuracy history
@@ -836,7 +944,7 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
    - Scenario simulation results
 
 2. **Stage 2 - Phase 50 Consensus Voting** (Real Agent Voting)
-   - **12 specialized agents** vote on the plan
+   - **21 specialized agents** vote on the plan
    - Reputation-weighted voting (0.5-2.0x multipliers)
    - Unanimous consensus achieved (89.7% avg confidence)
    - Each agent provides reasoning
@@ -1380,7 +1488,7 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 ### For Developers
 1. Follow [Quick Start](README.md#quick-start)
 2. Access Dashboard at http://localhost:3000
-3. Explore API at http://localhost:8000/docs
+3. Explore API at http://localhost:8889/docs
 4. Sync Knowledge Base with environment variable
 
 ### For DevOps
@@ -1425,13 +1533,13 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 - **Security Checks**: ✅ REAL - No more hardcoded returns
 - **Test Execution**: ✅ REAL - pytest running with coverage
 - **GitHub Integration**: ✅ REAL - PRs created on actual GitHub
-- **Agent Voting**: ✅ LIVE - 12 agents unanimously voting
+- **Agent Voting**: ✅ LIVE - 21 agents consensus voting
 - **Knowledge Base**: ✅ GROWING - Learning from every mission
 
 ### What's Working Right Now
 1. ✅ Every `/nova` command triggers complete 6-stage pipeline
 2. ✅ Phase 40 simulates risk and success probability
-3. ✅ Phase 50: 12 agents vote (unanimous consensus)
+3. ✅ Phase 50: 21 agents vote (reputation-weighted consensus)
 4. ✅ Code executes in real environment
 5. ✅ pytest runs and passes
 6. ✅ Commits pushed to GitHub
@@ -1450,7 +1558,7 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 ✅ **Database Operations** - Real queries executed  
 ✅ **GitHub Integration** - Real PRs created  
 ✅ **Slack Commands** - Live `/nova` routing  
-✅ **Agent Voting** - 12-agent consensus working  
+✅ **Agent Voting** - 21-agent consensus working  
 ✅ **Knowledge Base** - Building from missions  
 
 ### Important Notes
@@ -1463,6 +1571,72 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 - All missions are **logged and persisted** for learning
 - All changes **require Phase 50 consensus** before execution
 - Deployments are **tracked** with audit trails
+
+---
+
+## Phase 51: Autonomous Loop Engine
+
+Phase 51 adds the missing intelligence loop that transforms Piddy from a structured pipeline into a true autonomous dev agent:
+
+```
+Task -> Try -> Fail -> Diagnose -> Fix -> Retry -> Succeed
+```
+
+### Three Integrated Systems
+
+| System | Purpose | Persistence |
+|--------|---------|-------------|
+| **AutonomousLoop** | Try/fail/retry execution with diagnosis between attempts | In-memory + DB |
+| **ToolDecisionLayer** | Agents dynamically choose tools based on context and error patterns | Queries phase28 graph + phase19 DB |
+| **FailureMemory** | Persistent record of what failed and why, queried before every attempt | SQLite (`data/failure_memory.db`) |
+
+### How It Works
+
+1. **Pre-flight**: Query failure memory for past issues with similar tasks
+2. **Strategy selection**: ToolDecisionLayer picks approach based on history + knowledge graph
+3. **Execute**: Run the chosen strategy
+4. **On failure**: Diagnose (classify error, check graph, check learning DB), record failure, pick new strategy
+5. **Retry**: Up to 5 attempts with exponential backoff and strategy evolution
+6. **Cross-post**: Every outcome recorded to phase19 learning DB for continuous improvement
+
+### Strategy Pool
+
+| Strategy | When Used |
+|----------|-----------|
+| `direct_execution` | Default first attempt |
+| `simplify_and_retry` | After timeout or scope too large |
+| `decompose_subtasks` | Complex tasks that need breaking down |
+| `alternative_tool` | Import/module errors, tool chain issues |
+| `rollback_and_patch` | Syntax errors, test failures |
+
+### Error Diagnosis
+
+The ToolDecisionLayer diagnoses failures by:
+- Classifying error type (import, syntax, runtime, test, timeout, permission)
+- Querying failure memory for fixes that worked on similar errors
+- Checking phase28 knowledge graph for dependency/impact context
+- Checking phase19 learning DB for known bad patterns
+
+### API Endpoints
+
+**REST (Dashboard)**:
+- `POST /api/autonomous/execute` - Execute task with retry loop
+- `GET /api/autonomous/failures` - Query failure history
+- `GET /api/autonomous/summary` - Failure memory stats
+- `GET /api/autonomous/strategies` - Strategy success rates
+
+**RPC (Electron)**:
+- `autonomous.execute` - Execute task with retry loop
+- `autonomous.failure_summary` - Failure memory stats
+- `autonomous.failure_history` - Query past failures
+- `autonomous.strategy_stats` - Strategy success rates
+
+### Integration Points
+
+- **NovaCoordinator**: `execute_autonomous()` method wraps the standard pipeline
+- **Phase 19 (Self-Improving Agent)**: Loop outcomes cross-posted to learning DB
+- **Phase 28 (Knowledge Graph)**: Queried during strategy selection and diagnosis
+- **Phase 50 (Consensus Voting)**: Planning and voting run once; only execution retries
 
 ---
 
@@ -1493,7 +1667,7 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 
 - **Dashboard**: https://piddy.vercel.app (or your custom domain)
 - **GitHub**: https://github.com/burchdad/Piddy
-- **API**: localhost:8000/docs (or your deployment URL)
+- **API**: localhost:8889/docs (or your deployment URL)
 - **Knowledge Base**: https://github.com/burchdad/piddy-knowledge-base
 
 ---

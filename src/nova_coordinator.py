@@ -152,6 +152,31 @@ class NovaCoordinator:
     # CORE EXECUTION PIPELINE
     # ========================================================================
     
+    async def execute_autonomous(
+        self,
+        task: str,
+        requester: str = "system",
+        consensus_type: str = "UNANIMOUS",
+        max_retries: int = 5,
+    ) -> Dict:
+        """
+        Execute a mission with autonomous retry loop (Phase 51).
+        
+        Planning and voting run once. The execution stage retries on failure
+        with automatic diagnosis, strategy switching, and failure memory.
+        
+        This is the recommended entry point for autonomous operation.
+        """
+        try:
+            from src.phase51_autonomous_loop import execute_with_autonomous_loop
+            return await execute_with_autonomous_loop(
+                self, task, requester=requester,
+                consensus_type=consensus_type, max_retries=max_retries,
+            )
+        except ImportError:
+            logger.warning("Phase 51 not available, falling back to standard pipeline")
+            return await self.execute_with_consensus(task, requester, consensus_type)
+
     async def execute_with_consensus(
         self,
         task: str,
@@ -304,6 +329,21 @@ class NovaCoordinator:
                 
                 if execution_result["status"] != "success":
                     logger.error(f"❌ Execution failed: {execution_result['error']}")
+                    # Record failure to Phase 51 failure memory for future runs
+                    try:
+                        from src.phase51_autonomous_loop import FailureMemory, FailureRecord
+                        fm = FailureMemory()
+                        fm.record_failure(task, FailureRecord(
+                            attempt_number=1,
+                            timestamp=datetime.utcnow().isoformat(),
+                            error_type="execution_error",
+                            error_message=str(execution_result.get("error", ""))[:1000],
+                            strategy_used="direct_execution",
+                            diagnosis="Standard pipeline failure (no autonomous loop)",
+                            suggested_fix="Use execute_autonomous() for retry capability",
+                        ))
+                    except Exception:
+                        pass
                     return {
                         "mission_id": mission_id,
                         "status": "failed",

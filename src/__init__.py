@@ -5,7 +5,7 @@ Piddy - Advanced DevOps & MLOps Integration Platform
 Phase 5: Advanced capabilities for production-grade systems
 """
 
-__version__ = "5.1.0"
+__version__ = "5.2.0"
 __author__ = "DevOps Team"
 __description__ = "Advanced DevOps & MLOps Integration Platform"
 

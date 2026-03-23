@@ -969,6 +969,113 @@ def nova_list_recent_missions(limit: int = 10) -> List[Dict]:
 
 
 # ============================================================================
+# CONFIGURATION - Key Management Endpoints
+# ============================================================================
+
+def config_status() -> Dict:
+    """Check whether Piddy is configured (keys present)."""
+    try:
+        from src.config.key_manager import get_config_status
+        return get_config_status()
+    except Exception as e:
+        logger.error(f"Error getting config status: {e}")
+        return {"configured": False, "error": str(e)}
+
+
+def config_save(payload: Optional[Dict] = None) -> Dict:
+    """Save / update API keys (encrypted at rest)."""
+    try:
+        from src.config.key_manager import save_keys, get_config_status
+        if payload:
+            save_keys(payload)
+        return {"status": "saved", **get_config_status()}
+    except Exception as e:
+        logger.error(f"Error saving config: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def config_test(payload: Optional[Dict] = None) -> Dict:
+    """Validate a single API key against its provider (sync stub - full test requires async)."""
+    if not payload:
+        return {"valid": False, "error": "No payload"}
+    provider = (payload.get("provider") or "").lower()
+    key = (payload.get("key") or "").strip()
+    if not key:
+        return {"valid": False, "error": "Key is empty"}
+    # Sync key format validation (actual provider call is async in HTTP endpoint)
+    if provider == "anthropic":
+        return {"valid": key.startswith("sk-ant-"), "provider": "anthropic",
+                "error": None if key.startswith("sk-ant-") else "Key should start with sk-ant-"}
+    elif provider == "openai":
+        return {"valid": key.startswith("sk-"), "provider": "openai",
+                "error": None if key.startswith("sk-") else "Key should start with sk-"}
+    return {"valid": False, "error": f"Unknown provider: {provider}"}
+
+
+# ============================================================================
+# Phase 51: Autonomous Loop Endpoints
+# ============================================================================
+
+def autonomous_execute(task: str, max_retries: int = 5, consensus_type: str = "UNANIMOUS") -> Dict:
+    """Execute a task with autonomous retry loop (try -> diagnose -> fix -> retry)."""
+    try:
+        coordinator = _get_coordinator()
+        from src.phase51_autonomous_loop import execute_with_autonomous_loop
+        result = _run_async(execute_with_autonomous_loop(
+            coordinator, task, max_retries=max_retries, consensus_type=consensus_type,
+        ))
+        return result
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        logger.error(f"Autonomous execute error: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def autonomous_failure_summary() -> Dict:
+    """Get failure memory summary (total failures, fix rate, top error types)."""
+    try:
+        from src.phase51_autonomous_loop import FailureMemory
+        fm = FailureMemory()
+        return fm.get_failure_summary()
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def autonomous_failure_history(task: str = "", error_type: str = "", limit: int = 20) -> Dict:
+    """Get past failures filtered by task or error type."""
+    try:
+        from src.phase51_autonomous_loop import FailureMemory
+        fm = FailureMemory()
+        if task:
+            failures = fm.get_past_failures(task, limit=limit)
+        elif error_type:
+            failures = fm.get_all_failures_by_error(error_type, limit=limit)
+        else:
+            failures = fm.get_past_failures("", limit=limit)
+        return {"failures": failures, "count": len(failures)}
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def autonomous_strategy_stats(task: str = "") -> Dict:
+    """Get strategy success rates from failure memory."""
+    try:
+        from src.phase51_autonomous_loop import FailureMemory
+        fm = FailureMemory()
+        stats = fm.get_strategy_stats(task)
+        return {"strategies": stats, "count": len(stats)}
+    except ImportError:
+        return {"status": "error", "error": "Phase 51 not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+# ============================================================================
 # RPC ENDPOINT REGISTRY
 # ============================================================================
 # Each entry maps the RPC function name to the Python callable
@@ -978,6 +1085,11 @@ RPC_ENDPOINTS = {
     "system.overview": system_overview,
     "system.health": system_health,
     "system.config": system_config,
+    
+    # Configuration (key management)
+    "config.status": config_status,
+    "config.save": config_save,
+    "config.test": config_test,
     
     # Agents
     "agents.list": agents_list,
@@ -1033,6 +1145,12 @@ RPC_ENDPOINTS = {
     "offline.get_pending_missions": offline_get_pending_missions,
     "offline.set_connectivity_status": offline_set_connectivity_status,
     "offline.clear_completed_missions": offline_clear_completed_missions,
+    
+    # Phase 51: Autonomous Loop
+    "autonomous.execute": autonomous_execute,
+    "autonomous.failure_summary": autonomous_failure_summary,
+    "autonomous.failure_history": autonomous_failure_history,
+    "autonomous.strategy_stats": autonomous_strategy_stats,
 }
 
 
