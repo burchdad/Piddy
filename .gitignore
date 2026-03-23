@@ -4,6 +4,9 @@ env/
 ENV/
 .venv
 
+# Embedded runtimes (installed locally per machine)
+runtime/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -44,6 +47,10 @@ htmlcov/
 .env.local
 .env.*.local
 
+# Encrypted keys (never commit)
+config/keys.enc
+config/.keyfile
+
 # Database
 *.db
 *.sqlite
@@ -71,6 +78,10 @@ package-lock.json
 kb_content_cache/
 knowledge_base_cache/
 .cache/
+.vite/
+
+# Build artifacts
+*.zip
 
 # OS
 .DS_Store

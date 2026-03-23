@@ -455,8 +455,19 @@ function createMenu() {
 }
 
 /**
+ * Detect platform tag for runtime directory naming
+ * Returns e.g. 'win32-x64', 'darwin-arm64', 'linux-x64'
+ */
+function getPlatformTag() {
+  const platform = process.platform === 'win32' ? 'win32'
+    : process.platform === 'darwin' ? 'darwin' : 'linux';
+  const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
+  return `${platform}-${arch}`;
+}
+
+/**
  * Find Python executable path or bundled backend
- * Priority: bundled backend > Python executable > system Python
+ * Priority: bundled backend > embedded runtime (platform-specific) > embedded runtime (generic) > system Python
  */
 function findPython() {
   log.info('🔍 Searching for backend executable...');
@@ -493,73 +504,87 @@ function findPython() {
     }
   }
   
-  log.info('ℹ️  Bundled backend not found, searching for Python...');
+  log.info('ℹ️  Bundled backend not found, searching for embedded Python...');
   
-  // FALLBACK: Search for Python executable
-  log.info('🔍 Searching for Python executable...');
+  // SECOND: Check platform-specific embedded runtime (cross-platform portable)
+  const platformTag = getPlatformTag();
+  const projectRoot = path.join(__dirname, '..');
   
-  // On Windows, try multiple common paths
+  const embeddedPaths = [];
+  
+  if (process.platform === 'win32') {
+    // Windows: platform-specific then generic
+    embeddedPaths.push(
+      path.join(projectRoot, 'runtime', platformTag, 'python', 'python.exe'),
+      path.join(projectRoot, 'runtime', 'python', 'python.exe')
+    );
+  } else {
+    // macOS / Linux: platform-specific then generic
+    embeddedPaths.push(
+      path.join(projectRoot, 'runtime', platformTag, 'python', 'bin', 'python3'),
+      path.join(projectRoot, 'runtime', 'python', 'bin', 'python3')
+    );
+  }
+  
+  for (const embeddedPath of embeddedPaths) {
+    try {
+      if (fs.existsSync(embeddedPath)) {
+        log.info(`✅ Found embedded Python: ${embeddedPath}`);
+        return embeddedPath;
+      }
+    } catch (err) {
+      log.debug(`  Error checking embedded path: ${err.message}`);
+    }
+  }
+  
+  log.info('ℹ️  No embedded Python found, searching system Python...');
+  
+  // FALLBACK: Search for system Python
   if (process.platform === 'win32') {
     const windowsPaths = [
       'python.exe',
       'python3.exe',
-      // Root-level Python installations (most common for standalone installs)
       'C:\\Python313\\python.exe',
       'C:\\Python312\\python.exe',
       'C:\\Python311\\python.exe',
       'C:\\Python310\\python.exe',
-      'C:\\Python39\\python.exe',
-      // Program Files installations
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python313', 'python.exe'),
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python312', 'python.exe'),
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python311', 'python.exe'),
       path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python310', 'python.exe'),
-      path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Python39', 'python.exe'),
-      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python313', 'python.exe'),
-      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python312', 'python.exe'),
-      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python311', 'python.exe'),
-      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python310', 'python.exe'),
-      path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Python39', 'python.exe'),
-      path.join(process.env.APPDATA || '', 'Python', 'Python313', 'python.exe'),
-      path.join(process.env.APPDATA || '', 'Python', 'Python312', 'python.exe'),
-      path.join(process.env.APPDATA || '', 'Python', 'Python311', 'python.exe'),
     ];
-    
-    log.debug(`Searching Windows paths: ${windowsPaths.join(', ')}`);
     
     for (const pythonPath of windowsPaths) {
       try {
-        log.debug(`  Checking: ${pythonPath}`);
         if (fs.existsSync(pythonPath)) {
-          log.info(`✅ Found Python at: ${pythonPath}`);
+          log.info(`✅ Found system Python: ${pythonPath}`);
           return pythonPath;
         }
       } catch (err) {
-        log.debug(`    Error checking path: ${err.message}`);
+        log.debug(`    Error: ${err.message}`);
       }
     }
   } else {
-    // On macOS/Linux, try common paths
-    const unixPaths = ['python3', 'python', '/usr/bin/python3', '/usr/bin/python'];
+    // macOS/Linux system Python
+    const unixPaths = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3', '/usr/bin/python'];
     for (const pythonPath of unixPaths) {
       try {
-        log.debug(`  Checking: ${pythonPath}`);
         const result = require('child_process').spawnSync(pythonPath, ['--version'], { 
           stdio: 'pipe',
           timeout: 2000 
         });
         if (result.status === 0) {
-          log.info(`✅ Found Python at: ${pythonPath}`);
+          log.info(`✅ Found system Python: ${pythonPath}`);
           return pythonPath;
         }
       } catch (err) {
-        log.debug(`    Error checking path: ${err.message}`);
+        log.debug(`    Error: ${err.message}`);
       }
     }
   }
   
   log.error('❌ Python executable not found!');
-  log.error(`   PATH: ${process.env.PATH}`);
+  log.error(`   Checked: embedded runtime/${platformTag}/python, runtime/python, system PATH`);
   return null;
 }
 

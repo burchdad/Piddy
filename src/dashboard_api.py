@@ -50,6 +50,47 @@ except ImportError:
     logger.warning("Could not import get_coordinator - missions may not execute properly")
     get_coordinator = None
 
+# Import config routes for onboarding / key management
+try:
+    from src.api.config_routes import router as config_router
+except ImportError:
+    logger.warning("Could not import config_router - onboarding API unavailable")
+    config_router = None
+
+# Import self-diagnosis system
+try:
+    from src.api.doctor import run_diagnosis
+except ImportError:
+    logger.warning("Could not import doctor - self-diagnosis unavailable")
+    run_diagnosis = None
+
+# Import skills/plugin loader
+try:
+    from src.skills.loader import get_skill_registry
+except ImportError:
+    logger.warning("Could not import skill registry - skills API unavailable")
+    get_skill_registry = None
+
+# Import session/context manager
+try:
+    from src.sessions.manager import get_session_manager
+except ImportError:
+    logger.warning("Could not import session manager - sessions API unavailable")
+    get_session_manager = None
+
+# Import agent for chat processing
+try:
+    from src.agent.core import BackendDeveloperAgent, Command, CommandType, CommandResponse
+    _agent_instance = None
+    def _get_agent():
+        global _agent_instance
+        if _agent_instance is None:
+            _agent_instance = BackendDeveloperAgent()
+        return _agent_instance
+except ImportError:
+    logger.warning("Could not import agent - chat processing unavailable")
+    _get_agent = None
+
 
 # ============================================================================
 # DATA MODELS
@@ -406,6 +447,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount config/onboarding router
+if config_router is not None:
+    app.include_router(config_router)
+
 # All endpoints use real data from JSON files only
 # No mock data fallback - ensures dashboard shows actual system state
 
@@ -420,6 +465,217 @@ async def health_check() -> Dict:
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@app.get("/api/doctor")
+async def doctor_endpoint() -> Dict:
+    """Full system self-diagnosis."""
+    if run_diagnosis is None:
+        return {"status": "error", "message": "Doctor module not available"}
+    return run_diagnosis()
+
+
+@app.get("/api/skills")
+async def list_skills() -> Dict:
+    """List all loaded skills/plugins."""
+    if get_skill_registry is None:
+        return {"skills": [], "message": "Skills loader not available"}
+    registry = get_skill_registry()
+    return {"skills": registry.to_dict_list(), "count": len(registry.list_all())}
+
+
+@app.post("/api/skills/reload")
+async def reload_skills() -> Dict:
+    """Hot-reload skills from library/skills/ folder."""
+    if get_skill_registry is None:
+        return {"success": False, "message": "Skills loader not available"}
+    registry = get_skill_registry()
+    count = registry.reload()
+    return {"success": True, "count": count, "message": f"Reloaded {count} skills"}
+
+
+@app.post("/api/settings/local-only")
+async def toggle_local_only(body: Dict = None) -> Dict:
+    """Toggle local-only mode (prevents cloud API calls)."""
+    body = body or {}
+    enabled = body.get("enabled")
+    if enabled is None:
+        return {"error": "Provide {\"enabled\": true/false}"}
+    try:
+        from config.settings import get_settings
+        settings = get_settings()
+        settings.local_only = bool(enabled)
+        return {
+            "success": True,
+            "local_only": settings.local_only,
+            "message": f"Local-only mode {'enabled' if settings.local_only else 'disabled'}. "
+                       f"{'Cloud APIs will NOT be called.' if settings.local_only else 'Cloud APIs available as fallback.'}"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/settings/local-only")
+async def get_local_only() -> Dict:
+    """Check if local-only mode is enabled."""
+    try:
+        from config.settings import get_settings
+        settings = get_settings()
+        return {"local_only": settings.local_only}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# SESSION / CONTEXT MANAGEMENT
+# ============================================================================
+
+@app.post("/api/sessions")
+async def create_session(body: Dict = None) -> Dict:
+    """Create a new conversation session."""
+    if get_session_manager is None:
+        return {"error": "Session manager not available"}
+    mgr = get_session_manager()
+    body = body or {}
+    session = mgr.create_session(
+        user_id=body.get("user_id", "default"),
+        title=body.get("title", ""),
+    )
+    return {"session_id": session.session_id, "title": session.title, "created_at": session.created_at}
+
+
+@app.get("/api/sessions")
+async def list_sessions(user_id: str = "default", limit: int = 50) -> Dict:
+    """List conversation sessions for a user."""
+    if get_session_manager is None:
+        return {"sessions": []}
+    mgr = get_session_manager()
+    sessions = mgr.list_sessions(user_id=user_id, limit=limit)
+    return {"sessions": sessions}
+
+
+@app.get("/api/sessions/{session_id}")
+async def get_session(session_id: str) -> Dict:
+    """Get a session with its message history."""
+    if get_session_manager is None:
+        return {"error": "Session manager not available"}
+    mgr = get_session_manager()
+    session = mgr.get_session(session_id)
+    if not session:
+        return {"error": "Session not found"}
+    return {
+        "session_id": session.session_id,
+        "title": session.title,
+        "created_at": session.created_at,
+        "updated_at": session.updated_at,
+        "message_count": len(session.messages),
+        "messages": [{"role": m.role, "content": m.content, "timestamp": m.timestamp} for m in session.messages],
+        "has_summary": bool(session.context_summary),
+    }
+
+
+@app.post("/api/sessions/{session_id}/messages")
+async def add_message(session_id: str, body: Dict) -> Dict:
+    """Add a message to a session."""
+    if get_session_manager is None:
+        return {"error": "Session manager not available"}
+    mgr = get_session_manager()
+    role = body.get("role", "user")
+    content = body.get("content", "")
+    if not content:
+        return {"error": "Message content required"}
+    msg = mgr.add_message(session_id, role, content, body.get("metadata"))
+    # Auto-summarize if context window is too large
+    mgr.summarize_if_needed(session_id)
+    return {"role": msg.role, "content": msg.content, "timestamp": msg.timestamp}
+
+
+@app.get("/api/sessions/{session_id}/context")
+async def get_context_window(session_id: str) -> Dict:
+    """Get the context window for LLM calls (recent messages + summary)."""
+    if get_session_manager is None:
+        return {"context": []}
+    mgr = get_session_manager()
+    context = mgr.get_context_window(session_id)
+    return {"context": context, "message_count": len(context)}
+
+
+@app.delete("/api/sessions/{session_id}")
+async def delete_session(session_id: str) -> Dict:
+    """Delete a conversation session."""
+    if get_session_manager is None:
+        return {"error": "Session manager not available"}
+    mgr = get_session_manager()
+    deleted = mgr.delete_session(session_id)
+    return {"deleted": deleted}
+
+
+# ============================================================================
+# CHAT ENDPOINT — session-aware, agent-powered
+# ============================================================================
+
+@app.post("/api/chat")
+async def chat(body: Dict) -> Dict:
+    """
+    Send a message to Piddy and get a response.
+    Creates/uses a session for conversation persistence.
+    Routes through the 4-tier failover agent.
+    """
+    message = body.get("message", "").strip()
+    session_id = body.get("session_id")
+    user_id = body.get("user_id", "default")
+
+    if not message:
+        return {"error": "Message is required"}
+
+    mgr = get_session_manager() if get_session_manager else None
+
+    # Create or reuse session
+    if mgr:
+        if not session_id:
+            session = mgr.create_session(user_id=user_id, title=message[:60])
+            session_id = session.session_id
+        # Store user message
+        mgr.add_message(session_id, "user", message)
+
+    # Try to get a response from the agent
+    reply = None
+    source = "fallback"
+
+    if _get_agent is not None:
+        try:
+            agent = _get_agent()
+            cmd = Command(
+                command_type=CommandType.CONVERSATION,
+                description=message,
+                parameters={"query": message},
+                source="dashboard_chat",
+                metadata={"is_conversation": True, "session_id": session_id or ""},
+            )
+            response: CommandResponse = await agent.process_command(cmd)
+            if response.success and response.result:
+                reply = str(response.result)
+                source = response.metadata.get("tier", "agent") if response.metadata else "agent"
+        except Exception as e:
+            logger.error(f"Agent error: {e}", exc_info=True)
+
+    if not reply:
+        reply = (
+            "I'm here but my language models aren't available right now. "
+            "Check the Health page to see what's offline, or configure API keys in Settings."
+        )
+        source = "fallback"
+
+    # Store assistant reply in session
+    if mgr and session_id:
+        mgr.add_message(session_id, "assistant", reply, {"source": source})
+        mgr.summarize_if_needed(session_id)
+
+    return {
+        "reply": reply,
+        "session_id": session_id,
+        "source": source,
     }
 
 
@@ -523,46 +779,8 @@ async def system_overview() -> Dict:
 
 
 # ============================================================================
-# API ENDPOINTS - AGENTS
+# API ENDPOINTS - AGENTS (served by realtime_dashboard.py from coordinator)
 # ============================================================================
-
-@app.get("/api/agents")
-async def get_agents() -> List[AgentStatus]:
-    """Get all agent statuses from real data"""
-    try:
-        from pathlib import Path
-        agent_file = Path("data/agent_state.json")
-        
-        if agent_file.exists():
-            with open(agent_file, 'r') as f:
-                agents_data = json.load(f)
-                return [AgentStatus(**agent) for agent in agents_data] if isinstance(agents_data, list) else []
-        
-        # No real agent data
-        return []
-    except Exception as e:
-        logger.error(f"Error fetching agents: {e}")
-        return []
-
-
-@app.get("/api/agents/{agent_id}")
-async def get_agent(agent_id: str) -> AgentStatus:
-    """Get specific agent status from real data"""
-    try:
-        from pathlib import Path
-        agents_file = Path("data/agent_state.json")
-        
-        if agents_file.exists():
-            with open(agents_file, 'r') as f:
-                agents_data = json.load(f)
-                for agent in agents_data:
-                    if agent.get('agent_id') == agent_id:
-                        return AgentStatus(**agent)
-        
-        return None
-    except Exception as e:
-        logger.error(f"Error fetching agent: {e}")
-        return None
 
 
 # ============================================================================
@@ -1782,6 +2000,144 @@ async def get_providers() -> Dict:
 
 
 # ============================================================================
+# EXPORT / BACKUP ENDPOINTS
+# ============================================================================
+
+@app.get("/api/export/conversations")
+async def export_conversations() -> Dict:
+    """Export all conversation sessions as JSON."""
+    if get_session_manager is None:
+        return {"error": "Session manager not available", "sessions": []}
+    mgr = get_session_manager()
+    sessions = mgr.list_sessions(user_id="default", limit=9999)
+    full = []
+    for s in sessions:
+        sess = mgr.get_session(s.get("session_id", s.get("id", "")))
+        if sess:
+            full.append({
+                "session_id": sess.session_id,
+                "title": sess.title,
+                "created_at": sess.created_at,
+                "updated_at": sess.updated_at,
+                "messages": [{"role": m.role, "content": m.content, "timestamp": m.timestamp} for m in sess.messages],
+            })
+    return {"exported_at": datetime.utcnow().isoformat(), "count": len(full), "sessions": full}
+
+
+@app.get("/api/export/knowledge-base")
+async def export_knowledge_base() -> Dict:
+    """Export knowledge base metadata (library catalog)."""
+    from pathlib import Path
+    kb = {}
+    lib_root = Path(__file__).resolve().parent.parent / "library"
+    if lib_root.exists():
+        for folder in sorted(lib_root.iterdir()):
+            if folder.is_dir():
+                files = sorted([f.name for f in folder.iterdir() if f.is_file()])
+                kb[folder.name] = {"count": len(files), "files": files}
+    return {"exported_at": datetime.utcnow().isoformat(), "library": kb}
+
+
+@app.get("/api/export/agent-state")
+async def export_agent_state() -> Dict:
+    """Export current agent state + decision logs."""
+    from pathlib import Path
+    data_dir = Path(__file__).resolve().parent.parent / "data"
+    result = {"exported_at": datetime.utcnow().isoformat()}
+    for name in ["agent_state", "decision_logs", "mission_telemetry", "approval_workflow_state"]:
+        fpath = data_dir / f"{name}.json"
+        if fpath.exists():
+            try:
+                result[name] = json.loads(fpath.read_text())
+            except Exception:
+                result[name] = None
+        else:
+            result[name] = None
+    return result
+
+
+@app.get("/api/export/settings")
+async def export_settings() -> Dict:
+    """Export current (non-secret) settings."""
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        return {
+            "exported_at": datetime.utcnow().isoformat(),
+            "settings": {
+                "ollama_base_url": s.ollama_base_url,
+                "ollama_model": s.ollama_model,
+                "ollama_enabled": s.ollama_enabled,
+                "local_only": s.local_only,
+                "agent_model": s.agent_model,
+                "agent_temperature": s.agent_temperature,
+                "agent_max_tokens": s.agent_max_tokens,
+                "log_level": s.log_level,
+            },
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# SETTINGS ENDPOINTS (extended)
+# ============================================================================
+
+@app.get("/api/settings")
+async def get_all_settings() -> Dict:
+    """Get all non-secret settings for the settings page."""
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        return {
+            "local_only": s.local_only,
+            "ollama_enabled": s.ollama_enabled,
+            "ollama_model": s.ollama_model,
+            "ollama_base_url": s.ollama_base_url,
+            "agent_temperature": s.agent_temperature,
+            "agent_max_tokens": s.agent_max_tokens,
+            "agent_model": s.agent_model,
+            "log_level": s.log_level,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/settings")
+async def update_settings(body: Dict) -> Dict:
+    """Update runtime settings."""
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        updated = []
+        for key in ["local_only", "ollama_enabled", "ollama_model", "ollama_base_url",
+                     "agent_temperature", "agent_max_tokens", "agent_model", "log_level"]:
+            if key in body:
+                setattr(s, key, body[key])
+                updated.append(key)
+        return {"success": True, "updated": updated}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/settings/ollama-models")
+async def get_ollama_models() -> Dict:
+    """List available Ollama models."""
+    try:
+        from config.settings import get_settings
+        import urllib.request
+        s = get_settings()
+        url = f"{s.ollama_base_url}/api/tags"
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read())
+            models = [m["name"] for m in data.get("models", [])]
+            return {"models": models, "current": s.ollama_model}
+    except Exception:
+        return {"models": [], "current": "", "error": "Ollama not reachable"}
+
+
+# ============================================================================
 # HEALTH CHECK ENDPOINTS
 # ============================================================================
 
@@ -2131,6 +2487,290 @@ async def get_approval_stats() -> Dict:
 
 
 # ============================================================================
+# HOST SCANNER & UNIVERSAL DIAGNOSTICS
+# ============================================================================
+
+@app.get("/api/scan/host")
+async def scan_host_endpoint() -> Dict:
+    """Scan the machine Piddy is plugged into — hardware, OS, runtimes, tools."""
+    try:
+        from src.api.host_scanner import scan_host
+        return scan_host()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/scan/repo")
+async def scan_repo_endpoint(body: Dict) -> Dict:
+    """Analyze any local repository on the host machine."""
+    repo_path = body.get("path", "")
+    if not repo_path:
+        return {"error": "Missing 'path' in request body"}
+    try:
+        from src.api.host_scanner import analyze_repo
+        return analyze_repo(repo_path)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/scan/programs")
+async def scan_programs_endpoint() -> Dict:
+    """List installed programs on the host OS."""
+    try:
+        from src.api.host_scanner import scan_installed_programs
+        programs = scan_installed_programs()
+        return {"count": len(programs), "programs": programs}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/platform")
+async def platform_info_endpoint() -> Dict:
+    """Return cross-platform runtime detection summary."""
+    try:
+        from src.platform.runtime import platform_summary
+        return platform_summary()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# AUTO-UPDATE SYSTEM
+# ============================================================================
+
+@app.get("/api/update/check")
+async def check_updates_endpoint() -> Dict:
+    """Check GitHub for available Piddy updates."""
+    try:
+        from src.api.updater import check_for_updates
+        return check_for_updates()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/update/apply")
+async def apply_update_endpoint() -> Dict:
+    """Apply the latest update from GitHub (git pull)."""
+    try:
+        from src.api.updater import apply_update
+        return apply_update()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# DISCORD / TELEGRAM BOT MANAGEMENT
+# ============================================================================
+
+@app.get("/api/integrations/status")
+async def integrations_status() -> Dict:
+    """Status of all channel integrations (Slack/Discord/Telegram)."""
+    result = {"slack": {"configured": False}, "discord": {"running": False}, "telegram": {"running": False}}
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        result["slack"]["configured"] = bool(s.slack_bot_token)
+    except Exception:
+        pass
+    try:
+        from src.integrations.discord_bot import get_discord_bot
+        result["discord"] = get_discord_bot().status()
+    except Exception:
+        pass
+    try:
+        from src.integrations.telegram_bot import get_telegram_bot
+        result["telegram"] = get_telegram_bot().status()
+    except Exception:
+        pass
+    return result
+
+
+@app.post("/api/integrations/discord/start")
+async def discord_start() -> Dict:
+    try:
+        from src.integrations.discord_bot import get_discord_bot
+        return get_discord_bot().start()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/integrations/discord/stop")
+async def discord_stop() -> Dict:
+    try:
+        from src.integrations.discord_bot import get_discord_bot
+        return get_discord_bot().stop()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/integrations/telegram/start")
+async def telegram_start() -> Dict:
+    try:
+        from src.integrations.telegram_bot import get_telegram_bot
+        return get_telegram_bot().start()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/integrations/telegram/stop")
+async def telegram_stop() -> Dict:
+    try:
+        from src.integrations.telegram_bot import get_telegram_bot
+        return get_telegram_bot().stop()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ============================================================================
+# BROWSER AUTOMATION
+# ============================================================================
+
+@app.post("/api/browser/launch")
+async def browser_launch() -> Dict:
+    try:
+        from src.tools.browser_automation import get_browser
+        return await get_browser().launch()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/browser/close")
+async def browser_close() -> Dict:
+    try:
+        from src.tools.browser_automation import get_browser
+        return await get_browser().close()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/browser/status")
+async def browser_status() -> Dict:
+    try:
+        from src.tools.browser_automation import get_browser
+        return get_browser().status()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/browser/action")
+async def browser_action(body: Dict) -> Dict:
+    """Execute a browser action. Body: {action, ...params}"""
+    try:
+        from src.tools.browser_automation import get_browser
+        b = get_browser()
+        action = body.get("action")
+        params = {k: v for k, v in body.items() if k != "action"}
+        handler = {
+            "navigate": b.navigate,
+            "screenshot": b.screenshot,
+            "extract_text": b.extract_text,
+            "extract_links": b.extract_links,
+            "click": b.click,
+            "fill": b.fill,
+            "evaluate": b.evaluate,
+            "pdf": b.pdf,
+        }.get(action)
+        if not handler:
+            return {"success": False, "error": f"Unknown action: {action}"}
+        return await handler(**params)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/browser/sequence")
+async def browser_sequence(body: Dict) -> Dict:
+    """Run a multi-step browser sequence. Body: {steps: [{action, ...}, ...]}"""
+    try:
+        from src.tools.browser_automation import get_browser
+        steps = body.get("steps", [])
+        return {"results": await get_browser().run_sequence(steps)}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# PRODUCTIVITY CONNECTORS (Calendar / Jira / Notion)
+# ============================================================================
+
+@app.get("/api/productivity/status")
+async def productivity_status() -> Dict:
+    try:
+        from src.integrations.productivity import get_all_connector_status
+        return get_all_connector_status()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/productivity/calendar/events")
+async def calendar_events() -> Dict:
+    try:
+        from config.settings import get_settings
+        from src.integrations.productivity import GoogleCalendarConnector
+        s = get_settings()
+        c = GoogleCalendarConnector(api_key=s.google_calendar_api_key, calendar_id=s.google_calendar_id)
+        return c.list_events()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/productivity/jira/issues")
+async def jira_issues() -> Dict:
+    try:
+        from config.settings import get_settings
+        from src.integrations.productivity import JiraConnector
+        s = get_settings()
+        j = JiraConnector(base_url=s.jira_base_url, email=s.jira_email, api_token=s.jira_api_token)
+        return j.search_issues()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/productivity/jira/create")
+async def jira_create(body: Dict) -> Dict:
+    try:
+        from config.settings import get_settings
+        from src.integrations.productivity import JiraConnector
+        s = get_settings()
+        j = JiraConnector(base_url=s.jira_base_url, email=s.jira_email, api_token=s.jira_api_token)
+        return j.create_issue(
+            project_key=body["project_key"],
+            summary=body["summary"],
+            description=body.get("description", ""),
+            issue_type=body.get("issue_type", "Task"),
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/productivity/notion/search")
+async def notion_search(q: str = "") -> Dict:
+    try:
+        from config.settings import get_settings
+        from src.integrations.productivity import NotionConnector
+        s = get_settings()
+        n = NotionConnector(api_token=s.notion_api_token)
+        return n.search(query=q)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/productivity/notion/create")
+async def notion_create(body: Dict) -> Dict:
+    try:
+        from config.settings import get_settings
+        from src.integrations.productivity import NotionConnector
+        s = get_settings()
+        n = NotionConnector(api_token=s.notion_api_token)
+        return n.create_page(
+            parent_id=body["parent_id"],
+            title=body["title"],
+            content=body.get("content", ""),
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
 # SERVE DASHBOARD FRONTEND
 # ============================================================================
 
@@ -2140,11 +2780,28 @@ async def root():
     return FileResponse("frontend/dist/index.html", media_type="text/html")
 
 
+def find_available_port(start=8000, end=8100):
+    """Find the first available port in range."""
+    import socket
+    for port in range(start, end):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('127.0.0.1', port))
+                return port
+        except OSError:
+            continue
+    return start  # fallback
+
+
 if __name__ == "__main__":
     import uvicorn
+    import os
+
+    port = int(os.environ.get("PIDDY_PORT", 0)) or find_available_port()
+    logger.info(f"Starting Piddy backend on port {port}")
     uvicorn.run(
         app,
         host="127.0.0.1",
-        port=8000,
+        port=port,
         log_level="info"
     )

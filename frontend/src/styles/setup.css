@@ -1,0 +1,220 @@
+/* ── Setup / Onboarding Screen ─────────────────────────────────────────── */
+
+.setup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-darker, #020617);
+  z-index: 9999;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.setup-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--bg-card, #1e293b);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.setup-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.setup-logo {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.setup-header h1 {
+  color: var(--text-primary, #f1f5f9);
+  font-size: 1.75rem;
+  margin: 0 0 0.25rem;
+}
+
+.setup-subtitle {
+  color: var(--primary-color, #6366f1);
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0 0 0.75rem;
+}
+
+.setup-desc {
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Fields ─────────────────────────────────────────────────────────────── */
+
+.setup-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.setup-field label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary, #f1f5f9);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.required-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary-color, #6366f1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optional-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(203, 213, 225, 0.1);
+  color: var(--text-secondary, #cbd5e1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-desc {
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.78rem;
+  margin: 0 0 0.35rem;
+}
+
+.field-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.field-row input {
+  flex: 1;
+  background: var(--bg-darker, #020617);
+  border: 1px solid rgba(203, 213, 225, 0.15);
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  color: var(--text-primary, #f1f5f9);
+  font-size: 0.85rem;
+  font-family: 'Fira Code', 'SF Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field-row input:focus {
+  border-color: var(--primary-color, #6366f1);
+}
+
+.field-row input.input-valid {
+  border-color: var(--success-color, #51cf66);
+}
+
+.field-row input.input-invalid {
+  border-color: var(--danger-color, #ff6b6b);
+}
+
+.test-btn {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-color, #6366f1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.test-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.25);
+}
+
+.test-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.test-result {
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.test-result.valid {
+  color: var(--success-color, #51cf66);
+}
+
+.test-result.invalid {
+  color: var(--danger-color, #ff6b6b);
+}
+
+/* ── Error ──────────────────────────────────────────────────────────────── */
+
+.setup-error {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: var(--danger-color, #ff6b6b);
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+/* ── Actions ────────────────────────────────────────────────────────────── */
+
+.setup-actions {
+  margin-top: 1.5rem;
+}
+
+.save-btn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color, #6366f1), var(--secondary-color, #8b5cf6));
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.setup-footer {
+  text-align: center;
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.75rem;
+  margin: 1.25rem 0 0;
+}
+
+.setup-footer code {
+  background: rgba(99, 102, 241, 0.15);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+}

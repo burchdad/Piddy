@@ -46,9 +46,10 @@ export function useStream(streamName, args = [], kwargs = {}, options = {}) {
 
     try {
       // Get stream manager from main Electron process
-      const streamManager = window.piddy?.streamManager || global.streamManager;
+      const streamManager = window.piddy?.streamManager || (typeof global !== 'undefined' && global.streamManager);
       if (!streamManager) {
-        setError('Stream manager not initialized');
+        // Not in Electron — silently degrade (no error banner)
+        console.info('[useStream] No streamManager — running in browser mode');
         setIsLoading(false);
         return;
       }

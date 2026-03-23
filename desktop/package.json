@@ -19,7 +19,8 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist:linux": "electron-builder --linux",
+    "dist:all": "electron-builder --win --mac --linux"
   },
   "author": {
     "name": "Piddy DevOps Team",
@@ -78,6 +79,30 @@
         "to": "src"
       },
       {
+        "from": "../config",
+        "to": "config"
+      },
+      {
+        "from": "../piddy",
+        "to": "piddy"
+      },
+      {
+        "from": "../library/skills",
+        "to": "library/skills"
+      },
+      {
+        "from": "../.env.example",
+        "to": ".env.example"
+      },
+      {
+        "from": "../start.sh",
+        "to": "start.sh"
+      },
+      {
+        "from": "../scripts/tools/bootstrap_runtime.sh",
+        "to": "scripts/tools/bootstrap_runtime.sh"
+      },
+      {
         "from": "../resources",
         "to": "resources",
         "filter": ["piddy-backend*"]
@@ -102,12 +127,20 @@
       "shortcutName": "Piddy"
     },
     "mac": {
-      "target": ["zip"],
-      "category": "public.app-category.productivity"
+      "target": [
+        {"target": "zip", "arch": ["x64", "arm64"]},
+        {"target": "dmg", "arch": ["x64", "arm64"]}
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns"
     },
     "linux": {
-      "target": ["AppImage"],
-      "category": "Development"
+      "target": [
+        {"target": "AppImage", "arch": ["x64"]},
+        {"target": "tar.gz", "arch": ["x64", "arm64"]}
+      ],
+      "category": "Development",
+      "icon": "assets/icon.png"
     }
   }
 }

@@ -29,6 +29,14 @@ class AgentRole(str, Enum):
     DATABASE_MIGRATION = "database_migration"
     ARCHITECTURE_REVIEWER = "architecture_reviewer"
     COST_OPTIMIZER = "cost_optimizer"
+    FRONTEND_DEVELOPER = "frontend_developer"
+    DOCUMENTATION = "documentation"
+    SECURITY_TOOLING = "security_tooling"
+    SECURITY_MONITORING = "security_monitoring"
+    LOAD_TESTING = "load_testing"
+    DATA_SECURITY = "data_security"
+    KNOWLEDGE_MONITOR = "knowledge_monitor"
+    TASK_AUTOMATION = "task_automation"
 
 
 class TaskPriority(int, Enum):

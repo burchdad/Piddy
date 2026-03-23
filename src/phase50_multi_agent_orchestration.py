@@ -29,6 +29,14 @@ class AgentRole(Enum):
     DATABASE_MIGRATION = "database_migration"    # Manages database changes
     ARCHITECTURE_REVIEWER = "architecture_reviewer" # Reviews architectural decisions
     COST_OPTIMIZER = "cost_optimizer"            # Optimizes infrastructure costs
+    FRONTEND_DEVELOPER = "frontend_developer"    # UI/UX development
+    DOCUMENTATION = "documentation"              # Documentation & guides
+    SECURITY_TOOLING = "security_tooling"        # Security tool development
+    SECURITY_MONITORING = "security_monitoring"  # Security monitoring & alerts
+    LOAD_TESTING = "load_testing"                # Load & stress testing
+    DATA_SECURITY = "data_security"              # Data security & cleanup
+    KNOWLEDGE_MONITOR = "knowledge_monitor"      # Knowledge storage monitoring
+    TASK_AUTOMATION = "task_automation"            # Task automation building
 
 
 class ConsensusType(Enum):
@@ -366,6 +374,184 @@ class AutonomousAgent:
                 elif cost_delta < -10:  # 10% savings
                     confidence = 0.95
                     reasoning = f"Cost savings identified ({cost_delta}%)"
+        
+        # =====================================================
+        # FRONTEND_DEVELOPER: UI/UX quality
+        # =====================================================
+        elif self.role == AgentRole.FRONTEND_DEVELOPER:
+            if 'ui_impact' in proposal.context:
+                impact = proposal.context['ui_impact']
+                if impact == 'breaking':
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.90
+                    reasoning = "Breaking UI change without migration"
+                elif impact == 'visual_regression':
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.80
+                    reasoning = "Potential visual regression detected"
+                else:
+                    confidence = 0.85
+                    reasoning = "UI change looks clean"
+            
+            if 'accessibility_score' in proposal.context:
+                a11y = proposal.context['accessibility_score']
+                if a11y < 0.70:
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.88
+                    reasoning = "Accessibility below threshold"
+        
+        # =====================================================
+        # DOCUMENTATION: Docs completeness
+        # =====================================================
+        elif self.role == AgentRole.DOCUMENTATION:
+            if 'docs_coverage' in proposal.context:
+                coverage = proposal.context['docs_coverage']
+                if coverage < 0.50:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.75
+                    reasoning = "Insufficient documentation coverage"
+                elif coverage > 0.90:
+                    confidence = 0.95
+                    reasoning = "Well-documented change"
+        
+        # =====================================================
+        # SECURITY_TOOLING: Security tool quality
+        # =====================================================
+        elif self.role == AgentRole.SECURITY_TOOLING:
+            if 'tool_coverage' in proposal.context:
+                coverage = proposal.context['tool_coverage']
+                if coverage < 0.60:
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.88
+                    reasoning = "Security tool coverage insufficient"
+                elif coverage > 0.90:
+                    confidence = 0.95
+                    reasoning = "Excellent security tool coverage"
+            
+            if 'false_positive_rate' in proposal.context:
+                fpr = proposal.context['false_positive_rate']
+                if fpr > 0.30:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.80
+                    reasoning = "High false positive rate in security scanning"
+        
+        # =====================================================
+        # SECURITY_MONITORING: Alerting & monitoring
+        # =====================================================
+        elif self.role == AgentRole.SECURITY_MONITORING:
+            if 'alert_severity' in proposal.context:
+                severity = proposal.context['alert_severity']
+                if severity == 'critical':
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.98
+                    reasoning = "Critical security alert — block deployment"
+                elif severity == 'high':
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.85
+                    reasoning = "High severity alert requires review"
+                else:
+                    confidence = 0.90
+                    reasoning = "No security alerts blocking"
+            
+            if 'monitoring_gaps' in proposal.context:
+                gaps = proposal.context['monitoring_gaps']
+                if gaps > 3:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.80
+                    reasoning = f"Monitoring coverage gaps detected ({gaps})"
+        
+        # =====================================================
+        # LOAD_TESTING: Performance under load
+        # =====================================================
+        elif self.role == AgentRole.LOAD_TESTING:
+            if 'load_test_pass' in proposal.context:
+                if not proposal.context['load_test_pass']:
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.92
+                    reasoning = "Load test failed — cannot deploy"
+                else:
+                    confidence = 0.95
+                    reasoning = "Load tests passed"
+            
+            if 'p99_latency_ms' in proposal.context:
+                p99 = proposal.context['p99_latency_ms']
+                if p99 > 2000:
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.90
+                    reasoning = f"P99 latency too high ({p99}ms)"
+                elif p99 > 500:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.80
+                    reasoning = f"P99 latency elevated ({p99}ms)"
+        
+        # =====================================================
+        # DATA_SECURITY: Data protection & cleanup
+        # =====================================================
+        elif self.role == AgentRole.DATA_SECURITY:
+            if 'pii_exposure' in proposal.context:
+                if proposal.context['pii_exposure']:
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.99
+                    reasoning = "PII exposure detected — immediate block"
+            
+            if 'data_retention_compliant' in proposal.context:
+                if not proposal.context['data_retention_compliant']:
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.95
+                    reasoning = "Data retention policy violation"
+                else:
+                    confidence = 0.90
+                    reasoning = "Data retention compliant"
+            
+            if 'encryption_at_rest' in proposal.context:
+                if not proposal.context['encryption_at_rest']:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.85
+                    reasoning = "Data not encrypted at rest"
+        
+        # =====================================================
+        # KNOWLEDGE_MONITOR: KB storage health
+        # =====================================================
+        elif self.role == AgentRole.KNOWLEDGE_MONITOR:
+            if 'kb_sync_status' in proposal.context:
+                status = proposal.context['kb_sync_status']
+                if status == 'stale':
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.80
+                    reasoning = "Knowledge base is stale — sync needed"
+                elif status == 'corrupt':
+                    outcome = VoteOutcome.REJECTED
+                    confidence = 0.95
+                    reasoning = "Knowledge base corruption detected"
+                else:
+                    confidence = 0.90
+                    reasoning = "Knowledge base healthy"
+            
+            if 'kb_coverage' in proposal.context:
+                coverage = proposal.context['kb_coverage']
+                if coverage < 0.50:
+                    confidence = 0.75
+                    reasoning = "Low knowledge base coverage for this domain"
+        
+        # =====================================================
+        # TASK_AUTOMATION: Automation quality
+        # =====================================================
+        elif self.role == AgentRole.TASK_AUTOMATION:
+            if 'automation_coverage' in proposal.context:
+                coverage = proposal.context['automation_coverage']
+                if coverage < 0.40:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.78
+                    reasoning = "Low automation coverage — manual steps required"
+                elif coverage > 0.85:
+                    confidence = 0.95
+                    reasoning = "Well-automated workflow"
+            
+            if 'idempotent' in proposal.context:
+                if not proposal.context['idempotent']:
+                    outcome = VoteOutcome.ABSTAIN
+                    confidence = 0.82
+                    reasoning = "Automation is not idempotent — risky reruns"
         
         vote = Vote(
             vote_id=f"vote_{uuid.uuid4().hex[:12]}",

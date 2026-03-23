@@ -80,6 +80,10 @@ class LocalCodeEngine:
 
         handler = handlers.get(command.command_type)
 
+        # CONVERSATION commands should go to a real LLM (Ollama/Claude/GPT)
+        if command.command_type == CommandType.CONVERSATION:
+            return None
+
         # For unmatched types, try keyword-based routing from description
         if handler is None:
             desc = command.description.lower()

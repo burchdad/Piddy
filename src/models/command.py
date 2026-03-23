@@ -17,6 +17,7 @@ class CommandType(str, Enum):
     INFRASTRUCTURE = "infrastructure"
     DOCUMENTATION = "documentation"
     MIGRATION = "migration"
+    CONVERSATION = "conversation"
     CUSTOM = "custom"
 
 

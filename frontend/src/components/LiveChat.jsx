@@ -1,98 +1,148 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useStream } from '../hooks/useStream';
-import { fetchApi } from '../utils/api';
+import { apiCall } from '../utils/api';
 import '../styles/components.css';
 
 /**
+ * Detect whether Electron streaming is available.
+ * Primary mode = Electron stream via window.piddy.streamManager
+ * Fallback = HTTP /api/chat for browser dev mode
+ */
+const hasElectronStream = () =>
+  !!(window.piddy?.streamManager || (typeof global !== 'undefined' && global.streamManager));
+
+/**
  * LiveChat - Real-time conversation with Piddy
- * 
- * Features:
- * - Live streaming messages (not fetched once)
- * - Real-time input to send commands to Piddy
- * - Timestamps and sender information
- * - Visual indicators for message status
- * - Auto-scroll to latest messages
+ *
+ * Electron (primary):  Uses useStream('stream.messages') for live push data
+ *                      and fetchApi RPC for sending.
+ * Browser (fallback):  Uses HTTP POST /api/chat for request/response.
  */
 function LiveChat() {
   const [inputValue, setInputValue] = useState('');
   const [sendStatus, setSendStatus] = useState('');
   const messagesEndRef = useRef(null);
-  const [userSendCount, setUserSendCount] = useState(0);
+  const isElectron = hasElectronStream();
 
-  // Use the stream hook to get real-time messages
-  const { 
-    data: messages, 
-    isLoading, 
+  // ── Electron stream state ──────────────────────────────────────────
+  const {
+    data: streamMessages,
+    isLoading,
     error: streamError,
-    cancel: cancelStream 
   } = useStream('stream.messages', [], {}, {
     maxItems: 100,
-    onData: (chunk) => {
-      // Auto-scroll on new message
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
+    autoStart: isElectron, // only auto-start when Electron is present
+    onData: () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    },
   });
 
-  // Auto-scroll when messages change
+  // ── HTTP fallback state (browser dev mode) ─────────────────────────
+  const [httpMessages, setHttpMessages] = useState([]);
+  const [sessionId, setSessionId] = useState(null);
+
+  // Unified message list — Electron stream takes priority
+  const messages = isElectron ? streamMessages : httpMessages;
+
+  // Auto-scroll on message change
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  const handleSendMessage = async (e) => {
+  // ── Send handler (works in both modes) ─────────────────────────────
+  const handleSendMessage = useCallback(async (e) => {
     e.preventDefault();
-    
-    if (!inputValue.trim()) {
-      return;
-    }
+    if (!inputValue.trim()) return;
+    const text = inputValue.trim();
 
-    try {
-      setSendStatus('sending');
-      
-      // Send message to Piddy via RPC
-      const result = await fetchApi('/api/messages/send', {
-        method: 'POST',
-        body: JSON.stringify({
-          sender_id: 'user',
-          receiver_id: 'Piddy',
-          content: inputValue.trim(),
-          priority: 2
-        })
-      });
+    if (isElectron) {
+      // ── Electron path: RPC send via api bridge ───────────────────
+      try {
+        setSendStatus('sending');
+        const result = await apiCall('/api/messages/send', {
+          method: 'POST',
+          data: {
+            sender_id: 'user',
+            receiver_id: 'Piddy',
+            content: text,
+            priority: 2,
+          },
+        });
 
-      if (result.status === 'sent') {
-        setSendStatus('sent');
-        setInputValue('');
-        setUserSendCount(userSendCount + 1);
-        
-        // Clear status after 2 seconds
-        setTimeout(() => setSendStatus(''), 2000);
-      } else {
-        setSendStatus(`error: ${result.error || 'Failed to send'}`);
+        if (result.status === 'sent') {
+          setSendStatus('');
+          setInputValue('');
+        } else {
+          setSendStatus(`error: ${result.error || 'Failed to send'}`);
+        }
+      } catch (err) {
+        console.error('Error sending message:', err);
+        setSendStatus(`error: ${err.message}`);
       }
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setSendStatus(`error: ${err.message}`);
+    } else {
+      // ── HTTP fallback path: request/response via /api/chat ───────
+      const userMsg = {
+        id: Date.now(),
+        sender: 'user',
+        content: text,
+        timestamp: new Date().toISOString(),
+      };
+      setHttpMessages((prev) => [...prev, userMsg]);
+      setInputValue('');
+
+      try {
+        setSendStatus('sending');
+        const result = await apiCall('/api/chat', {
+          method: 'POST',
+          data: { message: text, session_id: sessionId },
+        });
+
+        if (result.session_id) setSessionId(result.session_id);
+
+        setHttpMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'Piddy',
+            content: result.reply || result.error || 'No response',
+            timestamp: new Date().toISOString(),
+            source: result.source,
+          },
+        ]);
+        setSendStatus('');
+      } catch (err) {
+        console.error('Error sending message:', err);
+        setSendStatus(`error: ${err.message}`);
+        setHttpMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'Piddy',
+            content: `Error: ${err.message}`,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
     }
-  };
+  }, [inputValue, isElectron, sessionId]);
 
   return (
     <div className="page live-chat-container">
       <h2>💬 Live Chat with Piddy</h2>
-      
+
       {/* Status Bar */}
       <div className="live-chat-status">
-        {isLoading && messages.length === 0 && (
+        {isElectron && isLoading && messages.length === 0 && (
           <span className="status-loading">🔄 Connecting...</span>
         )}
-        {messages.length > 0 && (
+        {isElectron && messages.length > 0 && (
           <span className="status-connected">🟢 Live ({messages.length} messages)</span>
         )}
-        {streamError && (
+        {isElectron && streamError && (
           <span className="status-error">❌ {streamError}</span>
+        )}
+        {!isElectron && (
+          <span className="status-connected">🌐 Browser mode — HTTP chat</span>
         )}
       </div>
 
@@ -106,8 +156,8 @@ function LiveChat() {
         )}
 
         {messages.map((msg, idx) => (
-          <div 
-            key={msg.id || idx} 
+          <div
+            key={msg.id || idx}
             className={`message ${msg.sender === 'user' ? 'user-message' : 'piddy-message'} ${msg.NEW ? 'new-message' : ''}`}
           >
             <div className="message-header">
@@ -116,6 +166,7 @@ function LiveChat() {
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </span>
               {msg.priority > 1 && <span className="priority">⭐</span>}
+              {msg.source && <span className="source-badge">{msg.source}</span>}
             </div>
             <div className="message-content">{msg.content}</div>
             {msg.status === 'processing' && (
@@ -127,7 +178,6 @@ function LiveChat() {
           </div>
         ))}
 
-        {/* Scroll anchor */}
         <div ref={messagesEndRef} />
       </div>
 
@@ -138,11 +188,11 @@ function LiveChat() {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Talk to Piddy... e.g., 'what's happening' or 'create mission'"
-          disabled={isLoading && messages.length === 0}
+          disabled={isElectron && isLoading && messages.length === 0}
           className="live-chat-input"
         />
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={!inputValue.trim() || sendStatus === 'sending'}
           className="live-chat-send-btn"
         >
@@ -151,10 +201,8 @@ function LiveChat() {
       </form>
 
       {/* Send Status */}
-      {sendStatus && (
-        <div className={`send-status ${sendStatus.startsWith('error') ? 'error' : 'success'}`}>
-          {sendStatus}
-        </div>
+      {sendStatus && sendStatus.startsWith('error') && (
+        <div className="send-status error">{sendStatus}</div>
       )}
 
       {/* Help Text */}

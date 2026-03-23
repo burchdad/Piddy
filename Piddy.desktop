@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Piddy
+Comment=AI Assistant - Portable Edition
+Exec=bash -c 'cd "$(dirname "%k")" && ./start.sh'
+Icon=piddy
+Terminal=true
+Categories=Utility;Development;
+StartupNotify=true

@@ -10,6 +10,24 @@ class Settings(BaseSettings):
     slack_bot_token: str = ""
     slack_signing_secret: str = ""
     slack_app_token: str = ""
+
+    # Discord Configuration
+    discord_bot_token: str = ""
+
+    # Telegram Configuration
+    telegram_bot_token: str = ""
+
+    # Google Calendar
+    google_calendar_api_key: str = ""
+    google_calendar_id: str = "primary"
+
+    # Jira
+    jira_base_url: str = ""
+    jira_email: str = ""
+    jira_api_token: str = ""
+
+    # Notion
+    notion_api_token: str = ""
     
     # Anthropic API
     anthropic_api_key: str = ""
@@ -23,8 +41,9 @@ class Settings(BaseSettings):
     
     # Local LLM (Ollama) - works completely offline
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "codellama:13b"
+    ollama_model: str = "llama3.2:3b"
     ollama_enabled: bool = True  # Auto-detected: tries Ollama if cloud LLMs fail
+    local_only: bool = False  # When True, never call cloud APIs (Anthropic/OpenAI) — Ollama only
     
     # Database
     database_url: str = "sqlite:///./piddy.db"
@@ -60,8 +79,42 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings():
-    """Get cached settings instance."""
-    return Settings()
+    """Get cached settings instance, enriched with encrypted key store."""
+    settings = Settings()
+    # Bridge: if .env keys are empty, pull from encrypted key_manager
+    try:
+        from src.config.key_manager import get_all_keys
+        stored = get_all_keys()
+        if stored:
+            if not settings.anthropic_api_key and stored.get("ANTHROPIC_API_KEY"):
+                settings.anthropic_api_key = stored["ANTHROPIC_API_KEY"]
+            if not settings.openai_api_key and stored.get("OPENAI_API_KEY"):
+                settings.openai_api_key = stored["OPENAI_API_KEY"]
+            if not settings.slack_bot_token and stored.get("SLACK_BOT_TOKEN"):
+                settings.slack_bot_token = stored["SLACK_BOT_TOKEN"]
+            if not settings.slack_signing_secret and stored.get("SLACK_SIGNING_SECRET"):
+                settings.slack_signing_secret = stored["SLACK_SIGNING_SECRET"]
+            if not settings.slack_app_token and stored.get("SLACK_APP_TOKEN"):
+                settings.slack_app_token = stored["SLACK_APP_TOKEN"]
+            if not settings.github_token and stored.get("GITHUB_TOKEN"):
+                settings.github_token = stored["GITHUB_TOKEN"]
+            if not settings.discord_bot_token and stored.get("DISCORD_BOT_TOKEN"):
+                settings.discord_bot_token = stored["DISCORD_BOT_TOKEN"]
+            if not settings.telegram_bot_token and stored.get("TELEGRAM_BOT_TOKEN"):
+                settings.telegram_bot_token = stored["TELEGRAM_BOT_TOKEN"]
+            if not settings.google_calendar_api_key and stored.get("GOOGLE_CALENDAR_API_KEY"):
+                settings.google_calendar_api_key = stored["GOOGLE_CALENDAR_API_KEY"]
+            if not settings.jira_base_url and stored.get("JIRA_BASE_URL"):
+                settings.jira_base_url = stored["JIRA_BASE_URL"]
+            if not settings.jira_email and stored.get("JIRA_EMAIL"):
+                settings.jira_email = stored["JIRA_EMAIL"]
+            if not settings.jira_api_token and stored.get("JIRA_API_TOKEN"):
+                settings.jira_api_token = stored["JIRA_API_TOKEN"]
+            if not settings.notion_api_token and stored.get("NOTION_API_TOKEN"):
+                settings.notion_api_token = stored["NOTION_API_TOKEN"]
+    except Exception:
+        pass  # key_manager not available — use .env only
+    return settings
 
 
 # Setup logging

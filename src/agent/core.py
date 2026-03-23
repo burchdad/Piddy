@@ -16,6 +16,7 @@ from src.models.command import Command, CommandResponse, CommandType
 from src.tools import get_all_tools
 from src.agent.conversational_prompt import CONVERSATIONAL_SYSTEM_PROMPT
 from src.services.rate_limiter import get_rate_limiter, Provider
+from src.skills.loader import get_skill_registry
 
 
 logger = logging.getLogger(__name__)
@@ -101,41 +102,77 @@ class BackendDeveloperAgent:
     """
     
     def __init__(self):
-        """Initialize the backend developer agent."""
-        self.settings = get_settings()
-        self.primary_llm = self._create_primary_llm()
-        self.fallback_llm = self._create_fallback_llm()
-        self.local_llm = self._create_local_llm()
-        self.llm = self.primary_llm  # Start with primary
-        self.tools = self._initialize_tools()
-        self.executor = self._create_executor()
-        self.conversation_executor = self._create_conversation_executor()
-        self.local_engine = self._create_local_engine()
+        """Initialize the backend developer agent.
         
-        mode = "online" if self.primary_llm else ("local-llm" if self.local_llm else "offline")
+        Failover priority (free first, paid last):
+          1. Local Engine  — pattern-based + KB, always works, zero cost
+          2. Ollama         — local LLM, free, requires ollama serve
+          3. Anthropic      — Claude, paid cloud API
+          4. OpenAI         — GPT, paid cloud API (last resort)
+        """
+        self.settings = get_settings()
+        self.local_engine = self._create_local_engine()
+        self.local_llm = self._create_local_llm()       # Ollama (free)
+        self.anthropic_llm = self._create_anthropic_llm() # Claude (paid)
+        self.openai_llm = self._create_openai_llm()       # GPT (paid)
+        
+        # Legacy aliases for backward compatibility
+        self.primary_llm = self.anthropic_llm
+        self.fallback_llm = self.openai_llm
+        
+        # Set active LLM: prefer local, then cloud
+        self.llm = self.local_llm or self.anthropic_llm or self.openai_llm
+        self.tools = self._initialize_tools()
+        self.executor = self._create_executor() if self.llm else None
+        self.conversation_executor = self._create_conversation_executor() if self.llm else None
+        
+        if self.local_llm:
+            mode = "local-llm"
+        elif self.anthropic_llm:
+            mode = "cloud-anthropic"
+        elif self.openai_llm:
+            mode = "cloud-openai"
+        else:
+            mode = "offline"
         logger.info(f"BackendDeveloperAgent initialized — mode={mode}, primary={self.settings.agent_model}")
     
-    def _create_primary_llm(self) -> BaseLanguageModel:
-        """Create primary Claude LLM."""
-        return ChatAnthropic(
-            model=self.settings.agent_model,
-            temperature=self.settings.agent_temperature,
-            max_tokens=self.settings.agent_max_tokens,
-            api_key=self.settings.anthropic_api_key,
-        )
-    
-    def _create_fallback_llm(self) -> Optional[BaseLanguageModel]:
-        """Create fallback OpenAI LLM if configured."""
-        if not self.settings.openai_api_key:
-            logger.warning("OpenAI API key not configured - no fallback available")
+    def _create_anthropic_llm(self) -> Optional[BaseLanguageModel]:
+        """Create Anthropic Claude LLM (Tier 3 — paid cloud)."""
+        if not self.settings.anthropic_api_key:
+            logger.info("Anthropic API key not configured — skipping")
             return None
-        
-        return ChatOpenAI(
-            model=self.settings.openai_model,
-            temperature=self.settings.agent_temperature,
-            max_tokens=self.settings.agent_max_tokens,
-            api_key=self.settings.openai_api_key,
-        )
+        try:
+            return ChatAnthropic(
+                model=self.settings.agent_model,
+                temperature=self.settings.agent_temperature,
+                max_tokens=self.settings.agent_max_tokens,
+                api_key=self.settings.anthropic_api_key,
+            )
+        except Exception as e:
+            logger.warning(f"Anthropic LLM init failed: {e}")
+            return None
+    
+    # Legacy aliases
+    _create_primary_llm = _create_anthropic_llm
+    
+    def _create_openai_llm(self) -> Optional[BaseLanguageModel]:
+        """Create OpenAI GPT LLM (Tier 4 — paid cloud, last resort)."""
+        if not self.settings.openai_api_key:
+            logger.info("OpenAI API key not configured — skipping")
+            return None
+        try:
+            return ChatOpenAI(
+                model=self.settings.openai_model,
+                temperature=self.settings.agent_temperature,
+                max_tokens=self.settings.agent_max_tokens,
+                api_key=self.settings.openai_api_key,
+            )
+        except Exception as e:
+            logger.warning(f"OpenAI LLM init failed: {e}")
+            return None
+    
+    # Legacy alias
+    _create_fallback_llm = _create_openai_llm
     
     def _create_local_llm(self) -> Optional[BaseLanguageModel]:
         """Create local Ollama LLM for offline operation."""
@@ -393,10 +430,11 @@ Question: {input}
         """
         Process a backend development command.
         
-        Three-tier fallback chain — works online AND offline:
-          1. Cloud LLMs (Claude → GPT-4o)  — best quality, requires internet
-          2. Local LLM (Ollama)             — near-cloud quality, runs locally
-          3. Pure Local Engine              — pattern + KB based, always works
+        Four-tier failover chain (free first, paid last):
+          1. Local Engine  — pattern + KB based, always works, zero cost
+          2. Ollama        — local LLM, free, runs on your machine
+          3. Anthropic     — Claude cloud API, paid
+          4. OpenAI        — GPT cloud API, paid (last resort)
         
         Args:
             command: Command to execute
@@ -409,111 +447,135 @@ Question: {input}
         is_conversation = command.metadata.get("is_conversation", False)
         prompt = self._format_command_prompt(command)
         
-        # ── TIER 1: Cloud LLMs ─────────────────────────────────────────
-        cloud_result = await self._try_cloud_llms(command, prompt, is_conversation)
-        if cloud_result:
-            return cloud_result
-        
-        # ── TIER 2: Local LLM (Ollama) ────────────────────────────────
-        ollama_result = await self._try_local_llm(command, prompt, is_conversation)
-        if ollama_result:
-            return ollama_result
-        
-        # ── TIER 3: Pure Local Engine (no LLM at all) ─────────────────
+        # ── TIER 1: Local Engine (free, instant, always works) ─────────
         local_result = await self._try_local_engine(command)
         if local_result:
             return local_result
         
+        # ── TIER 2: Ollama (free, local LLM) ──────────────────────────
+        ollama_result = await self._try_local_llm(command, prompt, is_conversation)
+        if ollama_result:
+            return ollama_result
+        
+        # ── LOCAL-ONLY MODE: stop here if configured ──────────────
+        if self.settings.local_only:
+            logger.info("Local-only mode enabled — skipping cloud APIs")
+            return CommandResponse(
+                success=False,
+                command_type=command.command_type,
+                result=None,
+                error="Local-only mode: Ollama is not responding. "
+                      "Ensure Ollama is running (runtime/ollama/ollama.exe serve) "
+                      "or disable local_only mode to allow cloud API fallback.",
+                metadata={"source": command.source, "tiers_attempted": ["local", "ollama"], "local_only": True}
+            )
+        
+        # ── TIER 3: Anthropic Claude (paid cloud) ─────────────────────
+        anthropic_result = await self._try_anthropic(command, prompt, is_conversation)
+        if anthropic_result:
+            return anthropic_result
+        
+        # ── TIER 4: OpenAI GPT (paid cloud, last resort) ─────────────
+        openai_result = await self._try_openai(command, prompt, is_conversation)
+        if openai_result:
+            return openai_result
+        
         # All tiers exhausted
-        logger.error("All processing tiers exhausted (cloud, local LLM, local engine)")
+        logger.error("All processing tiers exhausted (local, ollama, anthropic, openai)")
         return CommandResponse(
             success=False,
             command_type=command.command_type,
             result=None,
-            error="All processing tiers exhausted. Cloud LLMs unavailable, "
-                  "Ollama not running, and command type not supported by local engine. "
-                  "Start Ollama (`ollama serve`) or check API keys.",
-            metadata={"source": command.source, "tiers_attempted": ["cloud", "ollama", "local"]}
+            error="All processing tiers exhausted. Install Ollama (free) from ollama.com "
+                  "or configure API keys in Settings for cloud providers.",
+            metadata={"source": command.source, "tiers_attempted": ["local", "ollama", "anthropic", "openai"]}
         )
     
+    async def _try_cloud_llm(self, command, prompt, is_conversation, llm, llm_name, tier_label) -> Optional[CommandResponse]:
+        """Try a single cloud LLM provider."""
+        if llm is None:
+            return None
+        
+        if _is_rate_limited(llm_name):
+            logger.warning(f"Skipping {llm_name}: rate limited")
+            return None
+        
+        try:
+            logger.info(f"☁️  {tier_label} — {llm_name}")
+            
+            if llm != self.llm:
+                self.llm = llm
+                self.executor = self._create_executor()
+                self.conversation_executor = self._create_conversation_executor()
+            
+            executor = self.conversation_executor if is_conversation else self.executor
+            result = executor.invoke({"input": prompt})
+            _clear_rate_limit(llm_name)
+            
+            return CommandResponse(
+                success=True,
+                command_type=command.command_type,
+                result=result.get("output", ""),
+                execution_time=0.0,
+                metadata={
+                    "source": command.source,
+                    "is_conversation": is_conversation,
+                    "engine": "cloud",
+                    "llm_used": llm_name,
+                }
+            )
+        
+        except Exception as llm_e:
+            error_str = str(llm_e).lower()
+            logger.warning(f"{llm_name} failed: {str(llm_e)[:150]}")
+            
+            rate_limit_phrases = [
+                "rate_limit", "429", "rate limit", "quota exceeded",
+                "too many requests", "ratelimit"
+            ]
+            if any(p in error_str for p in rate_limit_phrases):
+                _record_rate_limit_error(llm_name, str(llm_e))
+            
+            return None
+    
+    async def _try_anthropic(self, command, prompt, is_conversation) -> Optional[CommandResponse]:
+        """Tier 3: Anthropic Claude (paid cloud)."""
+        return await self._try_cloud_llm(
+            command, prompt, is_conversation,
+            self.anthropic_llm, "claude", "Tier 3"
+        )
+    
+    async def _try_openai(self, command, prompt, is_conversation) -> Optional[CommandResponse]:
+        """Tier 4: OpenAI GPT (paid cloud, last resort)."""
+        return await self._try_cloud_llm(
+            command, prompt, is_conversation,
+            self.openai_llm, "gpt-4o", "Tier 4"
+        )
+    
+    # Legacy alias for backward compatibility
     async def _try_cloud_llms(self, command, prompt, is_conversation) -> Optional[CommandResponse]:
-        """Tier 1: Try cloud LLMs (Claude → GPT-4o)."""
-        primary_name = self.settings.agent_model.split("-")[0]
-        fallback_name = "gpt-4o" if primary_name == "claude" else "claude"
-        
-        llm_strategies = [
-            ("primary", self.primary_llm, primary_name),
-            ("fallback", self.fallback_llm, fallback_name),
-        ]
-        
-        for strategy_name, llm, llm_name in llm_strategies:
-            if llm is None:
-                continue
-            
-            if _is_rate_limited(llm_name):
-                logger.warning(f"Skipping {strategy_name} ({llm_name}): rate limited")
-                continue
-            
-            try:
-                logger.info(f"☁️  Tier 1 — {strategy_name} LLM: {llm_name}")
-                
-                if llm != self.llm:
-                    self.llm = llm
-                    self.executor = self._create_executor()
-                    self.conversation_executor = self._create_conversation_executor()
-                
-                executor = self.conversation_executor if is_conversation else self.executor
-                result = executor.invoke({"input": prompt})
-                _clear_rate_limit(llm_name)
-                
-                return CommandResponse(
-                    success=True,
-                    command_type=command.command_type,
-                    result=result.get("output", ""),
-                    execution_time=0.0,
-                    metadata={
-                        "source": command.source,
-                        "is_conversation": is_conversation,
-                        "engine": "cloud",
-                        "llm_used": llm_name,
-                    }
-                )
-            
-            except Exception as llm_e:
-                error_str = str(llm_e).lower()
-                logger.warning(f"Cloud LLM {llm_name} failed: {str(llm_e)[:150]}")
-                
-                rate_limit_phrases = [
-                    "rate_limit", "429", "rate limit", "quota exceeded",
-                    "too many requests", "ratelimit"
-                ]
-                service_error_phrases = [
-                    "overloaded", "unavailable", "temporarily unavailable",
-                    "service unavailable", "502", "503", "timeout",
-                    "connection", "refused", "network",
-                ]
-                
-                if any(p in error_str for p in rate_limit_phrases):
-                    _record_rate_limit_error(llm_name, str(llm_e))
-                
-                # For non-service errors, stop trying cloud and fall through
-                recoverable = rate_limit_phrases + service_error_phrases + [
-                    "token", "credit", "balance", "insufficient", "quota"
-                ]
-                if not any(p in error_str for p in recoverable):
-                    logger.error(f"Non-recoverable cloud error, falling through to local")
-                    break
-        
-        return None
+        result = await self._try_anthropic(command, prompt, is_conversation)
+        if result:
+            return result
+        return await self._try_openai(command, prompt, is_conversation)
     
     async def _try_local_llm(self, command, prompt, is_conversation) -> Optional[CommandResponse]:
-        """Tier 2: Try local LLM via Ollama."""
+        """Tier 2: Local LLM via Ollama (free, runs locally)."""
         if not self.local_llm:
             return None
         
         try:
             logger.info(f"🏠 Tier 2 — Local LLM: {self.settings.ollama_model}")
-            response = self.local_llm.invoke(prompt)
+            
+            # Build a full prompt with system identity + skill context
+            system_intro = (
+                "You are Piddy, an expert AI developer assistant. "
+                "Answer the user's question using the knowledge provided below. "
+                "Be concise, accurate, and helpful.\n\n"
+            )
+            full_prompt = system_intro + prompt
+            
+            response = self.local_llm.invoke(full_prompt)
             
             # Ollama returns a string directly
             result_text = response if isinstance(response, str) else str(response)
@@ -536,12 +598,12 @@ Question: {input}
             return None
     
     async def _try_local_engine(self, command) -> Optional[CommandResponse]:
-        """Tier 3: Pure local engine — pattern-based + KB, no LLM needed."""
+        """Tier 1: Pure local engine — pattern-based + KB, no LLM needed (free, instant)."""
         if not self.local_engine:
             return None
         
         try:
-            logger.info(f"🔧 Tier 3 — Local engine (patterns + KB)")
+            logger.info(f"🔧 Tier 1 — Local engine (patterns + KB)")
             result = await self.local_engine.process(command)
             if result:
                 logger.info("✅ Local engine handled command successfully")
@@ -551,8 +613,18 @@ Question: {input}
             return None
     
     def _format_command_prompt(self, command: Command) -> str:
-        """Format a command into a natural language prompt."""
+        """Format a command into a natural language prompt with skill injection."""
         prompt = f"Task: {command.description}\n\n"
+        
+        # Inject matching skill context into the prompt
+        try:
+            registry = get_skill_registry()
+            skill_context = registry.get_context_for_query(command.description)
+            if skill_context:
+                prompt += f"## Relevant Knowledge\n{skill_context}\n\n"
+                logger.debug(f"Injected skill context for: {command.description[:50]}")
+        except Exception as e:
+            logger.debug(f"Skill injection skipped: {e}")
         
         if command.context:
             prompt += "Context:\n"

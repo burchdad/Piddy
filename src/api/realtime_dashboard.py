@@ -78,6 +78,7 @@ def setup_realtime_dashboard(app, coordinator, telemetry_collector):
                     "failed_tasks": agent.failed_tasks,
                     "current_task_id": agent.current_task_id,
                     "last_activity": agent.last_activity,
+                    "capabilities": agent.capabilities,
                 }
                 for agent in agents
             ]

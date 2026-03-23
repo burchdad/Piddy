@@ -67,6 +67,15 @@ def create_app() -> FastAPI:
         ("API Compat", AgentRole.API_COMPATIBILITY, ["api_testing", "compatibility_check", "versioning"]),
         ("DB Migration", AgentRole.DATABASE_MIGRATION, ["schema_migration", "data_migration", "optimization"]),
         ("Arch Reviewer", AgentRole.ARCHITECTURE_REVIEWER, ["architecture_review", "design_patterns", "best_practices"]),
+        ("Cost Optimizer", AgentRole.COST_OPTIMIZER, ["cost_analysis", "resource_optimization", "budget_tracking"]),
+        ("Frontend Dev", AgentRole.FRONTEND_DEVELOPER, ["ui_development", "react_components", "css_styling", "accessibility"]),
+        ("Doc Writer", AgentRole.DOCUMENTATION, ["documentation", "api_docs", "user_guides", "changelog"]),
+        ("SecTool Dev", AgentRole.SECURITY_TOOLING, ["scanner_development", "rule_authoring", "exploit_detection", "tool_integration"]),
+        ("Sec Monitor", AgentRole.SECURITY_MONITORING, ["alert_management", "anomaly_detection", "incident_response", "log_analysis"]),
+        ("Load Tester", AgentRole.LOAD_TESTING, ["load_testing", "stress_testing", "capacity_planning", "latency_analysis"]),
+        ("Data Guardian", AgentRole.DATA_SECURITY, ["pii_detection", "data_encryption", "retention_policy", "data_cleanup"]),
+        ("KB Monitor", AgentRole.KNOWLEDGE_MONITOR, ["kb_sync", "content_validation", "coverage_tracking", "stale_detection"]),
+        ("Automator", AgentRole.TASK_AUTOMATION, ["workflow_building", "script_generation", "ci_cd_pipelines", "scheduled_tasks"]),
     ]
     
     for agent_name, agent_role, capabilities in agents_to_register:
