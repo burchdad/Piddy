@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiCall } from '../utils/api';
 
 const PROVIDERS = [
   {
@@ -33,25 +34,23 @@ const PROVIDERS = [
   },
 ];
 
-function SettingsPanel({ apiUrl }) {
+function SettingsPanel() {
   const [settings, setSettings] = useState(null);
   const [models, setModels] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const base = apiUrl || '';
-
   useEffect(() => {
-    fetch(`${base}/api/settings`).then(r => r.json()).then(setSettings).catch(() => {});
-    fetch(`${base}/api/settings/ollama-models`).then(r => r.json()).then(d => setModels(d.models || [])).catch(() => {});
-  }, [base]);
+    apiCall('/api/settings').then(setSettings).catch(() => {});
+    apiCall('/api/settings/ollama-models').then(d => setModels(d.models || [])).catch(() => {});
+  }, []);
 
   const update = (key, val) => { setSettings(s => ({ ...s, [key]: val })); setSaved(false); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch(`${base}/api/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+      await apiCall('/api/settings', { method: 'POST', data: settings });
       setSaved(true);
     } catch { /* silently fail */ }
     setSaving(false);
@@ -115,7 +114,7 @@ function SettingsPanel({ apiUrl }) {
   );
 }
 
-export default function Setup({ apiUrl, onComplete, mode }) {
+export default function Setup({ onComplete, mode, backendOnline }) {
   const [values, setValues] = useState({});
   const [testing, setTesting] = useState({});
   const [testResults, setTestResults] = useState({});
@@ -135,13 +134,10 @@ export default function Setup({ apiUrl, onComplete, mode }) {
     if (!value?.trim()) return;
     setTesting(prev => ({ ...prev, [key]: true }));
     try {
-      const url = apiUrl ? `${apiUrl}/api/config/test` : '/api/config/test';
-      const resp = await fetch(url, {
+      const data = await apiCall('/api/config/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, key: value }),
+        data: { provider, key: value },
       });
-      const data = await resp.json();
       setTestResults(prev => ({ ...prev, [key]: data }));
     } catch {
       setTestResults(prev => ({ ...prev, [key]: { valid: false, error: 'Network error' } }));
@@ -158,13 +154,10 @@ export default function Setup({ apiUrl, onComplete, mode }) {
     setSaving(true);
     setError(null);
     try {
-      const url = apiUrl ? `${apiUrl}/api/config/save` : '/api/config/save';
-      const resp = await fetch(url, {
+      const data = await apiCall('/api/config/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        data: values,
       });
-      const data = await resp.json();
       if (data.status === 'saved' || data.configured) {
         onComplete();
       } else {
@@ -182,6 +175,16 @@ export default function Setup({ apiUrl, onComplete, mode }) {
   // Render the key-entry card (used in both overlay and settings page)
   const keysCard = (
     <>
+      {backendOnline === false && (
+        <div className="setup-error" style={{ marginBottom: '1rem', background: 'var(--bg-tertiary)', borderLeft: '3px solid var(--warning-color, #f0ad4e)' }}>
+          <strong>Backend not reachable.</strong> API key management requires the Piddy backend.
+          <br /><br />
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Start Piddy locally with <code>python piddy.py serve</code> or use the Desktop app.
+            The Vercel deployment serves the dashboard UI only — the backend must run on your machine.
+          </span>
+        </div>
+      )}
       <div className="setup-fields">
         {PROVIDERS.map(p => (
           <div key={p.key} className="setup-field">
@@ -202,7 +205,7 @@ export default function Setup({ apiUrl, onComplete, mode }) {
               {p.provider && (
                 <button
                   className="test-btn"
-                  disabled={!values[p.key]?.trim() || testing[p.key]}
+                  disabled={backendOnline === false || !values[p.key]?.trim() || testing[p.key]}
                   onClick={() => testKey(p.provider, p.key, values[p.key])}
                 >
                   {testing[p.key] ? '...' : 'Test'}
@@ -219,7 +222,7 @@ export default function Setup({ apiUrl, onComplete, mode }) {
       </div>
       {error && <div className="setup-error">{error}</div>}
       <div className="setup-actions">
-        <button className="save-btn" disabled={!canSave || saving} onClick={handleSave}>
+        <button className="save-btn" disabled={backendOnline === false || !canSave || saving} onClick={handleSave}>
           {saving ? 'Saving...' : 'Save & Launch Piddy'}
         </button>
       </div>
@@ -236,24 +239,22 @@ export default function Setup({ apiUrl, onComplete, mode }) {
           <h3>🔑 API Keys</h3>
           {keysCard}
         </div>
-        <SettingsPanel apiUrl={apiUrl} />
+        <SettingsPanel />
       </div>
     );
   }
 
   // Full-page onboarding wizard (first-run)
-  return <OnboardingWizard apiUrl={apiUrl} keysCard={keysCard} onComplete={onComplete} />;
+  return <OnboardingWizard keysCard={keysCard} onComplete={onComplete} />;
 }
 
-function OnboardingWizard({ apiUrl, keysCard, onComplete }) {
+function OnboardingWizard({ keysCard, onComplete }) {
   const [step, setStep] = useState(0);
   const [checks, setChecks] = useState(null);
-  const base = apiUrl || '';
 
   const runChecks = async () => {
     try {
-      const resp = await fetch(`${base}/api/doctor`);
-      const data = await resp.json();
+      const data = await apiCall('/api/doctor');
       setChecks(data);
     } catch {
       setChecks({ checks: [], summary: { ok: 0, warnings: 0, errors: 0 } });

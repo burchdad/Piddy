@@ -12,6 +12,26 @@ const isElectron = () => {
 };
 
 /**
+ * Check if backend API is reachable (cached after first check)
+ */
+let _backendReachable = null;
+export async function isBackendReachable() {
+  if (_backendReachable !== null) return _backendReachable;
+  if (isElectron()) { _backendReachable = true; return true; }
+  try {
+    const url = getApiUrl('/api/system/overview');
+    const resp = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(5000) });
+    _backendReachable = resp.ok;
+  } catch {
+    _backendReachable = false;
+  }
+  return _backendReachable;
+}
+
+/** Reset the cached backend check (e.g. after config change) */
+export function resetBackendCheck() { _backendReachable = null; }
+
+/**
  * Get API URL for HTTP requests
  */
 export const getApiUrl = (endpoint) => {

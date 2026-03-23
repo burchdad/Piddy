@@ -3,6 +3,8 @@ import './styles/App.css';
 import './styles/components.css';
 import './styles/dashboard.css';
 import './styles/setup.css';
+import { apiCall } from './utils/api';
+import { isBackendReachable } from './utils/api';
 
 // Import components
 import Sidebar from './components/Sidebar';
@@ -33,30 +35,25 @@ import Productivity from './components/Productivity';
 import { ToastProvider } from './components/Toast';
 import Setup from './components/Setup';
 
-function getApiUrl() {
-  if (window.piddy && window.piddy.backendUrl) {
-    return window.piddy.backendUrl;
-  }
-  // In dev mode, use relative URLs so the Vite proxy handles routing
-  if (import.meta.env.DEV) return '';
-  return import.meta.env.VITE_API_URL || 'http://localhost:8889';
-}
-
 function App() {
   const [activePage, setActivePage] = useState('chat');
   const [systemStatus, setSystemStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [needsSetup, setNeedsSetup] = useState(null); // null = checking, true/false
-
-  const apiUrl = getApiUrl();
+  const [backendOnline, setBackendOnline] = useState(null); // null = checking
 
   // Check config status on mount
   useEffect(() => {
     const checkConfig = async () => {
+      const reachable = await isBackendReachable();
+      setBackendOnline(reachable);
+      if (!reachable) {
+        setNeedsSetup(false);
+        return;
+      }
       try {
-        const resp = await fetch(`${apiUrl}/api/config/status`);
-        const data = await resp.json();
+        const data = await apiCall('/api/config/status');
         setNeedsSetup(!data.configured);
       } catch {
         // If config endpoint fails, skip setup check and show dashboard
@@ -64,7 +61,7 @@ function App() {
       }
     };
     checkConfig();
-  }, [apiUrl]);
+  }, []);
 
   // Fetch system status on mount (only after setup done)
   useEffect(() => {
@@ -73,20 +70,9 @@ function App() {
     const fetchStatus = async (retry = 0, maxRetries = 5) => {
       try {
         setError(null);
-        console.log('📡 Fetching status from:', `${apiUrl}/api/system/overview`);
+        console.log('📡 Fetching system status...');
         
-        const response = await fetch(`${apiUrl}/api/system/overview`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
+        const data = await apiCall('/api/system/overview');
         console.log('✅ System status fetched:', data);
         
         // Add is_healthy based on status
@@ -117,7 +103,7 @@ function App() {
     // Poll every 30 seconds
     const interval = setInterval(() => fetchStatus(), 30000);
     return () => clearInterval(interval);
-  }, [needsSetup, apiUrl]);
+  }, [needsSetup]);
 
   const renderPage = () => {
     switch (activePage) {
@@ -140,7 +126,7 @@ function App() {
           />
         );
       case 'settings':
-        return <Setup apiUrl={apiUrl} mode="settings" onComplete={() => { setNeedsSetup(false); setActivePage('chat'); }} />;
+        return <Setup mode="settings" backendOnline={backendOnline} onComplete={() => { setNeedsSetup(false); setActivePage('chat'); }} />;
       case 'agents':
         return <Agents />;
       case 'messages':
@@ -198,7 +184,7 @@ function App() {
   }
 
   if (needsSetup) {
-    return <ToastProvider><Setup apiUrl={apiUrl} onComplete={() => setNeedsSetup(false)} /></ToastProvider>;
+    return <ToastProvider><Setup backendOnline={backendOnline} onComplete={() => setNeedsSetup(false)} /></ToastProvider>;
   }
 
   return (
@@ -206,6 +192,18 @@ function App() {
     <div className="app">
       <Sidebar currentPage={activePage} onPageChange={setActivePage} />
       <div className="main-content">
+        {backendOnline === false && (
+          <div style={{
+            background: '#2d2000', borderBottom: '1px solid #665200',
+            padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#ffc107',
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+          }}>
+            <span>&#9888;</span>
+            <span>
+              <strong>Backend offline.</strong> Start Piddy locally (<code>python piddy.py serve</code>) or use the Desktop app to enable full functionality.
+            </span>
+          </div>
+        )}
         <div className="page-container">
           {loading ? (
             <div className="loading">
