@@ -21,8 +21,8 @@ Piddy is a fully portable AI development assistant that runs from any directory 
 | Skills | 60 reference skill packs |
 | CLI Commands | 16 (`piddy.py`) |
 | Doctor Checks | 17 system health checks |
-| RPC Endpoints | 43 + 6 stream functions = 49 |
-| REST Endpoints | 4 autonomous loop endpoints |
+| RPC Endpoints | 45 + 6 stream functions = 51 |
+| REST Endpoints | 4 autonomous loop + 2 tool synthesis endpoints |
 | Dashboard Pages | 30 React components |
 | Development Phases | 51 completed |
 | Embedded Runtimes | Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2 |
@@ -1608,6 +1608,7 @@ Task -> Try -> Fail -> Diagnose -> Fix -> Retry -> Succeed
 | `decompose_subtasks` | Complex tasks that need breaking down |
 | `alternative_tool` | Import/module errors, tool chain issues |
 | `rollback_and_patch` | Syntax errors, test failures |
+| `synthesize_tool` | Required tool doesn't exist -- create it on-the-fly |
 
 ### Error Diagnosis
 
@@ -1616,6 +1617,19 @@ The ToolDecisionLayer diagnoses failures by:
 - Querying failure memory for fixes that worked on similar errors
 - Checking phase28 knowledge graph for dependency/impact context
 - Checking phase19 learning DB for known bad patterns
+- **Detecting missing tools** and triggering the ToolSynthesizer to create them
+
+### Tool Synthesis (Auto-Create Missing Tools)
+
+When the loop encounters an error indicating a required tool doesn't exist:
+1. `ToolSynthesizer.diagnose_missing_tool()` parses the error for patterns like
+   `No module named X`, `tool Y not found`, `KeyError` in RPC dispatch
+2. It infers the tool's category (executor, analyzer, generator, data_pipeline)
+   and picks a safe logic snippet (file I/O, text search, subprocess, etc.)
+3. Generates a complete Python module from a template, writes it to
+   `src/tools/synthesized/generated/<name>.py`
+4. Registers it at runtime so the immediate retry can use it
+5. Persists metadata to `data/synthesized_tools.db` for future sessions
 
 ### API Endpoints
 
@@ -1624,12 +1638,16 @@ The ToolDecisionLayer diagnoses failures by:
 - `GET /api/autonomous/failures` - Query failure history
 - `GET /api/autonomous/summary` - Failure memory stats
 - `GET /api/autonomous/strategies` - Strategy success rates
+- `GET /api/synthesized/tools` - List all synthesized tools
+- `POST /api/synthesized/run` - Run a synthesized tool by name
 
 **RPC (Electron)**:
 - `autonomous.execute` - Execute task with retry loop
 - `autonomous.failure_summary` - Failure memory stats
 - `autonomous.failure_history` - Query past failures
 - `autonomous.strategy_stats` - Strategy success rates
+- `synthesized.list` - List all synthesized tools
+- `synthesized.run` - Run a synthesized tool by name
 
 ### Integration Points
 

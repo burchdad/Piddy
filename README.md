@@ -110,7 +110,7 @@ python piddy.py <command>
 Piddy/
 +-- piddy.py                 # Main CLI entry point
 +-- piddy/                   # CLI command modules
-|   +-- rpc_endpoints.py     # 43 RPC endpoints + 6 stream functions
+|   +-- rpc_endpoints.py     # 45 RPC endpoints + 6 stream functions
 |   +-- *.py                 # Command handlers (start, stop, doctor, etc.)
 +-- src/
 |   +-- agent/               # Core agent logic & spawning
@@ -222,7 +222,7 @@ python piddy.py desktop
 - `desktop/main.js` -- Electron main process, spawns Python backend
 - `desktop/preload.js` -- Context bridge exposing `window.piddy.call()`
 - `desktop/stdio-protocol.js` -- JSON-RPC message framing and parsing
-- `piddy/rpc_endpoints.py` -- 43 RPC endpoints + 6 stream functions
+- `piddy/rpc_endpoints.py` -- 45 RPC endpoints + 6 stream functions
 
 ---
 

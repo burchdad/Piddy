@@ -43,6 +43,7 @@ STRATEGY_POOL = [
     "decompose_subtasks",
     "alternative_tool",
     "rollback_and_patch",
+    "synthesize_tool",
 ]
 
 # ---------------------------------------------------------------------------
@@ -338,6 +339,7 @@ class ToolDecisionLayer:
     - decompose_subtasks: Break into smaller independent tasks
     - alternative_tool:   Swap tool (e.g., different LLM, different test runner)
     - rollback_and_patch: Undo last change, apply targeted patch
+    - synthesize_tool:    Create the missing tool on-the-fly, then retry
 
     The layer also consults the knowledge graph (phase28) to check
     whether similar code has been modified before and what happened.
@@ -347,6 +349,17 @@ class ToolDecisionLayer:
         self.failure_memory = failure_memory
         self._graph = None
         self._learner = None
+        self._synthesizer = None
+
+    @property
+    def synthesizer(self):
+        if self._synthesizer is None:
+            try:
+                from src.tools.synthesized.synthesizer import ToolSynthesizer
+                self._synthesizer = ToolSynthesizer()
+            except Exception:
+                pass
+        return self._synthesizer
 
     @property
     def graph(self):
@@ -411,10 +424,23 @@ class ToolDecisionLayer:
                 except Exception:
                     pass
 
+        # --- Missing-tool detection (takes priority) ---
+        if last_error and self.synthesizer:
+            spec = self.synthesizer.diagnose_missing_tool(
+                last_error, task, {"attempt": attempt}
+            )
+            if spec and "synthesize_tool" not in already_tried:
+                reasoning_parts.append(
+                    f"Missing tool detected: '{spec['tool_name']}'. "
+                    f"Will synthesize it before retrying."
+                )
+                return "synthesize_tool", " ".join(reasoning_parts)
+
         # --- Error-specific strategy selection ---
         if last_error:
             err_lower = last_error.lower()
             if "import" in err_lower or "module" in err_lower:
+                # If we already tried synthesize_tool, fall through to alternative_tool
                 strategy = "alternative_tool"
                 reasoning_parts.append("Import/module error -- switching tool chain.")
                 return strategy, " ".join(reasoning_parts)
@@ -493,8 +519,22 @@ class ToolDecisionLayer:
             except Exception:
                 pass
 
+        # Check if a tool can be synthesized
+        synthesizable = False
+        if error_type in ("import_error", "runtime_error"):
+            try:
+                from src.tools.synthesized.synthesizer import ToolSynthesizer
+                synth = ToolSynthesizer()
+                spec = synth.diagnose_missing_tool(error, task, {})
+                if spec:
+                    synthesizable = True
+            except Exception:
+                pass
+
         # Build suggested fix
-        if past_fixes:
+        if synthesizable:
+            suggested_fix = f"Missing tool detected — synthesize_tool strategy can create it"
+        elif past_fixes:
             suggested_fix = f"Past fix that worked: {past_fixes[0]}"
         elif error_type == "import_error":
             suggested_fix = "Install missing dependency or fix import path"
@@ -596,6 +636,21 @@ class AutonomousLoop:
                 f"[AutonomousLoop] Attempt {attempt}/{self.max_retries} | "
                 f"Strategy: {strategy} | Reason: {reasoning}"
             )
+
+            # --- Synthesize tool if strategy says so ---
+            if strategy == "synthesize_tool":
+                synth_result = self._try_synthesize_tool(task, last_error, context)
+                if synth_result and synth_result.get("success"):
+                    context["synthesized_tool"] = synth_result["tool_name"]
+                    logger.info(
+                        f"[AutonomousLoop] Synthesized new tool: {synth_result['tool_name']} "
+                        f"-> {synth_result['file_path']}"
+                    )
+                else:
+                    logger.warning(
+                        f"[AutonomousLoop] Tool synthesis failed: "
+                        f"{synth_result.get('error', 'unknown') if synth_result else 'no spec'}"
+                    )
 
             # --- Execute ---
             attempt_start = datetime.utcnow()
@@ -699,6 +754,38 @@ class AutonomousLoop:
                 self.tools.learner.add_event(event)
         except Exception as e:
             logger.debug(f"Could not record to learning DB: {e}")
+
+    def _try_synthesize_tool(
+        self, task: str, last_error: Optional[str], context: Dict
+    ) -> Optional[Dict]:
+        """
+        Attempt to synthesize a missing tool based on the last error.
+
+        Returns the synthesizer result dict on success, or None.
+        """
+        if not last_error:
+            return None
+        try:
+            from src.tools.synthesized.synthesizer import ToolSynthesizer
+            synth = ToolSynthesizer()
+            spec = synth.diagnose_missing_tool(last_error, task, context)
+            if not spec:
+                logger.debug("[AutonomousLoop] Synthesizer found no missing-tool pattern")
+                return None
+
+            result = synth.synthesize(spec)
+            if result.get("success"):
+                # Record to learning DB
+                self._record_to_learning_db(
+                    task,
+                    "synthesize_tool",
+                    True,
+                    f"Created tool '{result['tool_name']}' to resolve: {last_error[:200]}",
+                )
+            return result
+        except Exception as e:
+            logger.warning(f"[AutonomousLoop] Tool synthesis error: {e}")
+            return None
 
 
 # ===================================================================

@@ -2847,6 +2847,43 @@ async def autonomous_strategies(task: str = ""):
         return {"status": "error", "error": str(e)}
 
 
+# --- Phase 51: Tool Synthesis endpoints ---
+
+@app.get("/api/synthesized/tools")
+async def synthesized_tools_list():
+    """List all dynamically synthesized tools."""
+    try:
+        from src.tools.synthesized.synthesizer import ToolSynthesizer
+        synth = ToolSynthesizer()
+        tools = synth.list_synthesized_tools()
+        return {"tools": tools, "count": len(tools)}
+    except ImportError:
+        return {"status": "error", "error": "ToolSynthesizer not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/api/synthesized/run")
+async def synthesized_tool_run(request: Request):
+    """Run a synthesized tool by name."""
+    try:
+        body = await request.json()
+        tool_name = body.get("tool_name", "")
+        params = body.get("params", {})
+        from src.tools.synthesized.synthesizer import ToolSynthesizer
+        synth = ToolSynthesizer()
+        func = synth.get_tool_function(tool_name)
+        if not func:
+            return {"status": "error", "error": f"Synthesized tool '{tool_name}' not found"}
+        result = func(**params)
+        synth.record_usage(tool_name, result.get("status") == "success")
+        return result
+    except ImportError:
+        return {"status": "error", "error": "ToolSynthesizer not available"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 # ============================================================================
 # SERVE DASHBOARD FRONTEND
 # ============================================================================
