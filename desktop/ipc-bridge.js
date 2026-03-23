@@ -242,11 +242,18 @@ function setupIPCBridge(bridge) {
   /**
    * Generic GET/POST handlers for flexibility
    */
+  // Endpoints that involve LLM calls need longer timeouts
+  const SLOW_ENDPOINTS = new Set([
+    'chat', 'messages.send', 'nova.execute_task', 'nova.execute_with_consensus',
+    'autonomous.execute',
+  ]);
+
   ipcMain.handle('api:get', async (event, endpoint, queryParams) => {
     try {
       // Create function name from endpoint
       const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
-      return await pythonBridge.call(funcName, [], queryParams);
+      const timeout = SLOW_ENDPOINTS.has(funcName) ? 120000 : 30000;
+      return await pythonBridge.call(funcName, [], queryParams, timeout);
     } catch (err) {
       console.error('[IPC] generic GET failed:', err.message);
       throw err;
@@ -256,7 +263,8 @@ function setupIPCBridge(bridge) {
   ipcMain.handle('api:post', async (event, endpoint, data) => {
     try {
       const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
-      return await pythonBridge.call(funcName, [data]);
+      const timeout = SLOW_ENDPOINTS.has(funcName) ? 120000 : 30000;
+      return await pythonBridge.call(funcName, [data], {}, timeout);
     } catch (err) {
       console.error('[IPC] generic POST failed:', err.message);
       throw err;
@@ -266,7 +274,8 @@ function setupIPCBridge(bridge) {
   ipcMain.handle('api:put', async (event, endpoint, data) => {
     try {
       const funcName = endpoint.replace(/^\/api\//, '').replace(/\//g, '.');
-      return await pythonBridge.call(funcName, [data]);
+      const timeout = SLOW_ENDPOINTS.has(funcName) ? 120000 : 30000;
+      return await pythonBridge.call(funcName, [data], {}, timeout);
     } catch (err) {
       console.error('[IPC] generic PUT failed:', err.message);
       throw err;
