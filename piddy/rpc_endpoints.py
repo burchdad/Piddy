@@ -133,6 +133,41 @@ def _run_async(coro):
         raise
 
 
+def _run_async_long(coro):
+    """Run async function with a longer timeout (for LLM calls)."""
+    try:
+        loop = _get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            import threading
+            result = [None]
+            exception = [None]
+            
+            def run_in_new_loop():
+                try:
+                    new_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(new_loop)
+                    result[0] = new_loop.run_until_complete(coro)
+                    new_loop.close()
+                except Exception as e:
+                    exception[0] = e
+            
+            thread = threading.Thread(target=run_in_new_loop, daemon=True)
+            thread.start()
+            thread.join(timeout=120)
+            
+            if thread.is_alive():
+                return {"reply": "Response is taking longer than expected. The language model may be slow or unreachable. Check the Health page.", "source": "timeout", "session_id": None}
+            if exception[0]:
+                raise exception[0]
+            return result[0]
+        else:
+            return loop.run_until_complete(coro)
+    except Exception as e:
+        logger.error(f"Error running long async function: {e}")
+        return {"reply": f"Error: {e}", "source": "error", "session_id": None}
+
+
 # ============================================================================
 # SYSTEM ENDPOINTS
 # ============================================================================
@@ -1192,7 +1227,65 @@ async def _chat_async(data: Dict) -> Dict:
 def chat_send(data: Dict = None) -> Dict:
     """Send a chat message to Piddy and get AI response (4-tier failover)."""
     data = data or {}
-    return _run_async(_chat_async(data))
+    return _run_async_long(_chat_async(data))
+
+
+# ============================================================================
+# SETTINGS (runtime config — non-secret values)
+# ============================================================================
+
+def settings_get(data: Dict = None) -> Dict:
+    """Get all non-secret settings, or update if data is provided."""
+    if data:
+        return settings_update(data)
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        return {
+            "local_only": s.local_only,
+            "ollama_enabled": s.ollama_enabled,
+            "ollama_model": s.ollama_model,
+            "ollama_base_url": s.ollama_base_url,
+            "agent_temperature": s.agent_temperature,
+            "agent_max_tokens": s.agent_max_tokens,
+            "agent_model": s.agent_model,
+            "log_level": s.log_level,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def settings_update(data: Dict = None) -> Dict:
+    """Update runtime settings."""
+    data = data or {}
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        updated = []
+        for key in ["local_only", "ollama_enabled", "ollama_model", "ollama_base_url",
+                     "agent_temperature", "agent_max_tokens", "agent_model", "log_level"]:
+            if key in data:
+                setattr(s, key, data[key])
+                updated.append(key)
+        return {"success": True, "updated": updated}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def settings_ollama_models() -> Dict:
+    """List available Ollama models from the local Ollama instance."""
+    try:
+        from config.settings import get_settings
+        import urllib.request
+        s = get_settings()
+        url = f"{s.ollama_base_url}/api/tags"
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read())
+            models = [m["name"] for m in data.get("models", [])]
+            return {"models": models, "current": s.ollama_model}
+    except Exception:
+        return {"models": [], "current": "", "error": "Ollama not reachable"}
 
 
 # ============================================================================
@@ -1278,6 +1371,12 @@ RPC_ENDPOINTS = {
     # Phase 51: Tool Synthesis
     "synthesized.list": synthesized_tools_list,
     "synthesized.run": synthesized_tools_run,
+    
+    # Settings (runtime config)
+    "settings": settings_get,
+    "settings.get": settings_get,
+    "settings.update": settings_update,
+    "settings.ollama-models": settings_ollama_models,
 }
 
 

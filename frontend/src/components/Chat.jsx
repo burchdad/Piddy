@@ -84,6 +84,7 @@ function Chat({ onOpenSessions }) {
         const data = await apiCall('/api/chat', {
           method: 'POST',
           data: { message: text, session_id: sessionId },
+          timeout: 120000,
         });
 
         if (data.error) { setError(data.error); setIsTyping(false); return; }
