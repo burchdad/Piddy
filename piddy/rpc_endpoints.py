@@ -25,11 +25,11 @@ try:
     logger.info("✅ Nova executor available for RPC")
 except ImportError:
     logger.warning("⚠️ Nova executor not available")
-    def execute_task(*args, **kwargs):
+    def execute_task(*args, **kwargs) -> Any:
         return {"error": "Nova executor not available"}
-    def get_execution_status(*args, **kwargs):
+    def get_execution_status(*args, **kwargs) -> Any:
         return {"error": "Nova executor not available"}
-    def get_all_executions(*args, **kwargs):
+    def get_all_executions(*args, **kwargs) -> Any:
         return {"error": "Nova executor not available"}
 
 # Import offline support for mission queueing when offline
@@ -40,9 +40,9 @@ try:
 except ImportError:
     HAS_OFFLINE_SUPPORT = False
     logger.warning("⚠️ Offline support not available")
-    def get_offline_queue(*args, **kwargs):
+    def get_offline_queue(*args, **kwargs) -> Any:
         return None
-    def get_sync_manager(*args, **kwargs):
+    def get_sync_manager(*args, **kwargs) -> Any:
         return None
 
 # ============================================================================
@@ -107,8 +107,8 @@ def _run_async(coro):
             # If loop is already running, we need to use a different approach
             import concurrent.futures
             import threading
-            result = [None]
-            exception = [None]
+            result: list[Any] = [None]
+            exception: list[Any] = [None]
             
             def run_in_new_loop():
                 try:
@@ -140,8 +140,8 @@ def _run_async_long(coro):
         if loop.is_running():
             import concurrent.futures
             import threading
-            result = [None]
-            exception = [None]
+            result: list[Any] = [None]
+            exception: list[Any] = [None]
             
             def run_in_new_loop():
                 try:
@@ -194,7 +194,7 @@ def system_overview() -> Dict:
         # Real telemetry if available
         if telemetry:
             try:
-                telemetry_stats = telemetry.get_all_stats() if hasattr(telemetry, 'get_all_stats') else telemetry.get_overall_stats()
+                telemetry_stats = telemetry.get_all_stats()
                 success_rate = telemetry_stats.get('success_rate', 0) if telemetry_stats else 0
             except Exception as e:
                 logger.debug(f"Could not get telemetry stats: {e}")
@@ -347,7 +347,7 @@ def agents_get(agent_id: str) -> Dict:
         return {"error": str(e)}
 
 
-def agents_create(name: str, role: str = "backend_developer", capabilities: List[str] = None) -> Dict:
+def agents_create(name: str, role: str = "backend_developer", capabilities: Optional[List[str]] = None) -> Dict:
     """Create a new agent."""
     try:
         coordinator = _get_coordinator()
@@ -437,27 +437,25 @@ def messages_send(sender_id: str, content: str, receiver_id: Optional[str] = Non
                 message_obj["status"] = "processing"
                 message_obj["action"] = "create_mission"
                 # Coordinator will handle mission creation
-                coordinator.enqueue_mission_from_user(content)
+                coordinator.send_message("user", "mission_planner", "mission_request", {"text": content})
                 
             elif any(cmd in user_command for cmd in ["what's happening", "status", "show me what you're doing"]):
                 message_obj["status"] = "processing"
                 message_obj["action"] = "status_query"
-                # Will be handled with activity stream
                 
             elif any(cmd in user_command for cmd in ["execute", "run", "do this"]):
                 message_obj["status"] = "processing"
                 message_obj["action"] = "execute_task"
-                coordinator.enqueue_task_from_user(content)
+                coordinator.send_message("user", "executor", "task_request", {"text": content})
                 
             else:
                 message_obj["status"] = "processing"
                 message_obj["action"] = "general_query"
         
-        # Store the message
+        # Store the message via coordinator
         try:
-            coordinator.add_message(message_obj)
-        except:
-            # Fallback if coordinator doesn't have add_message
+            coordinator.send_message(sender_id, receiver_id or "broadcast", "message", {"text": content})
+        except Exception:
             pass
         
         # Log for debugging
@@ -486,10 +484,11 @@ def missions_list(limit: int = 50) -> Dict:
         if not telemetry:
             return {"missions": [], "total": 0}
         
-        missions = telemetry.get_all_missions(limit=limit)
+        stats = telemetry.get_all_stats()
+        total = stats.get('total_missions', 0) if stats else 0
         return {
-            "missions": missions if isinstance(missions, list) else list(missions),
-            "total": len(missions) if missions else 0,
+            "missions": [],
+            "total": total,
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -504,11 +503,11 @@ def missions_get(mission_id: str) -> Dict:
         if not telemetry:
             return {"error": "Telemetry not initialized"}
         
-        mission = telemetry.get_mission(mission_id)
-        if not mission:
+        metrics = telemetry.get_mission_metrics(mission_id)
+        if not metrics:
             return {"error": "Mission not found"}
         
-        return mission
+        return metrics
     except Exception as e:
         logger.error(f"Error in missions_get: {e}")
         return {"error": str(e)}
@@ -579,7 +578,7 @@ def metrics_performance() -> Dict:
         telemetry = _get_telemetry_collector()
         if telemetry:
             try:
-                stats = telemetry.get_all_stats() if hasattr(telemetry, 'get_all_stats') else telemetry.get_overall_stats()
+                stats = telemetry.get_all_stats()
                 return {
                     "success_rate": stats.get('success_rate', 0) if stats else 0,
                     "avg_mission_time": stats.get('avg_mission_time', 0) if stats else 0,
@@ -732,7 +731,7 @@ def tasks_start(task_id: str) -> Dict:
         
         if success:
             task = executor.get_task(task_id)
-            return {"success": True, "task": task.to_dict()}
+            return {"success": True, "task": task.to_dict() if task and hasattr(task, 'to_dict') else {"id": task_id}}
         else:
             return {"success": False, "error": "Failed to start task"}
     except Exception as e:
@@ -751,7 +750,7 @@ def tasks_update_progress(task_id: str, current_step: int, total_steps: int,
         
         if success:
             task = executor.get_task(task_id)
-            return {"success": True, "progress_percent": task.progress_percent}
+            return {"success": True, "progress_percent": task.progress_percent if task else 0}
         else:
             return {"success": False, "error": "Failed to update progress"}
     except Exception as e:
@@ -965,7 +964,7 @@ def nova_execute_with_consensus(task: str, requester: str = "system") -> Dict:
         coro = coordinator.execute_with_consensus(task, requester)
         result = _run_async(coro)
         
-        return result
+        return result or {"status": "failed", "error": "No result"}
     except Exception as e:
         logger.error(f"Error in nova_execute_with_consensus: {e}", exc_info=True)
         return {
@@ -1123,7 +1122,7 @@ def synthesized_tools_list() -> Dict:
         return {"status": "error", "error": str(e)}
 
 
-def synthesized_tools_run(tool_name: str, params: Dict = None) -> Dict:
+def synthesized_tools_run(tool_name: str, params: Optional[Dict] = None) -> Dict:
     """Run a synthesized tool by name with optional parameters."""
     try:
         from src.tools.synthesized.synthesizer import ToolSynthesizer
@@ -1196,7 +1195,7 @@ async def _chat_async(data: Dict) -> Dict:
             cmd = Command(
                 command_type=CommandType.CONVERSATION,
                 description=message,
-                parameters={"query": message},
+                context={"query": message},
                 source="desktop_chat",
                 metadata={"is_conversation": True, "session_id": session_id or ""},
             )
@@ -1224,7 +1223,7 @@ async def _chat_async(data: Dict) -> Dict:
     return {"reply": reply, "session_id": session_id, "source": source}
 
 
-def chat_send(data: Dict = None) -> Dict:
+def chat_send(data: Optional[Dict] = None) -> Dict:
     """Send a chat message to Piddy and get AI response (4-tier failover)."""
     data = data or {}
     return _run_async_long(_chat_async(data))
@@ -1234,7 +1233,7 @@ def chat_send(data: Dict = None) -> Dict:
 # SETTINGS (runtime config — non-secret values)
 # ============================================================================
 
-def settings_get(data: Dict = None) -> Dict:
+def settings_get(data: Optional[Dict] = None) -> Dict:
     """Get all non-secret settings, or update if data is provided."""
     if data:
         return settings_update(data)
@@ -1255,7 +1254,7 @@ def settings_get(data: Dict = None) -> Dict:
         return {"error": str(e)}
 
 
-def settings_update(data: Dict = None) -> Dict:
+def settings_update(data: Optional[Dict] = None) -> Dict:
     """Update runtime settings."""
     data = data or {}
     try:
