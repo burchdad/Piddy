@@ -1106,11 +1106,104 @@ def synthesized_tools_run(tool_name: str, params: Dict = None) -> Dict:
 
 
 # ============================================================================
+# CHAT (Agent conversation via 4-tier LLM failover)
+# ============================================================================
+
+_agent = None
+_session_mgr = None
+_agent_imports_done = False
+
+
+def _ensure_agent_imports():
+    """Lazy-import agent and session manager on first chat call."""
+    global _agent, _session_mgr, _agent_imports_done
+    if _agent_imports_done:
+        return
+    _agent_imports_done = True
+    try:
+        from src.agent.core import BackendDeveloperAgent
+        _agent = BackendDeveloperAgent()
+        logger.info("✅ Agent initialized for RPC chat")
+    except Exception as e:
+        logger.warning(f"⚠️ Agent not available for RPC chat: {e}")
+    try:
+        from src.sessions.manager import get_session_manager
+        _session_mgr = get_session_manager()
+    except Exception:
+        pass
+
+
+async def _chat_async(data: Dict) -> Dict:
+    """Async chat handler — mirrors /api/chat REST endpoint."""
+    from src.agent.core import Command, CommandType, CommandResponse
+
+    message = (data.get("message") or "").strip()
+    session_id = data.get("session_id")
+    user_id = data.get("user_id", "default")
+
+    if not message:
+        return {"error": "Message is required"}
+
+    _ensure_agent_imports()
+
+    # Session tracking
+    if _session_mgr:
+        if not session_id:
+            session = _session_mgr.create_session(user_id=user_id, title=message[:60])
+            session_id = session.session_id
+        _session_mgr.add_message(session_id, "user", message)
+
+    reply = None
+    source = "fallback"
+
+    if _agent is not None:
+        try:
+            cmd = Command(
+                command_type=CommandType.CONVERSATION,
+                description=message,
+                parameters={"query": message},
+                source="desktop_chat",
+                metadata={"is_conversation": True, "session_id": session_id or ""},
+            )
+            response: CommandResponse = await _agent.process_command(cmd)
+            if response.success and response.result:
+                reply = str(response.result)
+                source = response.metadata.get("tier", "agent") if response.metadata else "agent"
+        except Exception as e:
+            logger.error(f"Agent error in RPC chat: {e}", exc_info=True)
+
+    if not reply:
+        reply = (
+            "I'm here but my language models aren't available right now. "
+            "Check the Health page to see what's offline, or configure API keys in Settings."
+        )
+        source = "fallback"
+
+    if _session_mgr and session_id:
+        try:
+            _session_mgr.add_message(session_id, "assistant", reply, {"source": source})
+            _session_mgr.summarize_if_needed(session_id)
+        except Exception:
+            pass
+
+    return {"reply": reply, "session_id": session_id, "source": source}
+
+
+def chat_send(data: Dict = None) -> Dict:
+    """Send a chat message to Piddy and get AI response (4-tier failover)."""
+    data = data or {}
+    return _run_async(_chat_async(data))
+
+
+# ============================================================================
 # RPC ENDPOINT REGISTRY
 # ============================================================================
 # Each entry maps the RPC function name to the Python callable
 
 RPC_ENDPOINTS = {
+    # Chat (AI conversation)
+    "chat": chat_send,
+    
     # System
     "system.overview": system_overview,
     "system.health": system_health,
