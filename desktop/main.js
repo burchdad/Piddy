@@ -126,7 +126,7 @@ function createSplashScreen() {
     skipTaskbar: true,  // Don't show in taskbar
     show: true,  // Show immediately
     transparent: false,
-    icon: path.join(__dirname, 'assets', 'icon.png')
+    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
   });
 
   const splashPath = isDevelopment 
@@ -295,7 +295,7 @@ function createWindow() {
         enableRemoteModule: false,
         sandbox: true
       },
-      icon: path.join(__dirname, 'assets', 'icon.png')
+      icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
     });
 
     log.info('BrowserWindow created successfully');
