@@ -94,6 +94,14 @@ def create_app() -> FastAPI:
     app.include_router(autonomous_router)
     app.include_router(self_healing_router)
     
+    # Mount dashboard API (provides /api/system/overview, /api/chat, /api/doctor, etc.)
+    try:
+        from src.dashboard_api import app as dashboard_app
+        app.mount("/", dashboard_app)
+        logger.info("✅ Dashboard API mounted - all dashboard endpoints available")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not mount dashboard API: {e}")
+    
     @app.on_event("startup")
     async def startup_event():
         """Startup event handler."""

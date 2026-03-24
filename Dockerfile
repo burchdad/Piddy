@@ -19,4 +19,4 @@ COPY . .
 # Run the application
 CMD ["python", "-m", "src.main"]
 
-EXPOSE 8000
+EXPOSE 8001
