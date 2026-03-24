@@ -83,7 +83,9 @@ let pythonProcess = null;
 let backendReady = false;
 let staticServerReady = false;
 
-const isDevelopment = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV_LAUNCH === 'true';
+const isDevelopment = process.env.NODE_ENV === 'development'
+  || process.env.ELECTRON_DEV_LAUNCH === 'true'
+  || !app.isPackaged;  // Running from source tree = dev mode
 
 /**
  * Resolve file paths correctly for both dev and packaged modes
@@ -298,46 +300,52 @@ function createWindow() {
     log.info('BrowserWindow created successfully');
     console.log('[WINDOW] BrowserWindow created, PID:', mainWindow.webContents.getProcessId?.());
 
-    // Use static server for production to avoid file:// CORS issues
-    if (isDevelopment) {
-      log.info('Development mode - loading from localhost:3000');
-      mainWindow.loadURL('http://localhost:3000');
-      mainWindow.webContents.openDevTools();
-    } else {
-      log.info('Production mode - starting static server');
-      console.log('[WINDOW] About to setup UI with static server');
-      
-      // For production, use the static server we started earlier
-      const setupUI = async () => {
-        try {
-          console.log('[WINDOW] setupUI starting');
-          const serverUrl = await startStaticServer();
-          console.log('[WINDOW] setupUI got serverUrl:', serverUrl);
-          
-          if (serverUrl) {
-            log.info(`Loading UI from: ${serverUrl}`);
-            console.log('[WINDOW] Loading URL:', serverUrl);
-            mainWindow.loadURL(serverUrl);
-          } else {
-            log.error('Failed to start static server, falling back to file://');
-            const fallbackPath = `file://${path.join(__dirname, '../frontend/dist/index.html')}`;
-            log.info(`Loading from: ${fallbackPath}`);
-            mainWindow.loadURL(fallbackPath);
+    // Always use static server to avoid file:// CORS issues
+    // In dev mode, try Vite dev server first, then fall back to static server
+    const setupUI = async () => {
+      try {
+        // In dev mode, check if Vite dev server is running
+        if (isDevelopment) {
+          try {
+            const probe = await new Promise((resolve, reject) => {
+              const req = http.get('http://localhost:3000', (res) => resolve(res.statusCode));
+              req.on('error', reject);
+              req.setTimeout(1000, () => { req.destroy(); reject(new Error('timeout')); });
+            });
+            if (probe === 200) {
+              log.info('Development mode - Vite dev server detected on :3000');
+              mainWindow.loadURL('http://localhost:3000');
+              mainWindow.webContents.openDevTools();
+              return;
+            }
+          } catch (_) {
+            log.info('Vite dev server not running, falling back to static server');
           }
-        } catch (err) {
-          log.error(`setupUI error: ${err}`);
-          console.error('[WINDOW] setupUI error:', err);
+        }
+
+        // Use static server for production build (works in both dev and packaged mode)
+        log.info('Starting static file server for frontend/dist...');
+        const serverUrl = await startStaticServer();
+        
+        if (serverUrl) {
+          log.info(`Loading UI from: ${serverUrl}`);
+          mainWindow.loadURL(serverUrl);
+        } else {
+          log.error('Failed to start static server, falling back to file://');
           const fallbackPath = `file://${path.join(__dirname, '../frontend/dist/index.html')}`;
+          log.info(`Loading from: ${fallbackPath}`);
           mainWindow.loadURL(fallbackPath);
         }
-      };
-      
-      console.log('[WINDOW] Calling setupUI');
-      setupUI().catch(err => {
-        log.error(`setupUI promise error: ${err}`);
-        console.error('[WINDOW] setupUI promise error:', err);
-      });
-    }
+      } catch (err) {
+        log.error(`setupUI error: ${err}`);
+        const fallbackPath = `file://${path.join(__dirname, '../frontend/dist/index.html')}`;
+        mainWindow.loadURL(fallbackPath);
+      }
+    };
+    
+    setupUI().catch(err => {
+      log.error(`setupUI promise error: ${err}`);
+    });
 
     log.info('Window loading initiated');
     console.log('[WINDOW] Window loading initiated');
@@ -394,20 +402,26 @@ function createWindow() {
 }
 
 /**
- * Create application menu
+ * Create application menu — VS Code-inspired, Piddy-tailored
  */
 function createMenu() {
+  const nav = (page) => () => {
+    if (mainWindow) mainWindow.webContents.send('menu:navigate', page);
+  };
+  const action = (name) => () => {
+    if (mainWindow) mainWindow.webContents.send('menu:action', name);
+  };
+
   const template = [
     {
       label: 'File',
       submenu: [
-        {
-          label: 'Exit',
-          accelerator: 'CmdOrCtrl+Q',
-          click: () => {
-            app.quit();
-          }
-        }
+        { label: 'New Chat', accelerator: 'CmdOrCtrl+N', click: action('new-chat') },
+        { type: 'separator' },
+        { label: 'Export Data', click: nav('export') },
+        { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: nav('settings') },
+        { type: 'separator' },
+        { label: 'Exit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
       ]
     },
     {
@@ -418,12 +432,53 @@ function createMenu() {
         { type: 'separator' },
         { role: 'cut' },
         { role: 'copy' },
-        { role: 'paste' }
+        { role: 'paste' },
+        { role: 'selectAll' },
+        { type: 'separator' },
+        { label: 'Find in Logs', accelerator: 'CmdOrCtrl+F', click: nav('logs') }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Toggle Sidebar', accelerator: 'CmdOrCtrl+B', click: action('toggle-sidebar') },
+        { label: 'Toggle Chat Panel', accelerator: 'CmdOrCtrl+J', click: action('toggle-chat') },
+        { type: 'separator' },
+        { label: 'Overview', click: nav('overview') },
+        { label: 'System Health', click: nav('doctor') },
+        { label: 'Agents', click: nav('agents') },
+        { label: 'Missions', click: nav('missions') },
+        { type: 'separator' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { role: 'resetZoom' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Go',
+      submenu: [
+        { label: 'Chat', accelerator: 'CmdOrCtrl+1', click: action('open-chat') },
+        { label: 'Overview', accelerator: 'CmdOrCtrl+2', click: nav('overview') },
+        { label: 'Health', accelerator: 'CmdOrCtrl+3', click: nav('doctor') },
+        { label: 'Skills', accelerator: 'CmdOrCtrl+4', click: nav('skills') },
+        { label: 'Agents', accelerator: 'CmdOrCtrl+5', click: nav('agents') },
+        { type: 'separator' },
+        { label: 'History', click: nav('sessions') },
+        { label: 'Logs', click: nav('logs') },
+        { label: 'Scanner', click: nav('scanner') },
+        { label: 'Updates', click: nav('updater') }
       ]
     },
     {
       label: 'Help',
       submenu: [
+        { label: 'Keyboard Shortcuts', accelerator: 'CmdOrCtrl+K CmdOrCtrl+S', click: action('show-shortcuts') },
+        { type: 'separator' },
+        { label: 'System Health Check', click: nav('doctor') },
+        { label: 'Check for Updates', click: nav('updater') },
+        { type: 'separator' },
         {
           label: 'About Piddy',
           click: () => {
@@ -431,7 +486,7 @@ function createMenu() {
               type: 'info',
               title: 'About Piddy',
               message: 'Piddy - AI Backend Developer Agent',
-              detail: 'Desktop Client v1.0.0\n\nGet help at: https://github.com/burchdad/Piddy'
+              detail: 'Desktop Client v1.0.0\n\nBuilt with Electron + React + Python'
             });
           }
         }
@@ -644,7 +699,7 @@ function startPythonBackend() {
         spawnArgs = []; // Binary runs standalone, no args needed
       } else {
         log.info(`Using Python interpreter: ${pythonExe}`);
-        spawnArgs = [scriptPath, '--desktop', '--rpc-mode'];  // Add --rpc-mode for direct RPC communication
+        spawnArgs = ['-u', scriptPath, '--desktop', '--rpc-mode'];  // -u for unbuffered stdio, --rpc-mode for direct RPC
       }
       
       log.info(`Step 3: About to spawn: ${spawnCmd} ${spawnArgs.join(' ')}`);
@@ -655,7 +710,7 @@ function startPythonBackend() {
         stdio: ['pipe', 'pipe', 'pipe'],  // Changed to 'pipe' for stdin to support RPC communication
         windowsHide: true,
         cwd: scriptDir,
-        env: { ...process.env }
+        env: { ...process.env, PYTHONUNBUFFERED: '1' }
       });
 
       log.info(`Step 4: Process spawned, PID: ${pythonProcess ? pythonProcess.pid : 'null'}`);

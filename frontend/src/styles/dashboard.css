@@ -74,7 +74,7 @@
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px);
+  height: 100%;
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
@@ -524,7 +524,7 @@
 
 .doctor-summary {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
@@ -540,6 +540,7 @@
 .doctor-summary-card.doctor-ok { border-left: 3px solid var(--success-color); }
 .doctor-summary-card.doctor-warn { border-left: 3px solid var(--warning-color); }
 .doctor-summary-card.doctor-error { border-left: 3px solid var(--danger-color); }
+.doctor-summary-card.doctor-skip { border-left: 3px solid #888; }
 .doctor-summary-card.doctor-total { border-left: 3px solid var(--info-color); }
 
 .doctor-summary-num {
@@ -609,6 +610,7 @@
 .doctor-check.doctor-ok { border-left: 3px solid var(--success-color); }
 .doctor-check.doctor-warn { border-left: 3px solid var(--warning-color); }
 .doctor-check.doctor-error { border-left: 3px solid var(--danger-color); }
+.doctor-check.doctor-skip { border-left: 3px solid #888; opacity: 0.7; }
 
 .doctor-check-icon {
   font-size: 1.1rem;

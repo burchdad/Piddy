@@ -1,0 +1,13 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.search-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+#weather-display, #forecast-table {
+    margin: 20px auto;
+    width: 50%;
+}

@@ -24,12 +24,14 @@ function Doctor() {
   const statusIcon = (s) => {
     if (s === 'ok') return '✅';
     if (s === 'warn') return '⚠️';
+    if (s === 'skip') return '⏭️';
     return '❌';
   };
 
   const statusClass = (s) => {
     if (s === 'ok') return 'doctor-ok';
     if (s === 'warn') return 'doctor-warn';
+    if (s === 'skip') return 'doctor-skip';
     return 'doctor-error';
   };
 
@@ -38,6 +40,7 @@ function Doctor() {
   const okCount = checks.filter(c => c.status === 'ok').length;
   const warnCount = checks.filter(c => c.status === 'warn').length;
   const errorCount = checks.filter(c => c.status === 'error').length;
+  const skipCount = checks.filter(c => c.status === 'skip').length;
 
   return (
     <div className="doctor-page">
@@ -66,6 +69,10 @@ function Doctor() {
         <div className="doctor-summary-card doctor-error">
           <div className="doctor-summary-num">{errorCount}</div>
           <div className="doctor-summary-label">Errors</div>
+        </div>
+        <div className="doctor-summary-card doctor-skip">
+          <div className="doctor-summary-num">{skipCount}</div>
+          <div className="doctor-summary-label">Skipped</div>
         </div>
         <div className="doctor-summary-card doctor-total">
           <div className="doctor-summary-num">{checks.length}</div>

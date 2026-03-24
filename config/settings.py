@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     
     # Local LLM (Ollama) - works completely offline
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3.2:3b"
+    ollama_model: str = "qwen2.5-coder:7b"
     ollama_enabled: bool = True  # Auto-detected: tries Ollama if cloud LLMs fail
     local_only: bool = False  # When True, never call cloud APIs (Anthropic/OpenAI) — Ollama only
     

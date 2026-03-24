@@ -15,7 +15,7 @@ function getBackendUrl() {
   }
   
   // Default to localhost for development
-  return 'http://localhost:8000';
+  return 'http://localhost:8889';
 }
 
 /**

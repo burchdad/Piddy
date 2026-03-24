@@ -85,12 +85,18 @@ class StdioProtocol extends EventEmitter {
       return;
     }
     
+    // Only attempt to parse lines that look like JSON objects
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('{')) {
+      // Non-JSON output from Python (startup banners, logs, etc.) — skip silently
+      return;
+    }
+    
     try {
-      const message = JSON.parse(line);
+      const message = JSON.parse(trimmed);
       this.emit('message', message);
     } catch (err) {
-      console.error('[Stdio Protocol] Failed to parse JSON:', line);
-      this.emit('error', new Error(`JSON parse error: ${err.message}`));
+      console.warn('[Stdio Protocol] Skipped malformed JSON line');
     }
   }
   

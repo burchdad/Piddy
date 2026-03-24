@@ -326,7 +326,7 @@ def _check_agents() -> Dict[str, Any]:
         from src.coordination.agent_coordinator import get_coordinator
         coordinator = get_coordinator()
         agents = coordinator.get_all_agents()
-        online = [a for a in agents if getattr(a, "status", "offline") == "online"]
+        online = [a for a in agents if getattr(a, "is_available", False)]
         return {
             "name": "Agent System",
             "status": "ok" if len(agents) >= 15 else ("warn" if agents else "error"),

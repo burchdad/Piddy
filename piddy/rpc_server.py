@@ -234,7 +234,10 @@ class RPCServer:
         logger.info("RPC Server listening on stdin")
         
         try:
-            for line in sys.stdin:
+            while True:
+                line = sys.stdin.readline()
+                if not line:  # EOF
+                    break
                 line = line.strip()
                 if not line:
                     continue

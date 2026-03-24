@@ -9,7 +9,7 @@ import { apiCall } from '../utils/api';
 const hasElectronStream = () =>
   !!(window.piddy?.streamManager || (typeof global !== 'undefined' && global.streamManager));
 
-function Chat({ onOpenSessions }) {
+function Chat({ onOpenSessions, onFilesCreated }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState(null);
@@ -59,15 +59,32 @@ function Chat({ onOpenSessions }) {
     const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
 
     if (isElectron) {
-      // Electron: send via RPC, stream will push the response
+      // Electron: send via chat RPC for full AI + file actions support
+      setMessages(prev => [...prev, userMsg]);
       setInput('');
       setIsTyping(true);
       setError(null);
       try {
-        await apiCall('/api/messages/send', {
+        const data = await apiCall('/api/chat', {
           method: 'POST',
-          data: { sender_id: 'user', receiver_id: 'Piddy', content: text, priority: 2 },
+          data: { message: text, session_id: sessionId },
+          timeout: 120000,
         });
+        if (data.error) { setError(data.error); setIsTyping(false); return; }
+        if (data.session_id) setSessionId(data.session_id);
+
+        const actions = data.actions || null;
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: data.reply,
+          source: data.source,
+          actions,
+          timestamp: new Date().toISOString(),
+        }]);
+
+        if (actions && actions.length > 0 && onFilesCreated) {
+          onFilesCreated(actions);
+        }
       } catch (err) {
         setError(`Send failed: ${err.message}`);
       } finally {
@@ -90,13 +107,19 @@ function Chat({ onOpenSessions }) {
         if (data.error) { setError(data.error); setIsTyping(false); return; }
         if (data.session_id) setSessionId(data.session_id);
 
+        const actions = data.actions || null;
         setMessages(prev => [...prev, {
           role: 'assistant',
           content: data.reply,
           source: data.source,
-          actions: data.actions || null,
+          actions,
           timestamp: new Date().toISOString(),
         }]);
+
+        // Open files in code panel when Piddy creates them
+        if (actions && actions.length > 0 && onFilesCreated) {
+          onFilesCreated(actions);
+        }
       } catch (err) {
         setError('Failed to reach Piddy. Is the backend running?');
       } finally {
@@ -233,14 +256,29 @@ function Chat({ onOpenSessions }) {
 
       {/* Input */}
       <form onSubmit={sendMessage} className="chat-input-bar">
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Ask Piddy anything..."
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(e); } }}
+          onPaste={e => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+              if (item.type.startsWith('image/')) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                const reader = new FileReader();
+                reader.onload = () => setInput(prev => prev + `[Image: ${file.name || 'screenshot.png'}]`);
+                reader.readAsDataURL(file);
+                return;
+              }
+            }
+          }}
+          placeholder="Ask Piddy anything... (Shift+Enter for new line)"
           disabled={isTyping}
           className="chat-input"
+          rows={1}
         />
         <button type="submit" disabled={!input.trim() || isTyping} className="chat-send-btn">
           {isTyping ? (

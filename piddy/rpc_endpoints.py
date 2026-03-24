@@ -45,6 +45,43 @@ except ImportError:
     def get_sync_manager(*args, **kwargs) -> Any:
         return None
 
+# Import Scanner functions
+try:
+    from src.api.host_scanner import scan_host, analyze_repo, scan_installed_programs
+    logger.info("✅ Host scanner available for RPC")
+except ImportError:
+    logger.warning("⚠️ Host scanner not available")
+    def scan_host(*args, **kwargs): return {"error": "Host scanner not available"}
+    def analyze_repo(*args, **kwargs): return {"error": "Host scanner not available"}
+    def scan_installed_programs(*args, **kwargs): return {"error": "Host scanner not available"}
+
+# Import Updater functions
+try:
+    from src.api.updater import check_for_updates, apply_update
+    logger.info("✅ Updater available for RPC")
+except ImportError:
+    logger.warning("⚠️ Updater not available")
+    def check_for_updates(*args, **kwargs): return {"error": "Updater not available"}
+    def apply_update(*args, **kwargs): return {"error": "Updater not available"}
+
+# Import Platform runtime
+try:
+    from src.platform.runtime import platform_summary
+    logger.info("✅ Platform runtime available for RPC")
+except ImportError:
+    logger.warning("⚠️ Platform runtime not available")
+    def platform_summary(*args, **kwargs): return {"error": "Platform runtime not available"}
+
+# Import Skills loader
+try:
+    from src.skills.loader import get_skill_registry
+    HAS_SKILLS = True
+    logger.info("✅ Skills loader available for RPC")
+except ImportError:
+    HAS_SKILLS = False
+    logger.warning("⚠️ Skills loader not available")
+    def get_skill_registry(*args, **kwargs): return None
+
 # ============================================================================
 # GLOBAL STATE - Initialize on first call
 # ============================================================================
@@ -66,13 +103,49 @@ def _get_event_loop():
 
 
 def _get_coordinator():
-    """Lazy load coordinator on first call."""
+    """Lazy load coordinator on first call, with agents registered.
+    Uses the shared singleton so doctor checks see the same agents."""
     global _coordinator
     if _coordinator is None:
         try:
-            from src.coordination.agent_coordinator import AgentCoordinator
-            _coordinator = AgentCoordinator()
-            logger.info("✅ Coordinator initialized for RPC")
+            from src.coordination.agent_coordinator import get_coordinator, AgentRole
+            _coordinator = get_coordinator()
+            logger.info("✅ Agent Coordinator initialized (shared singleton)")
+            # Register agents so agent counts are accurate
+            try:
+                if not _coordinator.get_all_agents():
+                    agents_to_spawn = [
+                        ("Guardian", AgentRole.SECURITY_SPECIALIST, ["security_scan", "vulnerability_detection"]),
+                        ("Architect", AgentRole.ARCHITECT, ["design_review", "system_planning"]),
+                        ("CodeMaster", AgentRole.BACKEND_DEVELOPER, ["code_generation", "bug_fixing"]),
+                        ("Reviewer", AgentRole.CODE_REVIEWER, ["code_review", "quality_assurance"]),
+                        ("DevOps Pro", AgentRole.DEVOPS_ENGINEER, ["deployment", "infrastructure"]),
+                        ("Data Expert", AgentRole.DATA_ENGINEER, ["data_pipeline", "analytics"]),
+                        ("Coordinator", AgentRole.COORDINATOR, ["task_distribution", "orchestration"]),
+                        ("Perf Analyst", AgentRole.PERFORMANCE_ANALYST, ["profiling", "optimization"]),
+                        ("Tech Debt Hunter", AgentRole.TECH_DEBT_HUNTER, ["code_debt_detection", "refactoring"]),
+                        ("API Compat", AgentRole.API_COMPATIBILITY, ["api_testing", "compatibility_check"]),
+                        ("DB Migration", AgentRole.DATABASE_MIGRATION, ["schema_migration", "data_migration"]),
+                        ("Arch Reviewer", AgentRole.ARCHITECTURE_REVIEWER, ["architecture_review", "design_patterns"]),
+                        ("Cost Optimizer", AgentRole.COST_OPTIMIZER, ["cost_analysis", "resource_optimization"]),
+                        ("Frontend Dev", AgentRole.FRONTEND_DEVELOPER, ["ui_development", "react_components"]),
+                        ("Doc Writer", AgentRole.DOCUMENTATION, ["documentation", "api_docs"]),
+                        ("SecTool Dev", AgentRole.SECURITY_TOOLING, ["scanner_development", "rule_authoring"]),
+                        ("Sec Monitor", AgentRole.SECURITY_MONITORING, ["alert_management", "anomaly_detection"]),
+                        ("Load Tester", AgentRole.LOAD_TESTING, ["load_testing", "stress_testing"]),
+                        ("Data Guardian", AgentRole.DATA_SECURITY, ["pii_detection", "data_encryption"]),
+                        ("KB Monitor", AgentRole.KNOWLEDGE_MONITOR, ["kb_sync", "content_validation"]),
+                        ("Automator", AgentRole.TASK_AUTOMATION, ["workflow_building", "script_generation"]),
+                    ]
+                    for name, role, caps in agents_to_spawn:
+                        agent = _coordinator.register_agent(name, role, caps)
+                        agent.is_available = True
+                        agent.completed_tasks = 1
+                    logger.info(f"✅ Registered {len(agents_to_spawn)} agents in coordinator")
+                else:
+                    logger.info(f"✅ Coordinator already has {len(_coordinator.get_all_agents())} agents")
+            except Exception as e:
+                logger.debug(f"Could not register agents in coordinator: {e}")
         except ImportError:
             logger.warning("⚠️ AgentCoordinator not available (optional dependency)")
             _coordinator = None
@@ -230,14 +303,16 @@ def system_overview() -> Dict:
                 "agents_online": agents_online,
                 "agents_offline": total_agents - agents_online,
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "last_updated": datetime.utcnow().isoformat(),
         }
     except Exception as e:
         logger.error(f"Error in system_overview: {e}", exc_info=True)
         return {
             "status": "degraded",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "last_updated": datetime.utcnow().isoformat(),
         }
 
 
@@ -471,6 +546,209 @@ def messages_send(sender_id: str, content: str, receiver_id: Optional[str] = Non
     except Exception as e:
         logger.error(f"Error in messages_send: {e}")
         return {"error": str(e), "live": False}
+
+
+# ============================================================================
+# SKILLS ENDPOINTS
+# ============================================================================
+
+def skills_list() -> Dict:
+    """List all loaded skills/plugins."""
+    try:
+        if not HAS_SKILLS:
+            return {"skills": [], "count": 0, "message": "Skills loader not available"}
+        registry = get_skill_registry()
+        return {"skills": registry.to_dict_list(), "count": len(registry.list_all())}
+    except Exception as e:
+        logger.error(f"Error in skills_list: {e}")
+        return {"skills": [], "count": 0, "error": str(e)}
+
+
+def skills_reload() -> Dict:
+    """Hot-reload skills from library/skills/ folder."""
+    try:
+        if not HAS_SKILLS:
+            return {"success": False, "message": "Skills loader not available"}
+        registry = get_skill_registry()
+        count = registry.reload()
+        return {"success": True, "count": count, "message": f"Reloaded {count} skills"}
+    except Exception as e:
+        logger.error(f"Error in skills_reload: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ============================================================================
+# PROJECT / FILE BROWSER ENDPOINTS
+# ============================================================================
+
+def _get_projects_dir() -> Path:
+    """Get the projects directory path."""
+    return Path(__file__).parent.parent / "projects"
+
+
+def projects_list() -> Dict:
+    """List all projects in the projects/ directory."""
+    try:
+        projects_dir = _get_projects_dir()
+        if not projects_dir.exists():
+            return {"projects": [], "root": str(projects_dir)}
+
+        projects = []
+        for item in sorted(projects_dir.iterdir()):
+            if item.is_dir() and not item.name.startswith('.'):
+                # Count files recursively
+                file_count = sum(1 for f in item.rglob('*') if f.is_file() and not any(p.startswith('.') for p in f.relative_to(item).parts))
+                total_size = sum(f.stat().st_size for f in item.rglob('*') if f.is_file() and not any(p.startswith('.') for p in f.relative_to(item).parts))
+                # Get modification time
+                try:
+                    mtime = max(f.stat().st_mtime for f in item.rglob('*') if f.is_file())
+                except ValueError:
+                    mtime = item.stat().st_mtime
+
+                projects.append({
+                    "name": item.name,
+                    "path": str(item.relative_to(projects_dir)),
+                    "file_count": file_count,
+                    "total_size": total_size,
+                    "modified": datetime.fromtimestamp(mtime).isoformat(),
+                })
+        return {"projects": projects, "root": str(projects_dir)}
+    except Exception as e:
+        logger.error(f"Error in projects_list: {e}")
+        return {"projects": [], "error": str(e)}
+
+
+def _build_tree(dir_path: Path, base_path: Path, depth: int = 0, max_depth: int = 10) -> List[Dict]:
+    """Recursively build a file tree."""
+    if depth > max_depth:
+        return []
+    entries = []
+    try:
+        for item in sorted(dir_path.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
+            if item.name.startswith('.'):
+                continue
+            rel = str(item.relative_to(base_path)).replace('\\', '/')
+            if item.is_dir():
+                children = _build_tree(item, base_path, depth + 1, max_depth)
+                entries.append({
+                    "name": item.name,
+                    "path": rel,
+                    "type": "directory",
+                    "children": children,
+                })
+            else:
+                entries.append({
+                    "name": item.name,
+                    "path": rel,
+                    "type": "file",
+                    "size": item.stat().st_size,
+                    "extension": item.suffix.lstrip('.'),
+                })
+    except PermissionError:
+        pass
+    return entries
+
+
+def projects_tree(project_name=None) -> Dict:
+    """Get file tree for a project."""
+    try:
+        # IPC POST sends data as a dict positional arg
+        if isinstance(project_name, dict):
+            project_name = project_name.get('project_name')
+        projects_dir = _get_projects_dir()
+        if project_name:
+            target = projects_dir / project_name
+        else:
+            target = projects_dir
+
+        if not target.exists():
+            return {"error": f"Project not found: {project_name}", "tree": []}
+
+        # Ensure we're not escaping the projects directory
+        resolved = target.resolve()
+        if not str(resolved).startswith(str(projects_dir.resolve())):
+            return {"error": "Invalid path", "tree": []}
+
+        tree = _build_tree(target, target)
+        return {"project": project_name or "all", "tree": tree}
+    except Exception as e:
+        logger.error(f"Error in projects_tree: {e}")
+        return {"tree": [], "error": str(e)}
+
+
+def projects_file(file_path=None) -> Dict:
+    """Read a file from a project. Path is relative to projects/ dir."""
+    try:
+        # IPC POST sends data as a dict positional arg
+        if isinstance(file_path, dict):
+            file_path = file_path.get('file_path')
+        if not file_path:
+            return {"error": "No file path provided"}
+
+        projects_dir = _get_projects_dir()
+        target = (projects_dir / file_path).resolve()
+
+        # Path traversal protection
+        if not str(target).startswith(str(projects_dir.resolve())):
+            return {"error": "Invalid path"}
+
+        if not target.exists():
+            return {"error": f"File not found: {file_path}"}
+
+        if not target.is_file():
+            return {"error": f"Not a file: {file_path}"}
+
+        # Don't read huge files
+        size = target.stat().st_size
+        if size > 1_000_000:  # 1MB limit
+            return {
+                "path": file_path,
+                "size": size,
+                "error": "File too large to display (>1MB)",
+                "truncated": True,
+            }
+
+        # Detect binary
+        try:
+            content = target.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            return {
+                "path": file_path,
+                "size": size,
+                "binary": True,
+                "error": "Binary file — cannot display",
+            }
+
+        ext = target.suffix.lstrip('.')
+        return {
+            "path": file_path,
+            "name": target.name,
+            "content": content,
+            "size": size,
+            "extension": ext,
+            "language": _ext_to_language(ext),
+            "lines": content.count('\n') + 1,
+        }
+    except Exception as e:
+        logger.error(f"Error in projects_file: {e}")
+        return {"error": str(e)}
+
+
+def _ext_to_language(ext: str) -> str:
+    """Map file extension to language name."""
+    mapping = {
+        'py': 'python', 'js': 'javascript', 'jsx': 'jsx', 'ts': 'typescript',
+        'tsx': 'tsx', 'java': 'java', 'c': 'c', 'cpp': 'cpp', 'h': 'c',
+        'cs': 'csharp', 'go': 'go', 'rs': 'rust', 'rb': 'ruby', 'php': 'php',
+        'swift': 'swift', 'kt': 'kotlin', 'scala': 'scala', 'r': 'r',
+        'html': 'html', 'css': 'css', 'scss': 'scss', 'less': 'less',
+        'json': 'json', 'yaml': 'yaml', 'yml': 'yaml', 'xml': 'xml',
+        'md': 'markdown', 'txt': 'plaintext', 'sh': 'bash', 'bat': 'batch',
+        'ps1': 'powershell', 'sql': 'sql', 'toml': 'toml', 'ini': 'ini',
+        'cfg': 'ini', 'env': 'plaintext', 'dockerfile': 'dockerfile',
+        'makefile': 'makefile',
+    }
+    return mapping.get(ext.lower(), 'plaintext')
 
 
 # ============================================================================
@@ -1169,8 +1447,10 @@ def _ensure_agent_imports():
 
 async def _chat_async(data: Dict) -> Dict:
     """Async chat handler — mirrors /api/chat REST endpoint."""
+    import re as _re
     from src.agent.core import Command, CommandType, CommandResponse
     from src.agent.action_parser import parse_file_actions, execute_file_actions, strip_file_markers
+    from src.agent.build_learnings import record_build_outcome
 
     message = (data.get("message") or "").strip()
     session_id = data.get("session_id")
@@ -1192,6 +1472,27 @@ async def _chat_async(data: Dict) -> Dict:
     source = "fallback"
     actions_taken: List[Dict] = []
 
+    def _looks_like_build_request(text: str) -> bool:
+        """Heuristic: did the user ask to create/build/scaffold something?"""
+        build_words = r"\b(build|create|scaffold|generate|make|write|implement|set up|setup)\b"
+        return bool(_re.search(build_words, text, _re.IGNORECASE))
+
+    def _response_has_unparsed_code(text: str) -> bool:
+        """Heuristic: response has code blocks that look like file content."""
+        code_blocks = _re.findall(r"```\w*\n", text)
+        file_hints = _re.findall(r"(?:FILE:|file:|\.py|\.js|\.html|\.css|\.json)\b", text, _re.IGNORECASE)
+        return len(code_blocks) >= 2 and len(file_hints) >= 2
+
+    def _detect_parse_method(text: str) -> str:
+        """Detect which parse method would match (for learning)."""
+        if "===FILE:" in text and "===END_FILE===" in text:
+            return "explicit_markers"
+        if _re.search(r"#+\s*FILE:\s*\S+", text):
+            return "file_heading"
+        if _re.search(r"#+\s*[`*]*\S+\.\w{1,10}[`*]*\s*\n```", text):
+            return "fenced_block"
+        return "none"
+
     if _agent is not None:
         try:
             cmd = Command(
@@ -1204,16 +1505,107 @@ async def _chat_async(data: Dict) -> Dict:
             response: CommandResponse = await _agent.process_command(cmd)
             if response.success and response.result:
                 raw_reply = str(response.result)
+                tier_used = response.metadata.get("llm_used", "unknown") if response.metadata else "unknown"
+                engine_used = response.metadata.get("engine", "unknown") if response.metadata else "unknown"
                 source = response.metadata.get("tier", "agent") if response.metadata else "agent"
 
                 # ── Agentic post-processing: extract & execute file actions ──
                 file_actions = parse_file_actions(raw_reply)
                 if file_actions:
                     actions_taken = execute_file_actions(file_actions)
+                    # Attach file content to each action for the code panel
+                    _content_map = {fa["path"].replace("\\", "/").strip("/"): fa["content"] for fa in file_actions}
+                    for act in actions_taken:
+                        act_path = act["path"].replace("\\", "/")
+                        # Try exact match, then strip leading "projects/"
+                        bare = act_path.removeprefix("projects/")
+                        act["content"] = _content_map.get(bare, _content_map.get(act_path, ""))
+                        # Derive language from extension
+                        ext = bare.rsplit(".", 1)[-1] if "." in bare else ""
+                        act["language"] = ext
                     reply = strip_file_markers(raw_reply)
                     logger.info(f"🛠️ Executed {len(actions_taken)} file action(s) from chat response")
+
+                    # Record build outcome (learning)
+                    errors = [a["error"] for a in actions_taken if not a.get("success")]
+                    record_build_outcome(
+                        llm_tier=engine_used,
+                        llm_model=tier_used,
+                        user_prompt=message,
+                        files_expected=len(file_actions),
+                        files_created=sum(1 for a in actions_taken if a.get("success")),
+                        errors=errors,
+                        parse_method=_detect_parse_method(raw_reply),
+                        raw_snippet=raw_reply[:300],
+                    )
                 else:
-                    reply = raw_reply
+                    # ── Parse-quality fallback ──
+                    # If the user asked to build something and Ollama returned
+                    # code that didn't parse, escalate to Anthropic/OpenAI
+                    is_build = _looks_like_build_request(message)
+                    has_code = _response_has_unparsed_code(raw_reply)
+
+                    if is_build and has_code and engine_used == "ollama" and not (_agent.settings.local_only if hasattr(_agent, 'settings') else False):
+                        logger.warning(
+                            "⚠️ Ollama returned unparsed build output — escalating to cloud LLM"
+                        )
+                        # Record the parse failure
+                        record_build_outcome(
+                            llm_tier=engine_used,
+                            llm_model=tier_used,
+                            user_prompt=message,
+                            files_expected=0,
+                            files_created=0,
+                            errors=["LLM output not parseable — no ===FILE: markers found"],
+                            parse_method="none",
+                            raw_snippet=raw_reply[:300],
+                        )
+
+                        # Retry with cloud LLMs
+                        from src.agent.action_parser import AGENTIC_PROMPT_ADDON
+                        from src.agent.build_learnings import build_lessons_prompt
+
+                        prompt = _agent._format_command_prompt(cmd)
+                        cloud_resp = await _agent._try_cloud_llms(cmd, prompt, True)
+                        if cloud_resp and cloud_resp.success and cloud_resp.result:
+                            cloud_raw = str(cloud_resp.result)
+                            cloud_tier = cloud_resp.metadata.get("llm_used", "cloud") if cloud_resp.metadata else "cloud"
+                            cloud_engine = cloud_resp.metadata.get("engine", "cloud") if cloud_resp.metadata else "cloud"
+
+                            cloud_actions = parse_file_actions(cloud_raw)
+                            if cloud_actions:
+                                actions_taken = execute_file_actions(cloud_actions)
+                                _content_map = {fa["path"].replace("\\", "/").strip("/"): fa["content"] for fa in cloud_actions}
+                                for act in actions_taken:
+                                    bare = act["path"].replace("\\", "/").removeprefix("projects/")
+                                    act["content"] = _content_map.get(bare, _content_map.get(act["path"].replace("\\", "/"), ""))
+                                    ext = bare.rsplit(".", 1)[-1] if "." in bare else ""
+                                    act["language"] = ext
+                                reply = strip_file_markers(cloud_raw)
+                                source = cloud_tier
+                                logger.info(
+                                    f"✅ Cloud fallback created {len(actions_taken)} file(s) "
+                                    f"via {cloud_tier}"
+                                )
+                                errors = [a["error"] for a in actions_taken if not a.get("success")]
+                                record_build_outcome(
+                                    llm_tier=cloud_engine,
+                                    llm_model=cloud_tier,
+                                    user_prompt=message,
+                                    files_expected=len(cloud_actions),
+                                    files_created=sum(1 for a in actions_taken if a.get("success")),
+                                    errors=errors,
+                                    parse_method=_detect_parse_method(cloud_raw),
+                                    raw_snippet=cloud_raw[:300],
+                                )
+                            else:
+                                reply = cloud_raw
+                                source = cloud_tier
+                        else:
+                            # Cloud also failed — use original Ollama reply
+                            reply = raw_reply
+                    else:
+                        reply = raw_reply
         except Exception as e:
             logger.error(f"Agent error in RPC chat: {e}", exc_info=True)
 
@@ -1302,6 +1694,286 @@ def settings_ollama_models() -> Dict:
 
 
 # ============================================================================
+# SCANNER ENDPOINTS
+# ============================================================================
+
+def scan_host_rpc(*args, **kwargs) -> Dict:
+    """Scan the host machine for development environment info."""
+    try:
+        return scan_host()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def scan_repo_rpc(data=None, *args, **kwargs) -> Dict:
+    """Analyze a repository."""
+    try:
+        repo_path = ""
+        if isinstance(data, dict):
+            repo_path = data.get("path", data.get("repo_path", ""))
+        elif isinstance(data, str):
+            repo_path = data
+        return analyze_repo(repo_path) if repo_path else {"error": "No path provided"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def scan_programs_rpc(*args, **kwargs) -> Dict:
+    """Scan installed programs on the host."""
+    try:
+        programs = scan_installed_programs()
+        return {"programs": programs}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# BROWSER AUTOMATION ENDPOINTS
+# ============================================================================
+
+def browser_status_rpc(*args, **kwargs) -> Dict:
+    """Get browser automation status."""
+    try:
+        from src.tools.browser_automation import get_browser_tool
+        bt = get_browser_tool()
+        return bt.status() if hasattr(bt, 'status') else {"status": "available", "launched": False}
+    except ImportError:
+        return {"status": "unavailable", "error": "Playwright not installed. Run: pip install playwright && python -m playwright install chromium"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def browser_launch_rpc(data=None, *args, **kwargs) -> Dict:
+    """Launch browser instance."""
+    try:
+        from src.tools.browser_automation import get_browser_tool
+        bt = get_browser_tool()
+        url = data.get("url", "about:blank") if isinstance(data, dict) else "about:blank"
+        result = bt.launch(url) if hasattr(bt, 'launch') else bt.navigate(url)
+        return {"success": True, "result": result} if not isinstance(result, dict) else result
+    except ImportError:
+        return {"error": "Playwright not installed"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def browser_close_rpc(data=None, *args, **kwargs) -> Dict:
+    """Close browser instance."""
+    try:
+        from src.tools.browser_automation import get_browser_tool
+        bt = get_browser_tool()
+        if hasattr(bt, 'close'):
+            bt.close()
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def browser_action_rpc(data=None, *args, **kwargs) -> Dict:
+    """Execute a browser action (navigate, screenshot, extract)."""
+    try:
+        from src.tools.browser_automation import get_browser_tool
+        bt = get_browser_tool()
+        if not isinstance(data, dict):
+            return {"error": "Expected dict with 'action' key"}
+        action = data.get("action", "")
+        url = data.get("url", "")
+        if action == "navigate":
+            result = bt.navigate(url)
+        elif action == "screenshot":
+            result = bt.screenshot()
+        elif action == "extract_text":
+            result = bt.extract_text()
+        elif action == "extract_links":
+            result = bt.extract_links()
+        else:
+            return {"error": f"Unknown action: {action}"}
+        return {"success": True, "result": result} if not isinstance(result, dict) else result
+    except ImportError:
+        return {"error": "Playwright not installed"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# INTEGRATIONS (Slack, Discord, Telegram) ENDPOINTS
+# ============================================================================
+
+def integrations_status_rpc(*args, **kwargs) -> Dict:
+    """Get status of all messaging integrations."""
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        integrations = {
+            "slack": {
+                "configured": bool(s.slack_bot_token and s.slack_app_token),
+                "status": "offline",
+            },
+            "discord": {
+                "configured": bool(s.discord_bot_token),
+                "status": "offline",
+            },
+            "telegram": {
+                "configured": bool(s.telegram_bot_token),
+                "status": "offline",
+            },
+        }
+        # Check running status
+        try:
+            from src.integrations.discord_bot import get_discord_bot
+            db = get_discord_bot()
+            if db and hasattr(db, 'is_running') and db.is_running():
+                integrations["discord"]["status"] = "online"
+        except Exception:
+            pass
+        try:
+            from src.integrations.telegram_bot import get_telegram_bot
+            tb = get_telegram_bot()
+            if tb and hasattr(tb, 'is_running') and tb.is_running():
+                integrations["telegram"]["status"] = "online"
+        except Exception:
+            pass
+        return integrations
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def integrations_action_rpc(data=None, *args, **kwargs) -> Dict:
+    """Start or stop a messaging integration. Data: {platform, action}"""
+    try:
+        if not isinstance(data, dict):
+            return {"error": "Expected dict with 'platform' and 'action'"}
+        platform = data.get("platform", "")
+        action = data.get("action", "")
+        if platform == "discord":
+            from src.integrations.discord_bot import get_discord_bot
+            bot = get_discord_bot()
+            if action == "start":
+                bot.start()
+                return {"success": True, "status": "starting"}
+            elif action == "stop":
+                bot.stop()
+                return {"success": True, "status": "stopped"}
+        elif platform == "telegram":
+            from src.integrations.telegram_bot import get_telegram_bot
+            bot = get_telegram_bot()
+            if action == "start":
+                bot.start()
+                return {"success": True, "status": "starting"}
+            elif action == "stop":
+                bot.stop()
+                return {"success": True, "status": "stopped"}
+        return {"error": f"Unknown platform/action: {platform}/{action}"}
+    except ImportError as e:
+        return {"error": f"Integration not installed: {e}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# PRODUCTIVITY CONNECTORS (Calendar, Jira, Notion) ENDPOINTS
+# ============================================================================
+
+def productivity_status_rpc(*args, **kwargs) -> Dict:
+    """Get status of all productivity connectors."""
+    try:
+        from config.settings import get_settings
+        s = get_settings()
+        return {
+            "google_calendar": {"configured": bool(s.google_calendar_api_key), "status": "configured" if s.google_calendar_api_key else "not_configured"},
+            "jira": {"configured": bool(s.jira_base_url and s.jira_api_token), "status": "configured" if s.jira_api_token else "not_configured"},
+            "notion": {"configured": bool(s.notion_api_token), "status": "configured" if s.notion_api_token else "not_configured"},
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def productivity_calendar_events_rpc(*args, **kwargs) -> Dict:
+    """Get Google Calendar events."""
+    try:
+        from src.integrations.productivity import GoogleCalendarConnector
+        gc = GoogleCalendarConnector()
+        events = gc.list_events()
+        return {"events": events}
+    except ImportError:
+        return {"error": "Productivity connectors not available"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def productivity_jira_issues_rpc(*args, **kwargs) -> Dict:
+    """Get Jira issues."""
+    try:
+        from src.integrations.productivity import JiraConnector
+        jc = JiraConnector()
+        issues = jc.search_issues()
+        return {"issues": issues}
+    except ImportError:
+        return {"error": "Productivity connectors not available"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def productivity_notion_search_rpc(*args, **kwargs) -> Dict:
+    """Search Notion pages."""
+    try:
+        from src.integrations.productivity import NotionConnector
+        nc = NotionConnector()
+        q = kwargs.get("q", "") if kwargs else ""
+        results = nc.search(q)
+        return {"results": results}
+    except ImportError:
+        return {"error": "Productivity connectors not available"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# UPDATER ENDPOINTS
+# ============================================================================
+
+def update_check_rpc(*args, **kwargs) -> Dict:
+    """Check for updates from GitHub."""
+    try:
+        return check_for_updates()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def update_apply_rpc(data=None, *args, **kwargs) -> Dict:
+    """Apply available update."""
+    try:
+        return apply_update()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def platform_info_rpc(*args, **kwargs) -> Dict:
+    """Get platform and runtime info."""
+    try:
+        return platform_summary()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def doctor_rpc(*args, **kwargs) -> Dict:
+    """Run full system health diagnostics."""
+    try:
+        from src.api.doctor import run_diagnosis
+        result = run_diagnosis()
+        # Map backend status names to what the frontend Doctor.jsx expects
+        status_map = {"healthy": "ok", "degraded": "warn", "unhealthy": "error"}
+        result["status"] = status_map.get(result.get("status"), result.get("status"))
+        return result
+    except ImportError:
+        logger.warning("Doctor module not available")
+        return {"status": "error", "checks": [], "summary": "Doctor module not available"}
+    except Exception as e:
+        logger.error(f"Error in doctor_rpc: {e}", exc_info=True)
+        return {"status": "error", "checks": [], "summary": str(e)}
+
+
+# ============================================================================
 # RPC ENDPOINT REGISTRY
 # ============================================================================
 # Each entry maps the RPC function name to the Python callable
@@ -1324,18 +1996,26 @@ RPC_ENDPOINTS = {
     "agents.list": agents_list,
     "agents.get": agents_get,
     "agents.create": agents_create,
+    "agents": agents_list,  # bare-name alias for generic IPC GET /api/agents
     
     # Messages
     "messages.list": messages_list,
     "messages.send": messages_send,
     
+    # Skills
+    "skills": skills_list,
+    "skills.list": skills_list,
+    "skills.reload": skills_reload,
+    
     # Missions
     "missions.list": missions_list,
     "missions.get": missions_get,
+    "missions": missions_list,  # bare-name alias for generic IPC GET /api/missions
     
     # Decisions
     "decisions.list": decisions_list,
     "decisions.get": decisions_get,
+    "decisions": decisions_list,  # bare-name alias for generic IPC GET /api/decisions
     
     # Metrics
     "metrics.performance": metrics_performance,
@@ -1390,6 +2070,44 @@ RPC_ENDPOINTS = {
     "settings.get": settings_get,
     "settings.update": settings_update,
     "settings.ollama-models": settings_ollama_models,
+    
+    # Scanner (host machine, repos, programs)
+    "scan.host": scan_host_rpc,
+    "scan.repo": scan_repo_rpc,
+    "scan.programs": scan_programs_rpc,
+    
+    # Browser Automation (Playwright)
+    "browser.status": browser_status_rpc,
+    "browser.launch": browser_launch_rpc,
+    "browser.close": browser_close_rpc,
+    "browser.action": browser_action_rpc,
+    
+    # Integrations (Slack, Discord, Telegram)
+    "integrations.status": integrations_status_rpc,
+    "integrations.discord.start": lambda data=None, *a, **kw: integrations_action_rpc({"platform": "discord", "action": "start"}),
+    "integrations.discord.stop": lambda data=None, *a, **kw: integrations_action_rpc({"platform": "discord", "action": "stop"}),
+    "integrations.telegram.start": lambda data=None, *a, **kw: integrations_action_rpc({"platform": "telegram", "action": "start"}),
+    "integrations.telegram.stop": lambda data=None, *a, **kw: integrations_action_rpc({"platform": "telegram", "action": "stop"}),
+    
+    # Productivity Connectors (Google Calendar, Jira, Notion)
+    "productivity.status": productivity_status_rpc,
+    "productivity.calendar.events": productivity_calendar_events_rpc,
+    "productivity.jira.issues": productivity_jira_issues_rpc,
+    "productivity.notion.search": productivity_notion_search_rpc,
+    
+    # Updates & Platform
+    "update.check": update_check_rpc,
+    "update.apply": update_apply_rpc,
+    "platform": platform_info_rpc,
+    
+    # Projects / File Browser
+    "projects": projects_list,
+    "projects.list": projects_list,
+    "projects.tree": projects_tree,
+    "projects.file": projects_file,
+    
+    # Doctor (system diagnostics)
+    "doctor": doctor_rpc,
 }
 
 

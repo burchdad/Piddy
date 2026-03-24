@@ -37,7 +37,23 @@ _FILE_BLOCK_RE = re.compile(
     re.DOTALL,
 )
 
-# Fallback: detect ```lang\n...``` fenced blocks preceded by a filename hint
+# Fallback 0: ===FILE: path=== + fenced code block, NO ===END_FILE=== required.
+# Matches each ===FILE: marker followed by the immediately next fenced code block.
+# Handles LLMs that forget the closing marker (very common with Ollama/qwen).
+_FILE_OPEN_BLOCK_RE = re.compile(
+    r"===FILE:\s*(.+?)\s*===\s*\n"
+    r"```\w*\n(.*?)```",
+    re.DOTALL,
+)
+
+# Fallback 1: #### FILE: path/to/file.ext  (common LLM format)
+_FILE_HEADING_RE = re.compile(
+    r"(?:^|\n)#+\s*(?:FILE:\s*)([^\n]+\.\w{1,10})\s*\n"
+    r"```\w*\n(.*?)```",
+    re.DOTALL,
+)
+
+# Fallback 2: detect ```lang\n...``` fenced blocks preceded by a filename hint
 _FENCED_BLOCK_RE = re.compile(
     r"(?:^|\n)#+\s*[`*]*([^\n`*]+\.\w{1,10})[`*]*\s*\n"  # heading with filename
     r"```\w*\n(.*?)```",
@@ -67,26 +83,164 @@ def parse_file_actions(text: str) -> List[Dict[str, str]]:
     Returns a list of dicts: [{"path": "relative/path", "content": "..."}]
     """
     actions: List[Dict[str, str]] = []
+    seen_paths: set = set()  # track to avoid duplicates
 
-    # Primary: explicit ===FILE:=== markers
+    def _add(path: str, content: str):
+        """Add action if not duplicate."""
+        norm = path.replace("\\", "/").strip("/")
+        if norm not in seen_paths:
+            seen_paths.add(norm)
+            actions.append({"path": norm, "content": content.rstrip("\n") + "\n"})
+
+    # ── Stage 1: explicit ===FILE:=== ... ===END_FILE=== markers ──
     for match in _FILE_BLOCK_RE.finditer(text):
         rel_path = match.group(1).strip().strip("`'\"")
         content = match.group(2)
-        # Strip leading/trailing fenced-code markers if the LLM wrapped them
         content = re.sub(r"^```\w*\n", "", content)
         content = re.sub(r"\n```\s*$", "", content)
-        actions.append({"path": rel_path, "content": content.rstrip("\n") + "\n"})
+        _add(rel_path, content)
 
-    # If no explicit markers, try fenced-block fallback (heading + code block)
+    # ── Stage 2: ===FILE: path=== + code block WITHOUT ===END_FILE=== ──
+    if not actions:
+        for match in _FILE_OPEN_BLOCK_RE.finditer(text):
+            rel_path = match.group(1).strip().strip("`'\"")
+            content = match.group(2)
+            if len(rel_path) < 120:
+                _add(rel_path, content)
+
+    # ── Stage 3: also pick up heading-based code blocks (templates, CSS, JS) ──
+    # These may appear alongside ===FILE: blocks for non-code assets.
+    # We always run this, but only add files not already captured.
+    if actions:
+        # Infer project prefix from already-parsed ===FILE: paths
+        project_prefix = _infer_project_prefix(actions)
+        # Build a path lookup from the file structure tree in the text
+        path_map = _build_path_map_from_tree(text)
+
+        for match in _FENCED_BLOCK_RE.finditer(text):
+            filename = match.group(1).strip().strip("`'\"")
+            filename = re.sub(r"^(?:FILE|File|file)\s*:\s*", "", filename)
+            content = match.group(2)
+
+            if not ("." in filename and len(filename) < 120):
+                continue
+            # Skip if already captured by ===FILE: stage
+            if any(filename in p for p in seen_paths):
+                continue
+
+            # Try to resolve full path from the tree
+            full_path = path_map.get(filename)
+            if not full_path and project_prefix:
+                # Guess subdirectory from extension
+                full_path = _guess_subdir(project_prefix, filename)
+
+            _add(full_path or filename, content)
+
+    # ── Stage 4: pure heading fallbacks (only when nothing above matched) ──
+    if not actions:
+        for match in _FILE_HEADING_RE.finditer(text):
+            rel_path = match.group(1).strip().strip("`'\"")
+            content = match.group(2)
+            if "." in rel_path and len(rel_path) < 120:
+                _add(rel_path, content)
+
     if not actions:
         for match in _FENCED_BLOCK_RE.finditer(text):
             filename = match.group(1).strip().strip("`'\"")
+            filename = re.sub(r"^(?:FILE|File|file)\s*:\s*", "", filename)
             content = match.group(2)
-            # Only accept if it looks like a real filename
             if "." in filename and len(filename) < 120:
-                actions.append({"path": filename, "content": content.rstrip("\n") + "\n"})
+                _add(filename, content)
 
     return actions
+
+
+def _infer_project_prefix(actions: List[Dict[str, str]]) -> str:
+    """Extract common project directory prefix from parsed actions."""
+    paths = [a["path"] for a in actions if "/" in a["path"]]
+    if not paths:
+        return ""
+    # Find common prefix (first directory component)
+    parts = [p.split("/")[0] for p in paths]
+    if len(set(parts)) == 1:
+        return parts[0]
+    return ""
+
+
+def _build_path_map_from_tree(text: str) -> Dict[str, str]:
+    """
+    Parse the file structure tree often included in LLM output and build
+    a mapping of filename → full relative path.
+
+    Handles trees like:
+        weather_dashboard/
+        ├── templates/
+        │   ├── base.html
+    """
+    path_map: Dict[str, str] = {}
+    # Match tree lines: optional prefix chars (│├└─ spaces) then a filename/dir
+    tree_re = re.compile(r"^[│├└─\s]*([^\s│├└─/][^\n/]*\.(\w{1,10}))$", re.MULTILINE)
+    # Also extract the root directory from lines like "weather_dashboard/"
+    root_re = re.compile(r"^(\w[\w_-]*)/$", re.MULTILINE)
+
+    root = ""
+    root_match = root_re.search(text)
+    if root_match:
+        root = root_match.group(1)
+
+    # Try to parse indentation-based hierarchy
+    dir_re = re.compile(r"^([│├└─\s]*?)([^\s│├└─][^\n]*/)$", re.MULTILINE)
+    # Build ordered list of (indent_level, name, is_dir)
+    line_re = re.compile(
+        r"^([│├└─\s]*?)([^\s│├└─/][^\n]*)$", re.MULTILINE
+    )
+
+    current_dirs: Dict[int, str] = {}  # indent_level → directory name
+
+    for m in line_re.finditer(text):
+        indent = len(m.group(1))
+        name = m.group(2).strip()
+        if name.endswith("/"):
+            # Directory
+            current_dirs[indent] = name.rstrip("/")
+            # Clear deeper levels
+            current_dirs = {k: v for k, v in current_dirs.items() if k <= indent}
+        elif "." in name and len(name) < 80:
+            # File — build path from current directory stack
+            parts = []
+            if root and 0 not in current_dirs:
+                parts.append(root)
+            for level in sorted(k for k in current_dirs if k < indent):
+                parts.append(current_dirs[level])
+            parts.append(name)
+            full = "/".join(parts)
+            path_map[name] = full
+
+    return path_map
+
+
+# Extension → likely subdirectory mapping
+_EXT_SUBDIRS = {
+    ".html": "templates",
+    ".jinja": "templates",
+    ".jinja2": "templates",
+    ".css": "static/css",
+    ".scss": "static/css",
+    ".js": "static/js",
+    ".ts": "static/js",
+    ".png": "static/images",
+    ".jpg": "static/images",
+    ".svg": "static/images",
+}
+
+
+def _guess_subdir(project_prefix: str, filename: str) -> str:
+    """Guess the full path for a bare filename using extension heuristics."""
+    ext = "." + filename.rsplit(".", 1)[-1] if "." in filename else ""
+    subdir = _EXT_SUBDIRS.get(ext, "")
+    if subdir:
+        return f"{project_prefix}/{subdir}/{filename}"
+    return f"{project_prefix}/{filename}"
 
 
 def execute_file_actions(actions: List[Dict[str, str]]) -> List[Dict[str, Any]]:
@@ -125,6 +279,8 @@ def execute_file_actions(actions: List[Dict[str, str]]) -> List[Dict[str, Any]]:
 def strip_file_markers(text: str) -> str:
     """Remove ===FILE:=== / ===END_FILE=== markers from the reply shown to the user."""
     cleaned = _FILE_BLOCK_RE.sub("", text)
+    # Also strip open-block markers (===FILE: without ===END_FILE===)
+    cleaned = _FILE_OPEN_BLOCK_RE.sub("", cleaned)
     # Collapse excessive blank lines left behind
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()

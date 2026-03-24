@@ -7,8 +7,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose safe APIs to renderer process
 contextBridge.exposeInMainWorld('piddy', {
-  // Backend configuration
-backendUrl: 'http://localhost:8000',
+  // Backend configuration (zero-port: IPC only, no HTTP backend)
+  backendUrl: null,
   
   // Check backend status
   backendStatus: () => ipcRenderer.invoke('backend-status'),
@@ -126,6 +126,11 @@ backendUrl: 'http://localhost:8000',
   }
 });
 
+// Expose stream manager reference for Chat detection
+contextBridge.exposeInMainWorld('piddyMenu', {
+  onNavigate: (callback) => ipcRenderer.on('menu:navigate', (event, page) => callback(page)),
+  onAction: (callback) => ipcRenderer.on('menu:action', (event, action) => callback(action)),
+});
+
 console.log('[Preload] Piddy API exposed to renderer');
-console.log('[Preload] Backend URL:', 'http://localhost:8000');
-console.log('[Preload] IPC Bridge ready - use window.piddy.api for zero-port calls');
+console.log('[Preload] IPC Bridge ready - using zero-port architecture (no HTTP backend)');

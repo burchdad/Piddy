@@ -568,6 +568,7 @@ Question: {input}
             logger.info(f"🏠 Tier 2 — Local LLM: {self.settings.ollama_model}")
             
             from src.agent.action_parser import AGENTIC_PROMPT_ADDON
+            from src.agent.build_learnings import build_lessons_prompt
             
             # Build a full prompt with system identity + agentic capabilities
             system_intro = (
@@ -575,7 +576,8 @@ Question: {input}
                 "You don't just explain code — you BUILD things. "
                 "When asked to create or build something, you produce actual files.\n\n"
             )
-            full_prompt = system_intro + AGENTIC_PROMPT_ADDON + "\n\n" + prompt
+            lessons = build_lessons_prompt()
+            full_prompt = system_intro + AGENTIC_PROMPT_ADDON + lessons + "\n\n" + prompt
             
             response = self.local_llm.invoke(full_prompt)
             

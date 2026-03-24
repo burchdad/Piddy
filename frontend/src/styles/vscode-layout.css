@@ -1,0 +1,625 @@
+/* ============================================================================
+   VS CODE-STYLE LAYOUT SYSTEM
+   Replaces the old sidebar + main-content layout with:
+   Activity Bar | Sidebar Panel | Main Editor | Chat Panel
+   + Status Bar at bottom
+   ============================================================================ */
+
+/* ── Layout Container ──────────────────────────────────────────────────── */
+
+.vscode-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+
+.vscode-main {
+  display: flex;
+  flex: 1;
+  min-height: 0; /* allow flex children to shrink below content size */
+}
+
+/* ── Activity Bar (far left, 48px) ─────────────────────────────────────── */
+
+.activity-bar {
+  width: 48px;
+  min-width: 48px;
+  background: var(--bg-darker);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.activity-bar-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.activity-bar-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 4px;
+}
+
+.activity-bar-brand {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: default;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.activity-bar-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.activity-bar-icon:hover {
+  opacity: 1;
+}
+
+.activity-bar-icon.active {
+  opacity: 1;
+}
+
+.activity-bar-icon-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.activity-bar-indicator {
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  background: var(--primary-color);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── Sidebar Panel (left, 220px, toggleable) ───────────────────────────── */
+
+.sidebar-panel {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-darker);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-panel-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.sidebar-panel-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.sidebar-panel-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+
+.sidebar-panel-item:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--text-primary);
+}
+
+.sidebar-panel-item.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--text-primary);
+}
+
+.sidebar-panel-item-icon {
+  font-size: 1rem;
+  width: 1.3rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-panel-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sidebar scrollbar */
+.sidebar-panel-nav::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar-panel-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-panel-nav::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* ── Main Editor Area (center, flex) ───────────────────────────────────── */
+
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* prevent overflow */
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+
+.editor-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+}
+
+.editor-content.editor-content-flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Editor scrollbar */
+.editor-content::-webkit-scrollbar {
+  width: 8px;
+}
+.editor-content::-webkit-scrollbar-track {
+  background: var(--bg-card);
+}
+.editor-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+.editor-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Backend offline banner */
+.editor-offline-banner {
+  background: #2d2000;
+  border-bottom: 1px solid #665200;
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  color: #ffc107;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Chat Panel (right, 380px, toggleable) ─────────────────────────────── */
+
+.chat-panel-container {
+  width: 380px;
+  min-width: 320px;
+  max-width: 500px;
+  background: var(--bg-dark);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Resize handle on the left edge of chat panel */
+.chat-panel-resize {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.chat-panel-resize:hover,
+.chat-panel-resize.resizing {
+  background: var(--primary-color);
+  opacity: 0.5;
+}
+
+/* Chat panel header bar */
+.chat-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-darker);
+  flex-shrink: 0;
+}
+
+.chat-panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-panel-header-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chat-panel-header-badge {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(81, 207, 102, 0.15);
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.chat-panel-header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.chat-panel-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 3px 8px;
+  border-radius: 3px;
+  transition: all 0.1s;
+  font-family: inherit;
+}
+
+.chat-panel-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+/* ── Chat adapted for panel mode ───────────────────────────────────────── */
+
+.chat-panel-container .chat-page {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.chat-panel-container .chat-toolbar {
+  display: none; /* Header is handled by chat-panel-header */
+}
+
+.chat-panel-container .chat-messages {
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.chat-panel-container .chat-bubble-body {
+  max-width: 90%;
+}
+
+.chat-panel-container .chat-input-bar {
+  padding: 0.5rem 0.75rem;
+}
+
+.chat-panel-container .chat-empty-icon {
+  font-size: 2rem;
+}
+
+.chat-panel-container .chat-empty h3 {
+  font-size: 1.1rem;
+}
+
+.chat-panel-container .chat-suggestions {
+  flex-direction: column;
+}
+
+.chat-panel-container .chat-suggestion {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
+}
+
+/* ── Status Bar (bottom, 24px) ─────────────────────────────────────────── */
+
+.status-bar {
+  height: 24px;
+  min-height: 24px;
+  background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 0.72rem;
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.status-bar-left,
+.status-bar-center,
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-bar-left {
+  flex: 1;
+}
+
+.status-bar-center {
+  flex: 0 0 auto;
+}
+
+.status-bar-right {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.status-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: 24px;
+  cursor: default;
+  white-space: nowrap;
+  transition: background 0.1s;
+  border-radius: 2px;
+}
+
+.status-bar-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.status-bar-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-bar-dot.connected {
+  background: #51cf66;
+  box-shadow: 0 0 4px rgba(81, 207, 102, 0.5);
+}
+
+.status-bar-dot.disconnected {
+  background: #ff6b6b;
+  box-shadow: 0 0 4px rgba(255, 107, 107, 0.5);
+}
+
+.status-bar-warning {
+  color: #ffd93d;
+}
+
+.status-bar-health-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-bar-health-dot.operational {
+  background: #51cf66;
+}
+
+.status-bar-health-dot.degraded {
+  background: #ffd93d;
+}
+
+.status-bar-health-dot.offline {
+  background: #ff6b6b;
+}
+
+/* ── Loading State ─────────────────────────────────────────────────────── */
+
+.vscode-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 1rem;
+  color: var(--text-secondary);
+  background: var(--bg-dark);
+}
+
+.vscode-loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .chat-panel-container {
+    width: 320px;
+    min-width: 280px;
+  }
+
+  .sidebar-panel {
+    width: 180px;
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-panel {
+    display: none;
+  }
+
+  .chat-panel-container {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 24px;
+    width: 100%;
+    max-width: 100%;
+    z-index: 2000;
+  }
+
+  .activity-bar {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .activity-bar-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .activity-bar-brand {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}
+
+/* ── Keyboard Shortcuts Overlay ────────────────────────────────────────── */
+
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.shortcuts-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 560px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shortcuts-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.shortcuts-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.shortcuts-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.shortcuts-grid {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shortcuts-section h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.shortcut-keys {
+  display: inline-block;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  color: var(--text-secondary);
+  min-width: 70px;
+  text-align: center;
+}

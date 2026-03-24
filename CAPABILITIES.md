@@ -2,7 +2,7 @@
 
 Comprehensive documentation of all features, modules, and capabilities available in Piddy — the portable, plug-and-play AI assistant.
 
-**Version**: 5.2.0  
+**Version**: 5.3.0  
 **Status**: ✅ PRODUCTION READY  
 **Last Updated**: March 2026
 
@@ -16,15 +16,15 @@ Piddy is a fully portable AI development assistant that runs from any directory 
 
 | Metric | Value |
 |--------|-------|
-| Version | 5.2.0 |
+| Version | 5.3.0 |
 | Agents | 21 specialized AI agents |
 | Skills | 60 reference skill packs |
 | CLI Commands | 16 (`piddy.py`) |
 | Doctor Checks | 17 system health checks |
 | RPC Endpoints | 45 + 6 stream functions = 51 |
 | REST Endpoints | 4 autonomous loop + 2 tool synthesis endpoints |
-| Dashboard Pages | 30 React components |
-| Development Phases | 51 completed |
+| Dashboard Pages | 30+ React components |
+| Development Phases | 52 completed |
 | Embedded Runtimes | Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2 |
 
 ### Architecture
@@ -34,13 +34,15 @@ Piddy is a fully portable AI development assistant that runs from any directory 
 │  Electron Desktop App (zero-port stdio IPC)     │
 │  ┌───────────────┐  ┌────────────────────────┐  │
 │  │ React 18 UI   │  │ Python Backend (RPC)   │  │
-│  │ 30 components │◄─┤ 39 endpoints + 6 streams│  │
+│  │ VS Code-style │◄─┤ 45 endpoints + 6 streams│  │
+│  │ layout + Code │  │ + file content/language│  │
+│  │ Panel preview │  │ in action responses    │  │
 │  └───────────────┘  └────────────────────────┘  │
 ├─────────────────────────────────────────────────┤
 │  Web Mode (FastAPI on port 8889)                │
 │  ┌───────────────┐  ┌────────────────────────┐  │
 │  │ React 18 UI   │  │ dashboard_api.py       │  │
-│  │ Vite 4.3      │◄─┤ REST + WebSocket       │  │
+│  │ Vite 4.5     │◄─┤ REST + WebSocket       │  │
 │  └───────────────┘  └────────────────────────┘  │
 ├─────────────────────────────────────────────────┤
 │  Embedded Runtimes (portable, no install)       │
@@ -104,7 +106,7 @@ python piddy.py start          # Starts FastAPI on port 8889
 
 - REST API + WebSocket at `http://localhost:8889`
 - React frontend served from `frontend/dist/`
-- Same 30 dashboard components as Electron
+- Same 30+ dashboard components as Electron (VS Code-style layout)
 
 ---
 
@@ -1185,6 +1187,18 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 
 ## Dashboard & UX
 
+### VS Code-Style Layout
+
+The dashboard uses a VS Code-inspired layout with five main zones:
+
+| Zone | Width | Component | Description |
+|------|-------|-----------|-------------|
+| Activity Bar | 48px | `ActivityBar.jsx` | Icon rail for section switching + bottom actions |
+| Sidebar | 220px | `SidebarPanel.jsx` | Page navigation within active section |
+| Editor Area | flex | `CodePanel.jsx` / pages | Main content area — page views or live file preview |
+| Chat Panel | 380px | `Chat.jsx` | AI chat with full mission pipeline |
+| Status Bar | 24px | `StatusBar.jsx` | System health, LLM source, agent count |
+
 ### Real-Time Monitoring
 
 #### System Overview
@@ -1526,8 +1540,11 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 
 ## Status & Next Steps
 
-### ✅ Current Status (March 18, 2026)
+### ✅ Current Status (March 23, 2026)
 - **Production**: ✅ LIVE and operational
+- **VS Code-style Layout**: ✅ LIVE - Activity Bar, Sidebar, Editor Area, Chat Panel, Status Bar
+- **CodePanel**: ✅ LIVE - Tabbed editor with token-based syntax highlighting (Catppuccin Mocha)
+- **Chat -> File Preview**: ✅ LIVE - Files created by Piddy appear in CodePanel in real time
 - **Slack Integration**: ✅ ACTIVE - `/nova` commands executing real missions
 - **Real Implementations**: ✅ ALL 47+ fake implementations replaced with real code
 - **Security Checks**: ✅ REAL - No more hardcoded returns
@@ -1535,6 +1552,7 @@ Every `/nova` command now triggers the **complete 6-stage production pipeline**:
 - **GitHub Integration**: ✅ REAL - PRs created on actual GitHub
 - **Agent Voting**: ✅ LIVE - 21 agents consensus voting
 - **Knowledge Base**: ✅ GROWING - Learning from every mission
+- **Parser**: ✅ IMPROVED - 4-stage cascade, path inference, self-improving via build learnings
 
 ### What's Working Right Now
 1. ✅ Every `/nova` command triggers complete 6-stage pipeline
@@ -1655,6 +1673,63 @@ When the loop encounters an error indicating a required tool doesn't exist:
 - **Phase 19 (Self-Improving Agent)**: Loop outcomes cross-posted to learning DB
 - **Phase 28 (Knowledge Graph)**: Queried during strategy selection and diagnosis
 - **Phase 50 (Consensus Voting)**: Planning and voting run once; only execution retries
+
+---
+
+## Phase 52: VS Code-Style Layout & CodePanel
+
+Phase 52 transforms the UI from a basic dashboard into a VS Code-style IDE layout with live file preview.
+
+### VS Code-Style Layout
+
+```
+┌──────┬──────────┬─────────────────────────┬──────────────┐
+│      │          │                         │              │
+│ Act- │ Sidebar  │   Editor Area           │  Chat Panel  │
+│ ivity│ Panel    │   (CodePanel /          │  (AI Chat)   │
+│ Bar  │ (pages)  │    page content)        │              │
+│ 48px │  220px   │       flex              │    380px     │
+├──────┴──────────┴─────────────────────────┴──────────────┤
+│  Status Bar (24px)                                       │
+└──────────────────────────────────────────────────────────┘
+```
+
+### New Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **ActivityBar** | `ActivityBar.jsx` | Left icon rail with section icons + bottom actions (History, Export, Chat, Settings) |
+| **SidebarPanel** | `SidebarPanel.jsx` | Collapsible page navigation within the active section |
+| **CodePanel** | `CodePanel.jsx` | VS Code-style tabbed editor showing files Piddy creates in real time |
+| **ProjectWorkspace** | `ProjectWorkspace.jsx` | File tree browser with tabbed code viewer and bottom panel |
+| **StatusBar** | `StatusBar.jsx` | Bottom bar showing system status, LLM source, agents, uptime |
+
+### CodePanel Features
+
+- **Tab bar**: One tab per created file with icons, active tab highlighted with primary color border
+- **Breadcrumb**: Shows file path, size, and detected language
+- **Line numbers**: Sticky gutter with monospace line numbers
+- **Token-based syntax highlighting**: Prevents regex self-matching using `\x00ID\x00` placeholder tokens
+- **Catppuccin Mocha theme**: keyword (#cba6f7), string (#a6e3a1), comment (#6c7086), number (#fab387), builtin (#89b4fa), decorator (#f9e2af)
+- **Language support**: Python, JavaScript/TypeScript, HTML, CSS, JSON, Bash, Markdown
+- **Auto-selection**: Latest created file is auto-selected
+- **Error view**: Shows failed file creation with details
+
+### Chat → File Pipeline
+
+1. User sends message in Chat panel
+2. Chat calls `/api/chat` RPC (full AI pipeline: planning + execution)
+3. RPC response includes `actions` array with `content` and `language` for each file
+4. Chat emits `onFilesCreated(actions)` to App
+5. App sets `codeFiles` state, rendering CodePanel in editor area
+6. Files appear with tabs, line numbers, and syntax highlighting
+
+### Parser Improvements
+
+- **Fixed double prefix bug**: `_build_path_map_from_tree()` no longer duplicates root directory
+- **4-stage parse cascade**: Tree → markers → path inference → flat extraction
+- **Self-improving**: Build learnings persisted for future reference
+- **Anthropic fallback**: Cloud parse-quality validation when local parsing uncertain
 
 ---
 

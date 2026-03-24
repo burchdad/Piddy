@@ -2,7 +2,7 @@
 
 A fully portable, plug-and-play AI assistant that runs from any directory with zero installation. Piddy ships with embedded runtimes (Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2), a React dashboard, an Electron desktop app, and a 21-agent consensus system.
 
-**Version 5.2.0** -- 60 skills -- 21 agents -- 51 development phases
+**Version 5.3.0** -- 60 skills -- 21 agents -- 51 development phases
 
 ## Quick Start
 
@@ -41,6 +41,7 @@ python piddy.py --help
 - **Zero-install**: Embedded Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2
 - **Runs anywhere**: USB drive, external drive, any local folder
 - **Electron desktop app**: Zero-port stdio RPC -- no network ports opened
+- **VS Code-style layout**: Activity Bar, Sidebar, Editor Area, Chat Panel, Status Bar
 - **Web dashboard**: FastAPI + React on port 8889
 - **4-tier LLM failover**: Local Engine -> Ollama -> Anthropic Claude -> OpenAI GPT-4o
 
@@ -53,11 +54,14 @@ python piddy.py --help
 
 ### Core Development
 - **Code generation**: 10+ languages (Python, JS/TS, Go, Java, Rust, C#, PHP, Ruby, C++, Kotlin)
+- **Live code preview**: VS Code-style tabbed editor shows files as Piddy creates them
+- **Syntax highlighting**: Token-based highlighter with Catppuccin Mocha theme
 - **API design**: REST, GraphQL, gRPC with validation and auth
 - **Database design**: Schema optimization, migrations, query tuning
 - **Code review**: Automated analysis with pylint, autopep8, isort, bandit
 - **Testing**: Real pytest with coverage reporting
 - **Security**: RBAC, audit logging, encryption, vulnerability scanning
+- **Self-improving parser**: 4-stage parse cascade with path inference and learning
 
 ### Integrations
 - **Slack**: `/nova` commands with full mission pipeline
@@ -132,10 +136,16 @@ Piddy/
 +-- frontend/
 |   +-- src/
 |   |   +-- App.jsx          # Main app with IPC-aware routing
-|   |   +-- components/      # 30 React dashboard components
+|   |   +-- components/      # 30+ React components (VS Code-style layout)
+|   |   |   +-- ActivityBar.jsx     # Left icon rail (sections + bottom actions)
+|   |   |   +-- SidebarPanel.jsx    # Collapsible sidebar with page navigation
+|   |   |   +-- CodePanel.jsx       # Tabbed editor with syntax highlighting
+|   |   |   +-- ProjectWorkspace.jsx # File tree browser + code viewer
+|   |   |   +-- StatusBar.jsx       # Bottom status bar
+|   |   |   +-- Chat.jsx            # AI chat panel (right side)
 |   |   +-- utils/           # apiClient.js (Electron IPC + web fetch)
-|   |   +-- styles/          # App.css, components.css
-|   +-- dist/                # Production build (63 modules)
+|   |   +-- styles/          # vscode-layout.css, codepanel.css, workspace.css
+|   +-- dist/                # Production build (70 modules)
 |   +-- package.json
 |   +-- vite.config.js
 +-- desktop/
@@ -169,11 +179,44 @@ Piddy/
 
 ## Dashboard
 
-The web dashboard runs at `http://localhost:8889` with 30 React components:
+The web dashboard and Electron app use a **VS Code-style layout** with 30+ React components:
+
+```
+┌──────┬──────────┬─────────────────────────┬──────────────┐
+│      │          │                         │              │
+│ Act- │ Sidebar  │   Editor Area           │  Chat Panel  │
+│ ivity│ Panel    │   (CodePanel /          │  (AI Chat)   │
+│ Bar  │ (pages)  │    page content)        │              │
+│      │          │                         │              │
+├──────┴──────────┴─────────────────────────┴──────────────┤
+│  Status Bar                                              │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Layout Components
+
+| Component | Width | Description |
+|-----------|-------|-------------|
+| **Activity Bar** | 48px | Left icon rail — section icons + bottom actions (History, Export, Chat, Settings) |
+| **Sidebar Panel** | 220px | Collapsible page navigation within active section |
+| **Editor Area** | flex | Main content — page views or CodePanel with live file preview |
+| **Chat Panel** | 380px | AI chat with full mission pipeline integration |
+| **Status Bar** | 24px | System status, LLM source, agent count, uptime |
+
+### CodePanel (Live File Preview)
+
+When Piddy creates files, they appear in real time in the **CodePanel** — a VS Code-style tabbed editor:
+- **Tab bar** with file icons, one tab per created file
+- **Breadcrumb** showing path, file size, and language
+- **Line numbers** with sticky gutter
+- **Syntax highlighting** using token-based highlighter (Catppuccin Mocha theme)
+- Supports Python, JS/TS, HTML, CSS, JSON, Bash, Markdown
+- Auto-selects the latest file created
+
+### Dashboard Pages
 
 | Page | Description |
 |------|-------------|
-| **Overview** | System status, agent health, recent activity |
 | **Agents** | 21 agents with reputation scores and vote weights |
 | **Missions** | Timeline visualization with 6-stage progression |
 | **Mission Replay** | Step-by-step playback with speed controls (0.5x-4x) |
@@ -206,7 +249,7 @@ The web dashboard runs at `http://localhost:8889` with 30 React components:
 
 ## Desktop App (Electron)
 
-The Electron app provides a native desktop experience with **zero network ports**:
+The Electron app provides a native desktop experience with **zero network ports** and a **VS Code-style layout**:
 
 ```bash
 python piddy.py desktop
@@ -216,7 +259,9 @@ python piddy.py desktop
 1. Electron spawns a Python child process
 2. Communication happens over **stdin/stdout JSON-RPC** (no HTTP, no ports)
 3. The preload script bridges IPC calls to the renderer
-4. The same React UI renders inside the Electron window
+4. The same React UI renders inside the Electron window with VS Code-style layout
+5. Chat sends to `/api/chat` RPC for full AI pipeline (planning, execution, file creation)
+6. Created files appear in the **CodePanel** editor in real time
 
 **Key files:**
 - `desktop/main.js` -- Electron main process, spawns Python backend
@@ -378,6 +423,7 @@ Piddy has progressed through 51 development phases. Key milestones:
 | 32-38 | API contracts, call graph, incremental rebuild, LLM-assisted planning |
 | 39-50 | Impact visualization, simulation, multi-repo, continuous refactoring, consensus |
 | 51 | Autonomous loop engine, failure memory, dynamic tool selection |
+| 52 | VS Code-style layout, CodePanel, token-based syntax highlighting, parser improvements |
 
 See [CAPABILITIES.md](CAPABILITIES.md) for detailed phase descriptions.
 

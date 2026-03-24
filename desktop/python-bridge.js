@@ -67,16 +67,25 @@ class PythonBridge {
    * @private
    */
   async _testConnection() {
-    try {
-      const result = await this.call('__ping__', [], {}, 5000);
-      if (result && result.status === 'pong') {
-        console.log('[PythonBridge] Connected to Python RPC server');
-        this.connected = true;
+    // Retry ping with delay — Python backend needs time to import modules and start listening
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // Wait for backend to initialize before first attempt
+        if (attempt === 1) await new Promise(r => setTimeout(r, 3000));
+        else await new Promise(r => setTimeout(r, 5000));
+        
+        console.log(`[PythonBridge] Connection test attempt ${attempt}/3...`);
+        const result = await this.call('__ping__', [], {}, 15000);
+        if (result && result.status === 'pong') {
+          console.log('[PythonBridge] Connected to Python RPC server');
+          this.connected = true;
+          return;
+        }
+      } catch (err) {
+        console.warn(`[PythonBridge] Connection test attempt ${attempt} failed:`, err.message);
       }
-    } catch (err) {
-      console.warn('[PythonBridge] Connection test failed:', err);
-      // Not fatal - might retry
     }
+    console.warn('[PythonBridge] All connection tests failed — RPC calls may still work');
   }
   
   /**

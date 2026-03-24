@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="search-container">
+    <input type="text" id="city-search" placeholder="Enter city name">
+    <button onclick="searchWeather()">Search</button>
+</div>
+
+<div id="weather-display"></div>
+{% endblock %}
