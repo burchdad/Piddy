@@ -48,6 +48,13 @@
     "files": [
       "main.js",
       "preload.js",
+      "splash-preload.js",
+      "ipc-bridge.js",
+      "python-bridge.js",
+      "stdio-protocol.js",
+      "stream-manager.js",
+      "port-finder.js",
+      "splash.html",
       "piddy-backend.exe",
       "piddy-backend",
       "node_modules/fix-path/**/*",
@@ -87,8 +94,16 @@
         "to": "piddy"
       },
       {
-        "from": "../library/skills",
-        "to": "library/skills"
+        "from": "../data",
+        "to": "data"
+      },
+      {
+        "from": "../library",
+        "to": "library"
+      },
+      {
+        "from": "../projects",
+        "to": "projects"
       },
       {
         "from": "../.env.example",

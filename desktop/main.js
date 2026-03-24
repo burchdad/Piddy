@@ -115,7 +115,7 @@ function createSplashScreen() {
     minWidth: 400,
     minHeight: 500,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'splash-preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
@@ -287,6 +287,7 @@ function createWindow() {
       height: 900,
       minWidth: 1024,
       minHeight: 600,
+      show: false,  // Hidden until fully loaded — splash stays visible
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         nodeIntegration: false,
@@ -350,12 +351,14 @@ function createWindow() {
     log.info('Window loading initiated');
     console.log('[WINDOW] Window loading initiated');
 
-    // Always open dev tools for debugging
-    setTimeout(() => {
-      if (!isDevelopment && mainWindow) {
-        mainWindow.webContents.openDevTools();
-      }
-    }, 1000);
+    // Open dev tools only when explicitly requested via env var
+    if (process.env.ELECTRON_DEV_LAUNCH === 'true') {
+      setTimeout(() => {
+        if (mainWindow) {
+          mainWindow.webContents.openDevTools();
+        }
+      }, 1000);
+    }
 
     mainWindow.on('closed', () => {
       log.info('Window closed by user');
@@ -366,18 +369,39 @@ function createWindow() {
     });
 
     mainWindow.webContents.on('did-finish-load', () => {
-      log.info('Window loaded, checking backend status');
+      log.info('Window HTML loaded, waiting for frontend initialization...');
       console.log('[WINDOW] did-finish-load event fired');
-      updateSplashStatus('Dashboard ready!', 95);
-      
-      // Close splash screen and show main window
-      setTimeout(() => {
-        completeSplash();
-        log.info('Splash screen closed, main window visible');
-      }, 500);
-      
+      updateSplashStatus('Connecting to backend...', 70);
       mainWindow.webContents.send('window-loaded');
     });
+
+    // Listen for frontend-ready signal (React app finished init)
+    const { ipcMain: ipc } = require('electron');
+    const readyHandler = () => {
+      log.info('Frontend signalled ready — showing main window');
+      updateSplashStatus('Dashboard ready!', 100);
+      
+      // Brief pause so user sees "Dashboard ready!" on splash, then swap
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.show();
+        }
+        completeSplash();
+        log.info('Splash screen closed, main window visible');
+      }, 800);
+      ipc.removeListener('frontend-ready', readyHandler);
+    };
+    ipc.on('frontend-ready', readyHandler);
+
+    // Safety timeout: show window after 30s even if frontend-ready never fires
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+        log.warn('Safety timeout — showing main window without frontend-ready signal');
+        if (mainWindow) mainWindow.show();
+        completeSplash();
+        ipc.removeListener('frontend-ready', readyHandler);
+      }
+    }, 30000);
 
     mainWindow.webContents.on('crashed', () => {
       log.error('Renderer process crashed!');

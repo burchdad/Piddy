@@ -344,6 +344,22 @@ class NovaCoordinator:
                         ))
                     except Exception:
                         pass
+                    # Phase 19: Record the failure for learning
+                    self._record_mission_experience(
+                        task, mission_id, "failure",
+                        execution_result, planning_result,
+                    )
+                    # ── Dashboard telemetry ──
+                    try:
+                        from src.dashboard_data_collector import log_mission
+                        log_mission(
+                            mission_id=mission_id,
+                            name=task[:100],
+                            description=task,
+                            status="failed",
+                        )
+                    except Exception:
+                        pass
                     return {
                         "mission_id": mission_id,
                         "status": "failed",
@@ -432,6 +448,26 @@ class NovaCoordinator:
                 # Store in history BEFORE returning
                 self.execution_history[mission_id] = final_result
                 
+                # ── Phase 19: Record successful mission for learning ──
+                self._record_mission_experience(
+                    task, mission_id, "success",
+                    execution_result, planning_result,
+                )
+                
+                # ── Dashboard telemetry ──
+                try:
+                    from src.dashboard_data_collector import log_mission
+                    log_mission(
+                        mission_id=mission_id,
+                        name=task[:100],
+                        description=task,
+                        status="completed",
+                        efficiency_score=planning_result.get("success_probability", 0.0),
+                        quality_score=1.0,
+                    )
+                except Exception:
+                    pass
+                
                 return final_result
             
             except Exception as e:
@@ -442,6 +478,54 @@ class NovaCoordinator:
                     "error": str(e),
                     "audit_trail": audit_trail
                 }
+    
+    # ========================================================================
+    # LEARNING — Phase 19 Integration
+    # ========================================================================
+    
+    def _record_mission_experience(
+        self, task: str, mission_id: str, outcome: str,
+        execution_result: Dict, planning_result: Dict,
+    ):
+        """Record mission outcome to Phase 19 self-improving agent + KB."""
+        try:
+            from src.phase19_self_improving_agent import SelfImprovingAgent
+            agent = SelfImprovingAgent()
+            
+            is_success = outcome == "success"
+            files_changed = execution_result.get("files_changed", [])
+            description = (
+                f"Mission {mission_id}: {task[:200]} "
+                f"(risk={planning_result.get('risk_level', '?')}, "
+                f"prob={planning_result.get('success_probability', 0):.0f}%)"
+            )
+            
+            # Record each file touched by the mission
+            if files_changed:
+                for fp in files_changed[:20]:  # Cap at 20 files
+                    agent.record_code_change(
+                        file_path=str(fp),
+                        change_type="enhancement" if is_success else "bug_fix",
+                        description=description,
+                        outcome="success" if is_success else "failure",
+                        success_score=0.9 if is_success else 0.2,
+                    )
+            else:
+                # Record at mission level even without file list
+                agent.record_code_change(
+                    file_path=f"mission/{mission_id}",
+                    change_type="enhancement" if is_success else "bug_fix",
+                    description=description,
+                    outcome="success" if is_success else "failure",
+                    success_score=0.9 if is_success else 0.2,
+                )
+            
+            logger.info(
+                f"🧠 Phase 19: Recorded mission {outcome} "
+                f"({len(files_changed)} file(s)) for KB learning"
+            )
+        except Exception as e:
+            logger.debug(f"Phase 19 recording skipped: {e}")
     
     # ========================================================================
     # STAGE IMPLEMENTATIONS

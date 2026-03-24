@@ -81,16 +81,44 @@ def _scan_hardware() -> Dict[str, Any]:
 
 def _scan_disks() -> List[Dict[str, Any]]:
     disks = []
-    try:
-        usage = shutil.disk_usage(str(PROJECT_ROOT))
-        disks.append({
-            "mount": str(PROJECT_ROOT.anchor),
-            "total_gb": round(usage.total / (1024 ** 3), 1),
-            "free_gb": round(usage.free / (1024 ** 3), 1),
-            "used_pct": round((usage.used / usage.total) * 100, 1),
-        })
-    except Exception:
-        pass
+    seen_mounts = set()
+
+    # On Windows, enumerate all drive letters
+    if sys.platform == "win32":
+        import string
+        for letter in string.ascii_uppercase:
+            drive = f"{letter}:\\"
+            try:
+                usage = shutil.disk_usage(drive)
+                if usage.total == 0:
+                    continue
+                disks.append({
+                    "mount": drive,
+                    "total_gb": round(usage.total / (1024 ** 3), 1),
+                    "free_gb": round(usage.free / (1024 ** 3), 1),
+                    "used_pct": round((usage.used / usage.total) * 100, 1),
+                })
+                seen_mounts.add(drive)
+            except (OSError, PermissionError):
+                continue
+    else:
+        # Unix: check / and the project root's mount
+        for path in ["/", str(PROJECT_ROOT)]:
+            mount = str(Path(path).anchor)
+            if mount in seen_mounts:
+                continue
+            try:
+                usage = shutil.disk_usage(path)
+                disks.append({
+                    "mount": mount,
+                    "total_gb": round(usage.total / (1024 ** 3), 1),
+                    "free_gb": round(usage.free / (1024 ** 3), 1),
+                    "used_pct": round((usage.used / usage.total) * 100, 1),
+                })
+                seen_mounts.add(mount)
+            except Exception:
+                continue
+
     return disks
 
 

@@ -10,11 +10,17 @@ With this, it feeds itself continuously and grows.
 import asyncio
 import logging
 import sys
+import io
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 import json
 from dataclasses import dataclass, field
+
+# Force UTF-8 stdout/stderr on Windows so emoji prints don't crash
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # Import our systems
 sys.path.insert(0, str(Path(__file__).parent))
@@ -102,7 +108,88 @@ class MetricsCollector:
         
         # If no metrics found, return simulated metrics for demo
         if not metrics:
+            metrics = self._collect_real_metrics()
+        
+        # If still nothing, fall back to demo data
+        if not metrics:
             metrics = self._generate_demo_metrics()
+        
+        return metrics
+    
+    def _collect_real_metrics(self) -> List[SystemMetric]:
+        """Collect real metrics from build learnings, experiences, and code verifier."""
+        metrics = []
+        now = datetime.utcnow().isoformat()
+        
+        try:
+            # ── Build learnings: real success/failure rates ──
+            from src.agent.build_learnings import _load_store, get_cloud_fix_lessons
+            
+            store = _load_store()
+            if store:
+                total = len(store)
+                successes = sum(1 for e in store if e.get("success"))
+                success_rate = successes / total if total > 0 else 0
+                
+                metrics.append(SystemMetric(
+                    timestamp=now,
+                    metric_name="build_success_rate",
+                    value=success_rate * 100,
+                    unit="%",
+                    component="build_learnings",
+                ))
+                metrics.append(SystemMetric(
+                    timestamp=now,
+                    metric_name="total_builds",
+                    value=float(total),
+                    unit="builds",
+                    component="build_learnings",
+                ))
+                
+                # Cloud fix lessons count (Ollama learning progress)
+                lessons = get_cloud_fix_lessons(limit=100)
+                if lessons:
+                    metrics.append(SystemMetric(
+                        timestamp=now,
+                        metric_name="cloud_fix_lessons_total",
+                        value=float(len(lessons)),
+                        unit="lessons",
+                        component="cloud_fix_learning",
+                    ))
+        except Exception as e:
+            self.logger.debug(f"Could not collect build learnings metrics: {e}")
+        
+        try:
+            # ── KB Experiences: how many fixes recorded & approved ──
+            from src.kb.experience_recorder import KBExperienceRecorder
+            recorder = KBExperienceRecorder()
+            stats = recorder.get_stats()
+            
+            if stats.get("total", 0) > 0:
+                metrics.append(SystemMetric(
+                    timestamp=now,
+                    metric_name="kb_experiences_total",
+                    value=float(stats.get("total", 0)),
+                    unit="experiences",
+                    component="kb_experience_recorder",
+                ))
+                metrics.append(SystemMetric(
+                    timestamp=now,
+                    metric_name="kb_experiences_in_kb",
+                    value=float(stats.get("in_kb", 0)),
+                    unit="experiences",
+                    component="kb_experience_recorder",
+                ))
+                if stats.get("avg_success_rate", 0) > 0:
+                    metrics.append(SystemMetric(
+                        timestamp=now,
+                        metric_name="kb_avg_success_rate",
+                        value=stats["avg_success_rate"] * 100,
+                        unit="%",
+                        component="kb_experience_recorder",
+                    ))
+        except Exception as e:
+            self.logger.debug(f"Could not collect KB experience metrics: {e}")
         
         return metrics
     
@@ -427,13 +514,27 @@ class AutonomousBackgroundService:
         self.automation_executor = AutomationExecutor(self.config)
         self.wave_coordinator = WaveCoordinator(self.framework, self.config)
         self.market_builder = MarketDrivenBuildManager(self.config)
+        self._email_listener = None
         
         self.logger = logging.getLogger(f"{__name__}.Service")
         
         self.cycles_completed = 0
         self.market_analysis_cycles = 0
+        self.email_check_cycles = 0
         self.service_start_time = datetime.utcnow()
         self.is_running = False
+        
+        # Initialize email listener (optional — runs if email is configured)
+        try:
+            from email_trigger_listener import EmailTriggerListener
+            listener = EmailTriggerListener()
+            if listener.config.get("email"):
+                self._email_listener = listener
+                self.logger.info("✅ Email trigger listener initialized")
+            else:
+                self.logger.info("ℹ️ Email listener skipped (no email configured)")
+        except Exception as e:
+            self.logger.debug(f"ℹ️ Email listener not available: {e}")
         
     def _setup_logging(self):
         """Setup logging for the service"""
@@ -527,9 +628,30 @@ class AutonomousBackgroundService:
                     
                     self.market_analysis_cycles += 1
                 
+                # Every 50 cycles: check email for market gap reports
+                email_check_interval = 50
+                if (self._email_listener
+                        and self.cycles_completed % email_check_interval == 0
+                        and self.cycles_completed > 0):
+                    try:
+                        processed = self._email_listener.check_mailbox_once()
+                        self.email_check_cycles += 1
+                        if processed > 0:
+                            self.logger.warning(
+                                f"📧 Email listener: processed {processed} market gap report(s)"
+                            )
+                    except Exception as email_err:
+                        self.logger.debug(f"Email check failed: {email_err}")
+                
                 # Print status report periodically (every 10 cycles)
                 if self.cycles_completed % 10 == 0:
                     await self._print_status_report()
+                    # Collect dashboard data for all tabs
+                    try:
+                        from src.dashboard_data_collector import collect_dashboard_snapshot
+                        collect_dashboard_snapshot()
+                    except Exception as dash_err:
+                        self.logger.debug(f"Dashboard snapshot failed: {dash_err}")
                 
                 # Wait for next cycle
                 await asyncio.sleep(self.config.polling_interval_seconds)
@@ -562,6 +684,7 @@ class AutonomousBackgroundService:
 
 🌊 CURRENT WAVE: {self.framework.growth_plan.current_wave.value if self.framework.growth_plan.current_wave else 'None'}
 🎯 WAVES DEPLOYED: {len(self.wave_coordinator.deployed_waves)}
+📧 EMAIL CHECKS: {self.email_check_cycles} ({'active' if self._email_listener else 'not configured'})
 
 🚀 STATUS: CONTINUOUS AUTONOMOUS IMPROVEMENT IN PROGRESS
 """)

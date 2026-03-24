@@ -758,15 +758,20 @@ def _ext_to_language(ext: str) -> str:
 def missions_list(limit: int = 50) -> Dict:
     """Get recent missions."""
     try:
-        telemetry = _get_telemetry_collector()
-        if not telemetry:
-            return {"missions": [], "total": 0}
+        # Read from mission_telemetry.json (same source as HTTP /api/missions)
+        missions_file = Path("data/mission_telemetry.json")
+        missions = []
+        if missions_file.exists():
+            with open(missions_file, 'r') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    missions = data[:limit]
+                elif isinstance(data, dict):
+                    missions = list(data.values())[:limit]
         
-        stats = telemetry.get_all_stats()
-        total = stats.get('total_missions', 0) if stats else 0
         return {
-            "missions": [],
-            "total": total,
+            "missions": missions,
+            "total": len(missions),
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -923,23 +928,324 @@ def approvals_list(limit: int = 50) -> Dict:
         if approval_file.exists():
             with open(approval_file, 'r') as f:
                 approvals = json.load(f)
+                if isinstance(approvals, dict):
+                    # File is keyed by request_id
+                    return {
+                        "requests": approvals,
+                        "total": len(approvals),
+                        "pending": len([a for a in approvals.values() if a.get("status") == "pending"]),
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
                 if isinstance(approvals, list):
                     return {
-                        "approvals": approvals[:limit],
+                        "requests": {a.get("request_id", str(i)): a for i, a in enumerate(approvals)},
                         "total": len(approvals),
                         "pending": len([a for a in approvals if a.get("status") == "pending"]),
                         "timestamp": datetime.utcnow().isoformat()
                     }
         
         return {
-            "approvals": [],
+            "requests": {},
             "total": 0,
             "pending": 0,
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
         logger.error(f"Error in approvals_list: {e}")
-        return {"approvals": [], "total": 0, "error": str(e)}
+        return {"requests": {}, "total": 0, "error": str(e)}
+
+
+def approvals_summary_stats() -> Dict:
+    """Get approval summary statistics."""
+    try:
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        data_dir = package_root / "data"
+        approval_file = data_dir / "approval_workflow_state.json"
+
+        total_decisions = 0
+        approved_count = 0
+        rejected_count = 0
+        pending_requests = 0
+
+        if approval_file.exists():
+            with open(approval_file, 'r') as f:
+                data = json.load(f)
+                items = data.values() if isinstance(data, dict) else (data if isinstance(data, list) else [])
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    status = item.get("status", "")
+                    if status in ("waiting", "pending"):
+                        pending_requests += 1
+                    approved = item.get("approved_gaps", [])
+                    rejected = item.get("rejected_gaps", [])
+                    approved_count += len(approved)
+                    rejected_count += len(rejected)
+                    total_decisions += len(approved) + len(rejected)
+
+        return {
+            "total_decisions": total_decisions,
+            "approved_count": approved_count,
+            "rejected_count": rejected_count,
+            "pending_requests": pending_requests,
+            "approval_rate": ((approved_count / total_decisions * 100) if total_decisions > 0 else 0),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error in approvals_summary_stats: {e}")
+        return {"total_decisions": 0, "approved_count": 0, "rejected_count": 0, "pending_requests": 0, "approval_rate": 0, "error": str(e)}
+
+
+def approvals_approve_request(data: Dict = None) -> Dict:
+    """Approve all gaps in a request."""
+    try:
+        request_id = (data or {}).get("request_id", "")
+        if not request_id:
+            return {"error": "Missing request_id"}
+
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        data_dir = package_root / "data"
+        workflow_file = data_dir / "approval_workflow_state.json"
+
+        if not workflow_file.exists():
+            return {"error": "No workflow data found"}
+
+        with open(workflow_file, 'r') as f:
+            workflows = json.load(f)
+
+        if request_id not in workflows:
+            return {"error": "Request not found"}
+
+        request = workflows[request_id]
+        gap_ids = [g.get("gap_id") for g in request.get("market_gaps", [])]
+        request["status"] = "fully_approved"
+        request["approved_gaps"] = gap_ids
+        request["rejected_gaps"] = []
+        request["rejection_reasons"] = {}
+
+        with open(workflow_file, 'w') as f:
+            json.dump(workflows, f, indent=2)
+
+        _add_notification_rpc(data_dir, "approval", f"Request {request_id} fully approved ({len(gap_ids)} gaps)")
+        return {"success": True, "request_id": request_id, "action": "approved_all", "gap_count": len(gap_ids)}
+    except Exception as e:
+        logger.error(f"Error approving request: {e}")
+        return {"error": str(e)}
+
+
+def approvals_reject_request(data: Dict = None) -> Dict:
+    """Reject all gaps in a request."""
+    try:
+        data = data or {}
+        request_id = data.get("request_id", "")
+        reason = data.get("reason", "Rejected by reviewer")
+        if not request_id:
+            return {"error": "Missing request_id"}
+
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        data_dir = package_root / "data"
+        workflow_file = data_dir / "approval_workflow_state.json"
+
+        if not workflow_file.exists():
+            return {"error": "No workflow data found"}
+
+        with open(workflow_file, 'r') as f:
+            workflows = json.load(f)
+
+        if request_id not in workflows:
+            return {"error": "Request not found"}
+
+        request = workflows[request_id]
+        gap_ids = [g.get("gap_id") for g in request.get("market_gaps", [])]
+        request["status"] = "rejected"
+        request["approved_gaps"] = []
+        request["rejected_gaps"] = gap_ids
+        request["rejection_reasons"] = {gid: reason for gid in gap_ids}
+
+        with open(workflow_file, 'w') as f:
+            json.dump(workflows, f, indent=2)
+
+        _add_notification_rpc(data_dir, "rejection", f"Request {request_id} rejected ({len(gap_ids)} gaps)")
+        return {"success": True, "request_id": request_id, "action": "rejected_all", "gap_count": len(gap_ids)}
+    except Exception as e:
+        logger.error(f"Error rejecting request: {e}")
+        return {"error": str(e)}
+
+
+def approvals_approve_gap(data: Dict = None) -> Dict:
+    """Approve a specific gap."""
+    try:
+        data = data or {}
+        request_id = data.get("request_id", "")
+        gap_id = data.get("gap_id", "")
+        if not request_id or not gap_id:
+            return {"error": "Missing request_id or gap_id"}
+
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        data_dir = package_root / "data"
+        decisions_file = data_dir / "approval_decisions.json"
+        decisions_file.parent.mkdir(parents=True, exist_ok=True)
+
+        decisions = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+
+        if request_id not in decisions:
+            decisions[request_id] = []
+        decisions[request_id].append({
+            "gap_id": gap_id, "approved": True,
+            "decision_time": datetime.utcnow().isoformat(), "reason": None
+        })
+        with open(decisions_file, 'w') as f:
+            json.dump(decisions, f, indent=2)
+
+        return {"success": True, "gap_id": gap_id, "action": "approved"}
+    except Exception as e:
+        logger.error(f"Error approving gap: {e}")
+        return {"error": str(e)}
+
+
+def approvals_reject_gap(data: Dict = None) -> Dict:
+    """Reject a specific gap."""
+    try:
+        data = data or {}
+        request_id = data.get("request_id", "")
+        gap_id = data.get("gap_id", "")
+        reason = data.get("reason", "No reason provided")
+        if not request_id or not gap_id:
+            return {"error": "Missing request_id or gap_id"}
+
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        data_dir = package_root / "data"
+        decisions_file = data_dir / "approval_decisions.json"
+        decisions_file.parent.mkdir(parents=True, exist_ok=True)
+
+        decisions = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+
+        if request_id not in decisions:
+            decisions[request_id] = []
+        decisions[request_id].append({
+            "gap_id": gap_id, "approved": False,
+            "decision_time": datetime.utcnow().isoformat(), "reason": reason
+        })
+        with open(decisions_file, 'w') as f:
+            json.dump(decisions, f, indent=2)
+
+        return {"success": True, "gap_id": gap_id, "action": "rejected", "reason": reason}
+    except Exception as e:
+        logger.error(f"Error rejecting gap: {e}")
+        return {"error": str(e)}
+
+
+# ============================================================================
+# NOTIFICATION ENDPOINTS (RPC)
+# ============================================================================
+
+def _add_notification_rpc(data_dir: Path, ntype: str, message: str, metadata: dict = None):
+    """Helper to add a notification."""
+    notifications_file = data_dir / "notifications.json"
+    notifications = []
+    if notifications_file.exists():
+        try:
+            with open(notifications_file, 'r') as f:
+                notifications = json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            notifications = []
+    notifications.insert(0, {
+        "id": f"notif_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{len(notifications)}",
+        "type": ntype,
+        "message": message,
+        "metadata": metadata or {},
+        "timestamp": datetime.utcnow().isoformat(),
+        "read": False
+    })
+    notifications = notifications[:100]
+    with open(notifications_file, 'w') as f:
+        json.dump(notifications, f, indent=2)
+
+
+def notifications_list(**kwargs) -> Dict:
+    """Get all notifications."""
+    try:
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        notifications_file = package_root / "data" / "notifications.json"
+
+        if not notifications_file.exists():
+            return {"notifications": [], "unread_count": 0, "timestamp": datetime.utcnow().isoformat()}
+
+        with open(notifications_file, 'r') as f:
+            notifications = json.load(f)
+
+        unread_only = kwargs.get("unread_only", False)
+        if unread_only:
+            notifications = [n for n in notifications if not n.get("read")]
+
+        unread_count = sum(1 for n in notifications if not n.get("read"))
+        return {"notifications": notifications, "unread_count": unread_count, "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error getting notifications: {e}")
+        return {"notifications": [], "unread_count": 0, "error": str(e)}
+
+
+def notifications_mark_read(data: Dict = None) -> Dict:
+    """Mark a notification as read."""
+    try:
+        notification_id = (data or {}).get("id", "")
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        notifications_file = package_root / "data" / "notifications.json"
+
+        if not notifications_file.exists():
+            return {"error": "No notifications"}
+
+        with open(notifications_file, 'r') as f:
+            notifications = json.load(f)
+
+        for n in notifications:
+            if n.get("id") == notification_id:
+                n["read"] = True
+                break
+
+        with open(notifications_file, 'w') as f:
+            json.dump(notifications, f, indent=2)
+
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def notifications_read_all(**kwargs) -> Dict:
+    """Mark all notifications as read."""
+    try:
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+        notifications_file = package_root / "data" / "notifications.json"
+
+        if not notifications_file.exists():
+            return {"success": True}
+
+        with open(notifications_file, 'r') as f:
+            notifications = json.load(f)
+
+        for n in notifications:
+            n["read"] = True
+
+        with open(notifications_file, 'w') as f:
+            json.dump(notifications, f, indent=2)
+
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # ============================================================================
@@ -1418,6 +1724,73 @@ def synthesized_tools_run(tool_name: str, params: Optional[Dict] = None) -> Dict
 
 
 # ============================================================================
+# DATABASE PERFORMANCE
+# ============================================================================
+
+def autonomous_database_performance() -> Dict:
+    """Get database performance metrics from SQLite databases."""
+    try:
+        script_dir = Path(__file__).parent
+        package_root = script_dir.parent
+
+        db_files = list(package_root.glob("*.db")) + list((package_root / "data").glob("*.db"))
+        total_size = 0
+        table_count = 0
+        total_rows = 0
+        tables_info = []
+
+        for db_path in db_files:
+            try:
+                import sqlite3
+                db_size = db_path.stat().st_size
+                total_size += db_size
+                conn = sqlite3.connect(str(db_path), timeout=2)
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+                db_tables = cursor.fetchall()
+                # Count indexes per table
+                cursor.execute("SELECT tbl_name, COUNT(*) FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' GROUP BY tbl_name")
+                index_counts = dict(cursor.fetchall())
+                db_table_count = len(db_tables)
+                for (tname,) in db_tables:
+                    table_count += 1
+                    try:
+                        cursor.execute(f"SELECT COUNT(*) FROM [{tname}]")
+                        row_count = cursor.fetchone()[0]
+                        total_rows += row_count
+                        tables_info.append({
+                            "name": tname,
+                            "database": db_path.name,
+                            "row_count": row_count,
+                            "size_mb": round(db_size / (1024 * 1024) / max(db_table_count, 1), 4),
+                            "index_count": index_counts.get(tname, 0),
+                        })
+                    except Exception:
+                        tables_info.append({"name": tname, "database": db_path.name, "row_count": 0, "size_mb": 0, "index_count": 0})
+                conn.close()
+            except Exception as e:
+                logger.debug(f"Could not read {db_path}: {e}")
+
+        health_status = "healthy" if db_files else "no_databases"
+
+        return {
+            "database": {
+                "size_mb": round(total_size / (1024 * 1024), 2),
+                "table_count": table_count,
+                "total_rows": total_rows,
+                "db_files": len(db_files),
+                "tables": tables_info,
+                "health": {"status": health_status},
+                "status": health_status,
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error in autonomous_database_performance: {e}")
+        return {"database": {"size_mb": 0, "table_count": 0, "total_rows": 0, "tables": [], "status": "error"}, "error": str(e)}
+
+
+# ============================================================================
 # CHAT (Agent conversation via 4-tier LLM failover)
 # ============================================================================
 
@@ -1450,8 +1823,27 @@ async def _chat_async(data: Dict) -> Dict:
     import re as _re
     from src.agent.core import Command, CommandType, CommandResponse
     from src.agent.action_parser import parse_file_actions, execute_file_actions, strip_file_markers
-    from src.agent.build_learnings import record_build_outcome
+    from src.agent.build_learnings import record_build_outcome, record_cloud_fix_lesson
     from src.agent.code_verifier import verify_files, format_issues_for_llm
+
+    def _record_experience(file_actions, description, change_type="bug_fix",
+                           outcome="success", success_score=0.85):
+        """Record a code change to Phase 19 self-improving agent + KB."""
+        try:
+            from src.phase19_self_improving_agent import SelfImprovingAgent
+            agent = SelfImprovingAgent()
+            for fa in file_actions:
+                agent.record_code_change(
+                    file_path=fa.get("path", "unknown"),
+                    change_type=change_type,
+                    description=description[:500],
+                    code_after=fa.get("content", "")[:2000],
+                    outcome=outcome,
+                    success_score=success_score,
+                )
+            logger.info(f"🧠 Phase 19: Recorded {len(file_actions)} experience(s) ({change_type})")
+        except Exception as exp_err:
+            logger.debug(f"Phase 19 recording skipped: {exp_err}")
 
     message = (data.get("message") or "").strip()
     session_id = data.get("session_id")
@@ -1611,19 +2003,156 @@ async def _chat_async(data: Dict) -> Dict:
                                     f"\n\n🔧 *Auto-fix applied ({fix_attempt} pass{'es' if fix_attempt > 1 else ''}) "
                                     f"— {verification['summary']}*"
                                 )
+                                # Phase 19: Record the successful fix for learning
+                                _record_experience(
+                                    file_actions,
+                                    f"Auto-fix ({engine_used}): {message[:200]}",
+                                    change_type="bug_fix", outcome="success",
+                                    success_score=0.8,
+                                )
                                 break
                             else:
                                 fix_prompt = format_issues_for_llm(verification)
                         else:
-                            # Exhausted fix attempts — report remaining issues
+                            # Exhausted fix attempts — escalate to cloud if Ollama was the engine
                             logger.warning(
                                 f"⚠️ Auto-fix exhausted {max_fix_attempts} attempts, "
                                 f"{verification['error_count']} error(s) remain"
                             )
-                            reply += (
-                                f"\n\n⚠️ *Verification found {verification['error_count']} issue(s) "
-                                f"that couldn't be auto-fixed — see diagnostics panel*"
-                            )
+
+                            # ── Cloud LLM escalation: let Anthropic/OpenAI fix Ollama's mistakes ──
+                            cloud_fixed = False
+                            if engine_used == "ollama" and not (_agent.settings.local_only if hasattr(_agent, 'settings') else False):
+                                logger.info(
+                                    "🎓 Escalating to cloud LLM — Ollama couldn't self-fix "
+                                    f"{verification['error_count']} error(s)"
+                                )
+                                # Capture Ollama's broken code before cloud fixes it
+                                ollama_broken_code = {
+                                    fa["path"]: fa["content"] for fa in file_actions
+                                }
+                                error_summary = format_issues_for_llm(verification)
+
+                                # Build a cloud fix prompt with full context
+                                cloud_fix_context = (
+                                    f"The user asked: {message}\n\n"
+                                    f"A local LLM generated code but it has errors that "
+                                    f"couldn't be auto-fixed after {max_fix_attempts} attempts:\n"
+                                    f"{error_summary}\n\n"
+                                    "Here are the files with issues:\n"
+                                )
+                                for fa in file_actions:
+                                    cloud_fix_context += f"\n===FILE: {fa['path']}===\n{fa['content']}===END_FILE===\n"
+                                cloud_fix_context += (
+                                    "\nFix ALL issues listed above. Output ONLY the corrected files "
+                                    "using ===FILE: path=== ... ===END_FILE=== format."
+                                )
+
+                                try:
+                                    cloud_fix_cmd = Command(
+                                        command_type=CommandType.CONVERSATION,
+                                        description=cloud_fix_context,
+                                        context={"query": cloud_fix_context},
+                                        source="cloud_escalation_fix",
+                                        metadata={
+                                            "is_conversation": True,
+                                            "session_id": session_id or "",
+                                            "force_cloud": True,
+                                        },
+                                    )
+                                    # Call cloud LLMs directly (skip Ollama)
+                                    cloud_prompt = _agent._format_command_prompt(cloud_fix_cmd)
+                                    cloud_fix_resp = await _agent._try_cloud_llms(
+                                        cloud_fix_cmd, cloud_prompt, True
+                                    )
+
+                                    if cloud_fix_resp and cloud_fix_resp.success and cloud_fix_resp.result:
+                                        cloud_fix_raw = str(cloud_fix_resp.result)
+                                        cloud_tier = (
+                                            cloud_fix_resp.metadata.get("llm_used", "cloud")
+                                            if cloud_fix_resp.metadata else "cloud"
+                                        )
+                                        cloud_fix_actions = parse_file_actions(cloud_fix_raw)
+
+                                        if cloud_fix_actions:
+                                            # Apply cloud fixes
+                                            execute_file_actions(cloud_fix_actions)
+
+                                            # Merge into tracking
+                                            cloud_content_map = {
+                                                fa["path"].replace("\\", "/").strip("/"): fa["content"]
+                                                for fa in cloud_fix_actions
+                                            }
+                                            for fa in cloud_fix_actions:
+                                                norm = fa["path"].replace("\\", "/").strip("/")
+                                                for orig in file_actions:
+                                                    if orig["path"].replace("\\", "/").strip("/") == norm:
+                                                        orig["content"] = fa["content"]
+                                                        break
+                                                for act in actions_taken:
+                                                    bare = act["path"].replace("\\", "/").removeprefix("projects/")
+                                                    if bare == norm:
+                                                        act["content"] = fa["content"]
+                                                        act["size"] = len(fa["content"])
+                                                        break
+
+                                            # Verify the cloud fix
+                                            cloud_verification = verify_files(file_actions)
+                                            for act in actions_taken:
+                                                act["verification"] = cloud_verification
+
+                                            if cloud_verification["passed"]:
+                                                cloud_fixed = True
+                                                verification = cloud_verification
+                                                logger.info(
+                                                    f"✅ Cloud LLM ({cloud_tier}) fixed all errors!"
+                                                )
+                                                reply = strip_file_markers(raw_reply) + (
+                                                    f"\n\n🎓 *{cloud_tier} fixed {len(verification.get('issues', []))} "
+                                                    f"issue(s) that local LLM couldn't resolve — "
+                                                    f"lesson recorded for future builds*"
+                                                )
+                                            else:
+                                                logger.warning(
+                                                    f"Cloud fix by {cloud_tier} still has "
+                                                    f"{cloud_verification['error_count']} error(s)"
+                                                )
+                                                reply += (
+                                                    f"\n\n⚠️ *Cloud LLM ({cloud_tier}) attempted fix but "
+                                                    f"{cloud_verification['error_count']} issue(s) remain*"
+                                                )
+
+                                            # ── Record the lesson regardless ──
+                                            # Even partial fixes teach Ollama something
+                                            cloud_fixed_code = {
+                                                fa["path"]: fa["content"] for fa in cloud_fix_actions
+                                            }
+                                            # Use Ollama's original errors as the lesson
+                                            ollama_verification = verify_files(
+                                                [{"path": p, "content": c} for p, c in ollama_broken_code.items()]
+                                            )
+                                            issues_list = [
+                                                iss.get("message", str(iss))
+                                                for iss in ollama_verification.get("issues", [])
+                                            ]
+                                            record_cloud_fix_lesson(
+                                                ollama_model=tier_used,
+                                                cloud_model=cloud_tier,
+                                                user_prompt=message,
+                                                error_summary=error_summary,
+                                                ollama_code=ollama_broken_code,
+                                                cloud_code=cloud_fixed_code,
+                                                issues_fixed=issues_list,
+                                            )
+
+                                except Exception as cloud_err:
+                                    logger.warning(f"Cloud escalation fix failed: {cloud_err}")
+
+                            if not cloud_fixed:
+                                reply += (
+                                    f"\n\n⚠️ *Verification found {verification['error_count']} issue(s) "
+                                    f"that couldn't be auto-fixed — see diagnostics panel*"
+                                )
 
                     # Record build outcome (learning)
                     errors = [a["error"] for a in actions_taken if not a.get("success")]
@@ -1637,6 +2166,27 @@ async def _chat_async(data: Dict) -> Dict:
                         parse_method=_detect_parse_method(raw_reply),
                         raw_snippet=raw_reply[:300],
                     )
+
+                    # ── Dashboard: Log verification as test results ──
+                    try:
+                        from src.dashboard_data_collector import log_test_result
+                        for fa in file_actions:
+                            log_test_result(
+                                test_name=f"verify:{fa.get('path', 'unknown')}",
+                                status="passed" if verification["passed"] else "failed",
+                                duration=0.0,
+                                message=verification.get("summary", ""),
+                            )
+                    except Exception:
+                        pass
+
+                    # ── Phase 19: Record experience for KB learning ──
+                    if verification["passed"]:
+                        _record_experience(
+                            file_actions, f"Build success: {message[:200]}",
+                            change_type="enhancement", outcome="success",
+                            success_score=0.9,
+                        )
                 else:
                     # ── Parse-quality fallback ──
                     # If the user asked to build something and Ollama returned
@@ -1705,6 +2255,14 @@ async def _chat_async(data: Dict) -> Dict:
                                     parse_method=_detect_parse_method(cloud_raw),
                                     raw_snippet=cloud_raw[:300],
                                 )
+                                # Phase 19: Record cloud fallback build for learning
+                                if cloud_verification["passed"]:
+                                    _record_experience(
+                                        cloud_actions,
+                                        f"Cloud fallback build ({cloud_tier}): {message[:200]}",
+                                        change_type="enhancement", outcome="success",
+                                        success_score=0.9,
+                                    )
                             else:
                                 reply = cloud_raw
                                 source = cloud_tier
@@ -1729,6 +2287,29 @@ async def _chat_async(data: Dict) -> Dict:
             _session_mgr.summarize_if_needed(session_id)
         except Exception:
             pass
+
+    # ── Dashboard data collection: log message + decision ──
+    try:
+        from src.dashboard_data_collector import log_chat_message, log_decision
+        log_chat_message(
+            user_message=message,
+            reply=reply or "",
+            source=source,
+            tier_used=tier_used if 'tier_used' in dir() else "unknown",
+            engine_used=engine_used if 'engine_used' in dir() else "unknown",
+            files_created=len(actions_taken),
+            session_id=session_id or "",
+        )
+        if actions_taken:
+            log_decision(
+                task=message[:200],
+                agent_id=engine_used if 'engine_used' in dir() else "piddy",
+                action=f"Created {len(actions_taken)} file(s)",
+                confidence=0.8 if source != "fallback" else 0.1,
+                status="executed",
+            )
+    except Exception:
+        pass
 
     result: Dict[str, Any] = {"reply": reply, "session_id": session_id, "source": source}
     if actions_taken:
@@ -2131,7 +2712,19 @@ RPC_ENDPOINTS = {
     "logs.get": logs_get,
     
     # Approvals
+    "approvals": approvals_list,
     "approvals.list": approvals_list,
+    "approvals.summary.stats": approvals_summary_stats,
+    "approvals.approve": approvals_approve_request,
+    "approvals.reject": approvals_reject_request,
+    "approvals.gap.approve": approvals_approve_gap,
+    "approvals.gap.reject": approvals_reject_gap,
+    
+    # Notifications
+    "notifications": notifications_list,
+    "notifications.list": notifications_list,
+    "notifications.mark_read": notifications_mark_read,
+    "notifications.read-all": notifications_read_all,
     
     # Tasks (Phase 3.3)
     "tasks.create": tasks_create,
@@ -2167,6 +2760,7 @@ RPC_ENDPOINTS = {
     "autonomous.failure_summary": autonomous_failure_summary,
     "autonomous.failure_history": autonomous_failure_history,
     "autonomous.strategy_stats": autonomous_strategy_stats,
+    "autonomous.database.performance": autonomous_database_performance,
     
     # Phase 51: Tool Synthesis
     "synthesized.list": synthesized_tools_list,

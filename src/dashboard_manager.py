@@ -17,12 +17,18 @@ Integrates:
 
 import os
 import sys
+import io
 import time
 import subprocess
 import signal
 import webbrowser
 from pathlib import Path
 from datetime import datetime
+
+# Force UTF-8 stdout/stderr on Windows so emoji prints don't crash
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 class DashboardManager:

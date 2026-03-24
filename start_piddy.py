@@ -431,6 +431,13 @@ def main():
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
     
+    # Install dashboard log handler early so all services write to data/*.log
+    try:
+        from src.log_handler import install_dashboard_logging
+        install_dashboard_logging()
+    except Exception:
+        pass
+    
     parser = argparse.ArgumentParser(
         description="🚀 Piddy Unified Startup - Start all system components",
         formatter_class=argparse.RawDescriptionHelpFormatter,

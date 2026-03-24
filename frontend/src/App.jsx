@@ -4,6 +4,7 @@ import './styles/components.css';
 import './styles/dashboard.css';
 import './styles/setup.css';
 import './styles/vscode-layout.css';
+import './styles/home.css';
 import { apiCall } from './utils/api';
 import { isBackendReachable } from './utils/api';
 
@@ -40,7 +41,10 @@ import Productivity from './components/Productivity';
 import ProjectWorkspace from './components/ProjectWorkspace';
 import CodePanel from './components/CodePanel';
 import { ToastProvider } from './components/Toast';
+import NotificationBell from './components/NotificationBell';
+import PiddyAvatar from './components/PiddyAvatar';
 import Setup from './components/Setup';
+import Home from './components/Home';
 
 // Map page ids to their parent section
 const PAGE_TO_SECTION = {};
@@ -51,8 +55,8 @@ const PAGE_TO_SECTION = {};
 });
 
 function App() {
-  const [activeSection, setActiveSection] = useState('work');
-  const [activePage, setActivePage] = useState('agents');
+  const [activeSection, setActiveSection] = useState('home');
+  const [activePage, setActivePage] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatOpen, setChatOpen] = useState(true);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -125,6 +129,8 @@ function App() {
           is_healthy: data.status === 'operational'
         });
         setLoading(false);
+        // Signal Electron that frontend is fully ready
+        if (window.piddy?.api?.ready) window.piddy.api.ready();
       } catch (err) {
         if (retry < maxRetries) {
           setTimeout(() => fetchStatus(retry + 1, maxRetries), 1000 * (retry + 1));
@@ -133,6 +139,8 @@ function App() {
         setError(err.message);
         setSystemStatus({ is_healthy: false, status: 'offline' });
         setLoading(false);
+        // Signal Electron even on error so splash closes
+        if (window.piddy?.api?.ready) window.piddy.api.ready();
       }
     };
 
@@ -183,6 +191,8 @@ function App() {
     }
 
     switch (activePage) {
+      case 'home':
+        return <Home systemStatus={systemStatus} onNavigate={handlePageChange} />;
       case 'overview':
         return <Overview systemStatus={systemStatus} />;
       case 'doctor':
@@ -241,7 +251,7 @@ function App() {
       case 'projects':
         return <ProjectWorkspace />;
       default:
-        return <Agents />;
+        return <Home systemStatus={systemStatus} onNavigate={handlePageChange} />;
     }
   };
 
@@ -288,6 +298,9 @@ function App() {
 
           {/* Main Editor Area */}
           <div className="editor-area">
+            <div className="editor-area-topbar">
+              <NotificationBell />
+            </div>
             {backendOnline === false && (
               <div className="editor-offline-banner">
                 <span>&#9888;</span>
@@ -313,6 +326,7 @@ function App() {
             <div className="chat-panel-container">
               <div className="chat-panel-header">
                 <div className="chat-panel-header-left">
+                  <PiddyAvatar size="xs" />
                   <span className="chat-panel-header-title">Chat with Piddy</span>
                   {isElectron && <span className="chat-panel-header-badge">Live</span>}
                 </div>

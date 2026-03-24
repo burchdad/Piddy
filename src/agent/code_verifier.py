@@ -117,7 +117,7 @@ def _ext(path: str) -> str:
     return Path(path).suffix.lower()
 
 
-def _issue(file: str, severity: str, code: str, message: str, line: int = None) -> Dict:
+def _issue(file: str, severity: str, code: str, message: str, line: Optional[int] = None) -> Dict:
     return {"file": file, "line": line, "severity": severity, "code": code, "message": message}
 
 
@@ -478,13 +478,15 @@ def _check_yaml(path: str, content: str) -> List[Dict]:
     issues: List[Dict] = []
     try:
         import yaml
-        yaml.safe_load(content)
     except ImportError:
-        pass  # yaml not installed, skip
+        return issues  # yaml not installed, skip
+    try:
+        yaml.safe_load(content)
     except yaml.YAMLError as e:
-        line = None
-        if hasattr(e, "problem_mark") and e.problem_mark:
-            line = e.problem_mark.line + 1
+        line: Optional[int] = None
+        mark = getattr(e, "problem_mark", None)
+        if mark is not None:
+            line = mark.line + 1
         issues.append(_issue(
             path, SEVERITY_ERROR, "E050",
             f"Invalid YAML: {e}",

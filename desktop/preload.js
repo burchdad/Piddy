@@ -122,7 +122,10 @@ contextBridge.exposeInMainWorld('piddy', {
 
     // Utilities
     invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
-    on: (channel, callback) => ipcRenderer.on(channel, (event, data) => callback(data))
+    on: (channel, callback) => ipcRenderer.on(channel, (event, data) => callback(data)),
+
+    // Signal that frontend is fully initialized
+    ready: () => ipcRenderer.send('frontend-ready')
   }
 });
 

@@ -155,9 +155,11 @@ def check_for_updates() -> Dict[str, Any]:
             result["release_url"] = data.get("html_url")
             result["published_at"] = data.get("published_at")
             if latest_tag and _version_tuple(latest_tag) > _version_tuple(current):
+                result["latest_version"] = latest_tag
                 result["available"] = True
                 result["message"] = f"Update available: {current} → {latest_tag}"
             else:
+                result["latest_version"] = current
                 result["message"] = "You are on the latest release"
             return result
     except Exception:

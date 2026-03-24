@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useStream } from '../hooks/useStream';
 import { apiCall } from '../utils/api';
+import PiddyAvatar from './PiddyAvatar';
 
 /**
  * Unified Chat — Electron stream (primary) with HTTP fallback (browser dev).
@@ -165,6 +166,7 @@ function Chat({ onOpenSessions, onFilesCreated }) {
       {/* Toolbar */}
       <div className="chat-toolbar">
         <div className="chat-toolbar-left">
+          <PiddyAvatar size="sm" />
           <h2 className="chat-title">Chat with Piddy</h2>
           {isElectron && <span className="chat-mode-badge live">Live</span>}
           {sessionId && <span className="chat-session-badge">Session active</span>}

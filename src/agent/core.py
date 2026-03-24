@@ -512,6 +512,11 @@ Question: {input}
             result = executor.invoke({"input": prompt})
             _clear_rate_limit(llm_name)
             
+            # Record success in global rate limiter for metrics tracking
+            limiter = get_rate_limiter()
+            provider = Provider.ANTHROPIC if llm_name == "claude" else Provider.OPENAI
+            limiter.record_success(provider)
+            
             return CommandResponse(
                 success=True,
                 command_type=command.command_type,

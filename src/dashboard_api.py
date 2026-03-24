@@ -13,7 +13,7 @@ Provides REST endpoints for:
 - Test results
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -42,6 +42,13 @@ console_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('[%(levelname)s] %(message)s')
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
+
+# Install JSON-lines log handler for dashboard Logs tab
+try:
+    from src.log_handler import install_dashboard_logging
+    install_dashboard_logging()
+except Exception:
+    pass
 
 # Import coordinator for mission execution
 try:
@@ -779,8 +786,54 @@ async def system_overview() -> Dict:
 
 
 # ============================================================================
-# API ENDPOINTS - AGENTS (served by realtime_dashboard.py from coordinator)
+# API ENDPOINTS - AGENTS
 # ============================================================================
+
+@app.get("/api/agents")
+async def get_agents() -> Dict:
+    """Get all registered agents from coordinator and/or agent_state.json"""
+    agents = []
+    try:
+        # Try coordinator first (live in-memory agents)
+        try:
+            from src.coordination.agent_coordinator import get_coordinator
+            coordinator = get_coordinator()
+            if coordinator:
+                for agent in coordinator.get_all_agents():
+                    agents.append({
+                        "agent_id": agent.id,
+                        "name": agent.name,
+                        "role": agent.role.value if hasattr(agent.role, 'value') else str(agent.role),
+                        "capabilities": agent.capabilities,
+                        "status": "active" if agent.is_available else ("busy" if agent.current_task_id else "offline"),
+                        "is_available": agent.is_available,
+                        "current_task_id": agent.current_task_id,
+                        "completed_tasks": agent.completed_tasks,
+                        "failed_tasks": agent.failed_tasks,
+                        "reputation_score": round(
+                            (agent.completed_tasks / max(agent.completed_tasks + agent.failed_tasks, 1)) * 100, 1
+                        ),
+                        "total_decisions": agent.completed_tasks + agent.failed_tasks,
+                        "correct_decisions": agent.completed_tasks,
+                        "last_activity": agent.last_activity or datetime.utcnow().isoformat(),
+                    })
+        except Exception as e:
+            logger.debug(f"Coordinator not available for agents: {e}")
+
+        # Supplement with agent_state.json if no coordinator agents
+        if not agents:
+            from pathlib import Path
+            agents_file = Path("data/agent_state.json")
+            if agents_file.exists():
+                with open(agents_file, 'r') as f:
+                    agents_data = json.load(f)
+                    if isinstance(agents_data, list):
+                        agents = agents_data
+
+        return {"agents": agents, "count": len(agents), "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error fetching agents: {e}")
+        return {"agents": [], "count": 0, "error": str(e), "timestamp": datetime.utcnow().isoformat()}
 
 
 # ============================================================================
@@ -1114,18 +1167,87 @@ async def get_security_issues() -> Dict:
 
 @app.get("/api/metrics/performance")
 async def get_performance_metrics() -> List[PerformanceMetric]:
-    """Get all performance metrics from real data"""
+    """Get performance metrics from real system data"""
     try:
+        import os
         from pathlib import Path
+        metrics = []
+
+        # Memory metric
+        try:
+            import psutil
+            proc = psutil.Process(os.getpid())
+            mem = proc.memory_info()
+            metrics.append(PerformanceMetric(
+                metric_name="memory_usage_mb",
+                value=round(mem.rss / 1024 / 1024, 1),
+                unit="MB",
+                threshold=512.0,
+                status="ok" if mem.rss / 1024 / 1024 < 512 else "warning",
+                timestamp=datetime.utcnow().isoformat(),
+            ))
+            metrics.append(PerformanceMetric(
+                metric_name="cpu_percent",
+                value=proc.cpu_percent(interval=0.1),
+                unit="%",
+                threshold=80.0,
+                status="ok",
+                timestamp=datetime.utcnow().isoformat(),
+            ))
+        except ImportError:
+            pass
+
+        # Build learnings count
+        try:
+            from src.agent.build_learnings import _load_store
+            store = _load_store()
+            metrics.append(PerformanceMetric(
+                metric_name="build_lessons",
+                value=float(len(store)),
+                unit="lessons",
+                threshold=None,
+                status="ok",
+                timestamp=datetime.utcnow().isoformat(),
+            ))
+        except Exception:
+            pass
+
+        # KB experiences count
+        try:
+            kb_file = Path("kb_content_cache/learned_experiences/experiences.jsonl")
+            if kb_file.exists():
+                count = sum(1 for _ in open(kb_file))
+                metrics.append(PerformanceMetric(
+                    metric_name="kb_experiences",
+                    value=float(count),
+                    unit="entries",
+                    threshold=None,
+                    status="ok",
+                    timestamp=datetime.utcnow().isoformat(),
+                ))
+        except Exception:
+            pass
+
+        # DB sizes
+        for db in Path(".").glob("*.db"):
+            metrics.append(PerformanceMetric(
+                metric_name=f"db_size_{db.stem}",
+                value=round(db.stat().st_size / 1024, 1),
+                unit="KB",
+                threshold=None,
+                status="ok",
+                timestamp=datetime.utcnow().isoformat(),
+            ))
+
+        # Also load from file if present
         metrics_file = Path("data/performance_metrics.json")
-        
         if metrics_file.exists():
             with open(metrics_file, 'r') as f:
-                metrics_data = json.load(f)
-                return [PerformanceMetric(**metric) for metric in metrics_data] if isinstance(metrics_data, list) else []
-        
-        # No real metrics data
-        return []
+                file_data = json.load(f)
+                if isinstance(file_data, list):
+                    metrics.extend([PerformanceMetric(**m) for m in file_data])
+
+        return metrics
     except Exception as e:
         logger.error(f"Error fetching metrics: {e}")
         return []
@@ -1133,16 +1255,31 @@ async def get_performance_metrics() -> List[PerformanceMetric]:
 
 @app.get("/api/metrics/graph")
 async def get_metric_graph(metric_name: str, period_hours: int = 24) -> Dict:
-    """Get metric data for graphing"""
-    return {
-        "metric_name": metric_name,
-        "period_hours": period_hours,
-        "data_points": 288,  # 5-minute intervals for 24 hours
-        "samples": [
-            {"timestamp": datetime.utcnow().isoformat(), "value": 45.2 + (i * 0.1)}
-            for i in range(12)  # Last 12 samples
-        ]
-    }
+    """Get metric data for graphing from real system data"""
+    try:
+        from pathlib import Path
+        samples = []
+
+        # Try reading from a metrics history file
+        history_file = Path("data/performance_metrics.json")
+        if history_file.exists():
+            with open(history_file, 'r') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    samples = [
+                        {"timestamp": m.get("timestamp", ""), "value": m.get("value", 0)}
+                        for m in data if m.get("metric_name") == metric_name
+                    ]
+
+        return {
+            "metric_name": metric_name,
+            "period_hours": period_hours,
+            "data_points": len(samples),
+            "samples": samples,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching metric graph: {e}")
+        return {"metric_name": metric_name, "period_hours": period_hours, "data_points": 0, "samples": []}
 
 
 # ============================================================================
@@ -2447,17 +2584,29 @@ async def get_approval_stats() -> Dict:
         workflow_file = Path("data/approval_workflow_state.json")
         decisions_file = Path("data/approval_decisions.json")
         
+        # Count decisions from workflow state (approved_gaps / rejected_gaps)
         if workflow_file.exists():
             with open(workflow_file, 'r') as f:
                 workflows = json.load(f)
                 for req_id, workflow in workflows.items():
-                    if isinstance(workflow, dict) and workflow.get("status") in ["waiting", "pending"]:
+                    if not isinstance(workflow, dict):
+                        continue
+                    status = workflow.get("status", "")
+                    if status in ["waiting", "pending"]:
                         pending_requests += 1
+                    approved = workflow.get("approved_gaps", [])
+                    rejected = workflow.get("rejected_gaps", [])
+                    approved_count += len(approved)
+                    rejected_count += len(rejected)
+                    total_decisions += len(approved) + len(rejected)
         
+        # Also count from explicit decisions file (if any)
         if decisions_file.exists():
             with open(decisions_file, 'r') as f:
                 decisions = json.load(f)
                 for req_id, decisions_list in decisions.items():
+                    if not isinstance(decisions_list, list):
+                        continue
                     for decision in decisions_list:
                         total_decisions += 1
                         if decision.get("approved"):
@@ -2484,6 +2633,202 @@ async def get_approval_stats() -> Dict:
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }
+
+
+# ============================================================================
+# REQUEST-LEVEL APPROVE / REJECT ALL GAPS
+# ============================================================================
+
+@app.post("/api/approvals/{request_id}/approve")
+async def approve_request(request_id: str) -> Dict:
+    """Approve all gaps in a request at once"""
+    try:
+        from pathlib import Path
+        workflow_file = Path("data/approval_workflow_state.json")
+        decisions_file = Path("data/approval_decisions.json")
+        notifications_file = Path("data/notifications.json")
+
+        if not workflow_file.exists():
+            return {"error": "No workflow data found", "timestamp": datetime.utcnow().isoformat()}
+
+        with open(workflow_file, 'r') as f:
+            workflows = json.load(f)
+
+        if request_id not in workflows:
+            return {"error": "Request not found", "timestamp": datetime.utcnow().isoformat()}
+
+        request = workflows[request_id]
+        gap_ids = [g.get("gap_id") for g in request.get("market_gaps", [])]
+
+        request["status"] = "fully_approved"
+        request["approved_gaps"] = gap_ids
+        request["rejected_gaps"] = []
+        request["rejection_reasons"] = {}
+
+        with open(workflow_file, 'w') as f:
+            json.dump(workflows, f, indent=2)
+
+        # Record in decisions file
+        decisions = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+        decisions[request_id] = [
+            {"gap_id": gid, "approved": True, "decision_time": datetime.utcnow().isoformat(), "reason": None}
+            for gid in gap_ids
+        ]
+        with open(decisions_file, 'w') as f:
+            json.dump(decisions, f, indent=2)
+
+        # Add notification
+        _add_notification(notifications_file, "approval", f"Request {request_id} fully approved ({len(gap_ids)} gaps)")
+
+        logger.info(f"Request {request_id} fully approved ({len(gap_ids)} gaps)")
+        return {"success": True, "request_id": request_id, "action": "approved_all", "gap_count": len(gap_ids), "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error approving request: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.post("/api/approvals/{request_id}/reject")
+async def reject_request(request_id: str, body: Dict = None) -> Dict:
+    """Reject all gaps in a request at once"""
+    try:
+        from pathlib import Path
+        workflow_file = Path("data/approval_workflow_state.json")
+        decisions_file = Path("data/approval_decisions.json")
+        notifications_file = Path("data/notifications.json")
+        reason = (body or {}).get("reason", "Rejected by reviewer")
+
+        if not workflow_file.exists():
+            return {"error": "No workflow data found", "timestamp": datetime.utcnow().isoformat()}
+
+        with open(workflow_file, 'r') as f:
+            workflows = json.load(f)
+
+        if request_id not in workflows:
+            return {"error": "Request not found", "timestamp": datetime.utcnow().isoformat()}
+
+        request = workflows[request_id]
+        gap_ids = [g.get("gap_id") for g in request.get("market_gaps", [])]
+
+        request["status"] = "rejected"
+        request["approved_gaps"] = []
+        request["rejected_gaps"] = gap_ids
+        request["rejection_reasons"] = {gid: reason for gid in gap_ids}
+
+        with open(workflow_file, 'w') as f:
+            json.dump(workflows, f, indent=2)
+
+        # Record in decisions file
+        decisions = {}
+        if decisions_file.exists():
+            with open(decisions_file, 'r') as f:
+                decisions = json.load(f)
+        decisions[request_id] = [
+            {"gap_id": gid, "approved": False, "decision_time": datetime.utcnow().isoformat(), "reason": reason}
+            for gid in gap_ids
+        ]
+        with open(decisions_file, 'w') as f:
+            json.dump(decisions, f, indent=2)
+
+        # Add notification
+        _add_notification(notifications_file, "rejection", f"Request {request_id} rejected ({len(gap_ids)} gaps)")
+
+        logger.info(f"Request {request_id} fully rejected ({len(gap_ids)} gaps): {reason}")
+        return {"success": True, "request_id": request_id, "action": "rejected_all", "gap_count": len(gap_ids), "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error rejecting request: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+# ============================================================================
+# NOTIFICATION SYSTEM
+# ============================================================================
+
+def _add_notification(notifications_file, ntype: str, message: str, metadata: dict = None):
+    """Helper to add a notification to the notifications file"""
+    from pathlib import Path
+    notifications_file = Path(notifications_file) if isinstance(notifications_file, str) else notifications_file
+    notifications_file.parent.mkdir(parents=True, exist_ok=True)
+    notifications = []
+    if notifications_file.exists():
+        try:
+            with open(notifications_file, 'r') as f:
+                notifications = json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            notifications = []
+    notifications.insert(0, {
+        "id": f"notif_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{len(notifications)}",
+        "type": ntype,
+        "message": message,
+        "metadata": metadata or {},
+        "timestamp": datetime.utcnow().isoformat(),
+        "read": False
+    })
+    # Keep last 100 notifications
+    notifications = notifications[:100]
+    with open(notifications_file, 'w') as f:
+        json.dump(notifications, f, indent=2)
+
+
+@app.get("/api/notifications")
+async def get_notifications(unread_only: bool = False) -> Dict:
+    """Get all notifications"""
+    try:
+        from pathlib import Path
+        notifications_file = Path("data/notifications.json")
+        if not notifications_file.exists():
+            return {"notifications": [], "unread_count": 0, "timestamp": datetime.utcnow().isoformat()}
+        with open(notifications_file, 'r') as f:
+            notifications = json.load(f)
+        if unread_only:
+            notifications = [n for n in notifications if not n.get("read")]
+        unread_count = sum(1 for n in notifications if not n.get("read"))
+        return {"notifications": notifications, "unread_count": unread_count, "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Error getting notifications: {e}")
+        return {"notifications": [], "unread_count": 0, "error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.post("/api/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str) -> Dict:
+    """Mark a notification as read"""
+    try:
+        from pathlib import Path
+        notifications_file = Path("data/notifications.json")
+        if not notifications_file.exists():
+            return {"error": "No notifications", "timestamp": datetime.utcnow().isoformat()}
+        with open(notifications_file, 'r') as f:
+            notifications = json.load(f)
+        for n in notifications:
+            if n.get("id") == notification_id:
+                n["read"] = True
+                break
+        with open(notifications_file, 'w') as f:
+            json.dump(notifications, f, indent=2)
+        return {"success": True, "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+@app.post("/api/notifications/read-all")
+async def mark_all_notifications_read() -> Dict:
+    """Mark all notifications as read"""
+    try:
+        from pathlib import Path
+        notifications_file = Path("data/notifications.json")
+        if not notifications_file.exists():
+            return {"success": True, "timestamp": datetime.utcnow().isoformat()}
+        with open(notifications_file, 'r') as f:
+            notifications = json.load(f)
+        for n in notifications:
+            n["read"] = True
+        with open(notifications_file, 'w') as f:
+            json.dump(notifications, f, indent=2)
+        return {"success": True, "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
 
 
 # ============================================================================
@@ -2885,8 +3230,192 @@ async def synthesized_tool_run(request: Request):
 
 
 # ============================================================================
+# DATABASE PERFORMANCE ENDPOINT
+# ============================================================================
+
+@app.get("/api/autonomous/database/performance")
+async def database_performance() -> Dict:
+    """Get database performance metrics from SQLite databases."""
+    try:
+        import os
+        from pathlib import Path
+
+        db_files = list(Path(".").glob("*.db")) + list(Path("data").glob("*.db"))
+        total_size = 0
+        table_count = 0
+        total_rows = 0
+        tables_info = []
+
+        for db_path in db_files:
+            try:
+                import sqlite3
+                total_size += db_path.stat().st_size
+                conn = sqlite3.connect(str(db_path), timeout=2)
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+                db_tables = cursor.fetchall()
+                for (tname,) in db_tables:
+                    table_count += 1
+                    try:
+                        cursor.execute(f"SELECT COUNT(*) FROM [{tname}]")
+                        row_count = cursor.fetchone()[0]
+                        total_rows += row_count
+                        tables_info.append({
+                            "database": db_path.name,
+                            "table": tname,
+                            "rows": row_count,
+                        })
+                    except Exception:
+                        tables_info.append({"database": db_path.name, "table": tname, "rows": 0})
+                conn.close()
+            except Exception as e:
+                logger.debug(f"Could not read {db_path}: {e}")
+
+        return {
+            "database": {
+                "size_mb": round(total_size / (1024 * 1024), 2),
+                "table_count": table_count,
+                "total_rows": total_rows,
+                "db_files": len(db_files),
+                "tables": tables_info,
+                "status": "healthy" if db_files else "no_databases",
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error getting database performance: {e}")
+        return {"database": {"size_mb": 0, "table_count": 0, "total_rows": 0, "tables": [], "status": "error"}, "error": str(e)}
+
+
+# ============================================================================
+# PROJECT WORKSPACE ENDPOINTS
+# ============================================================================
+
+@app.get("/api/projects")
+async def list_projects() -> Dict:
+    """List projects in the projects/ directory."""
+    try:
+        from pathlib import Path
+        projects_dir = Path("projects")
+        projects = []
+        if projects_dir.exists():
+            for item in sorted(projects_dir.iterdir()):
+                if item.is_dir() and not item.name.startswith(('.', '_')):
+                    file_count = sum(1 for _ in item.rglob("*") if _.is_file())
+                    projects.append({
+                        "name": item.name,
+                        "path": str(item),
+                        "file_count": file_count,
+                        "modified": datetime.fromtimestamp(item.stat().st_mtime).isoformat(),
+                    })
+        return {"projects": projects, "count": len(projects)}
+    except Exception as e:
+        logger.error(f"Error listing projects: {e}")
+        return {"projects": [], "count": 0, "error": str(e)}
+
+
+@app.post("/api/projects/tree")
+async def project_tree(body: Dict) -> Dict:
+    """Get file tree for a project."""
+    try:
+        from pathlib import Path
+        project_name = body.get("project_name", "")
+        if not project_name:
+            return {"error": "project_name required"}
+
+        # Sanitize to prevent path traversal
+        safe_name = Path(project_name).name
+        project_dir = Path("projects") / safe_name
+        if not project_dir.exists() or not project_dir.is_dir():
+            return {"error": f"Project '{safe_name}' not found", "tree": []}
+
+        def build_tree(directory, prefix=""):
+            nodes = []
+            try:
+                items = sorted(directory.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))
+            except PermissionError:
+                return nodes
+            for item in items:
+                if item.name.startswith('.'):
+                    continue
+                rel = str(item.relative_to(project_dir))
+                node = {"name": item.name, "path": rel, "type": "directory" if item.is_dir() else "file"}
+                if item.is_file():
+                    node["size"] = item.stat().st_size
+                    node["extension"] = item.suffix
+                if item.is_dir():
+                    node["children"] = build_tree(item, prefix + "  ")
+                nodes.append(node)
+            return nodes
+
+        tree = build_tree(project_dir)
+        return {"tree": tree, "project": safe_name}
+    except Exception as e:
+        logger.error(f"Error building project tree: {e}")
+        return {"tree": [], "error": str(e)}
+
+
+@app.post("/api/projects/file")
+async def project_file(body: Dict) -> Dict:
+    """Read a file from a project."""
+    try:
+        from pathlib import Path
+        file_path_str = body.get("file_path", "")
+        if not file_path_str:
+            return {"error": "file_path required"}
+
+        # Sanitize: ensure the path stays within projects/
+        requested = Path(file_path_str)
+        resolved = (Path("projects") / requested).resolve()
+        projects_root = Path("projects").resolve()
+        if not str(resolved).startswith(str(projects_root)):
+            return {"error": "Access denied: path outside projects directory"}
+
+        if not resolved.exists():
+            return {"error": f"File not found: {file_path_str}"}
+        if not resolved.is_file():
+            return {"error": "Not a file"}
+
+        # Size limit: 1 MB
+        size = resolved.stat().st_size
+        if size > 1_048_576:
+            return {"error": "File too large (>1MB)", "size": size}
+
+        # Detect if binary
+        BINARY_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.zip', '.tar', '.gz', '.exe', '.dll', '.so', '.pyc'}
+        if resolved.suffix.lower() in BINARY_EXTENSIONS:
+            return {"error": "Binary file", "extension": resolved.suffix, "size": size}
+
+        LANG_MAP = {
+            '.py': 'python', '.js': 'javascript', '.ts': 'typescript', '.jsx': 'jsx', '.tsx': 'tsx',
+            '.html': 'html', '.css': 'css', '.json': 'json', '.md': 'markdown', '.yaml': 'yaml',
+            '.yml': 'yaml', '.sh': 'bash', '.bat': 'batch', '.ps1': 'powershell', '.sql': 'sql',
+            '.xml': 'xml', '.toml': 'toml', '.ini': 'ini', '.cfg': 'ini', '.txt': 'plaintext',
+        }
+
+        content = resolved.read_text(encoding='utf-8', errors='replace')
+        lines = content.count('\n') + 1
+
+        return {
+            "content": content,
+            "extension": resolved.suffix,
+            "language": LANG_MAP.get(resolved.suffix.lower(), "plaintext"),
+            "size": size,
+            "lines": lines,
+        }
+    except Exception as e:
+        logger.error(f"Error reading project file: {e}")
+        return {"error": str(e)}
+
+
+# ============================================================================
 # SERVE DASHBOARD FRONTEND
 # ============================================================================
+
+# Mount built frontend assets (JS, CSS) so /assets/* resolves
+_frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if _frontend_dist.exists():
+    app.mount("/assets", StaticFiles(directory=str(_frontend_dist / "assets")), name="frontend-assets")
 
 @app.get("/")
 async def root():

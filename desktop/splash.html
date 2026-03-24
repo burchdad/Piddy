@@ -37,9 +37,13 @@
         }
 
         .logo {
-            font-size: 80px;
+            width: 120px;
+            height: 120px;
             margin-bottom: 15px;
             animation: bounce 1.5s ease-in-out infinite;
+            border-radius: 50%;
+            object-fit: cover;
+            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
         }
 
         .app-title {
@@ -164,7 +168,7 @@
 <body>
     <div class="splash-container">
         <div class="logo-section">
-            <div class="logo">🤖</div>
+            <img class="logo" src="assets/piddy-avatar.png" alt="Piddy" />
             <h1 class="app-title">PIDDY</h1>
             <p class="app-subtitle">AI BACKEND DEVELOPER</p>
         </div>
@@ -187,35 +191,33 @@
     <div class="version">v1.0.0</div>
 
     <script>
-        const { ipcRenderer } = require('electron');
-
         const statusText = document.getElementById('statusText');
         const progressFill = document.getElementById('progressFill');
 
         let currentProgress = 0;
 
-        // Receive updates from main process
-        ipcRenderer.on('splash-status', (event, data) => {
+        // Receive updates from main process via preload bridge
+        window.splash.onStatus((data) => {
             statusText.textContent = data.message;
-            currentProgress = Math.min(currentProgress + data.progress || 10, 95);
+            if (data.progress > currentProgress) {
+                currentProgress = data.progress;
+            }
             progressFill.style.width = currentProgress + '%';
         });
 
-        // Simulate progress while waiting
+        // Animate progress gently while waiting
         const progressInterval = setInterval(() => {
-            if (currentProgress < 90) {
-                currentProgress += Math.random() * 5;
-                progressFill.style.width = Math.min(currentProgress, 90) + '%';
+            if (currentProgress < 85) {
+                currentProgress += Math.random() * 2;
+                progressFill.style.width = Math.min(currentProgress, 85) + '%';
             }
-        }, 300);
+        }, 500);
 
         // Close window when ready
-        ipcRenderer.on('splash-complete', () => {
+        window.splash.onComplete(() => {
             clearInterval(progressInterval);
             progressFill.style.width = '100%';
-            setTimeout(() => {
-                window.close();
-            }, 300);
+            statusText.textContent = 'Dashboard ready!';
         });
     </script>
 </body>

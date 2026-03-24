@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../utils/api';
+import { useToast } from './Toast';
 import '../styles/components.css';
 
 function Approvals() {
@@ -9,9 +10,10 @@ function Approvals() {
   const [expandedRequest, setExpandedRequest] = useState(null);
   const [expandedGap, setExpandedGap] = useState({});
   const [processingGap, setProcessingGap] = useState(null);
+  const [processingRequest, setProcessingRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState({});
-  const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const toast = useToast();
 
   // Fetch approvals and stats
   useEffect(() => {
@@ -43,22 +45,58 @@ function Approvals() {
     return () => clearInterval(interval);
   }, []);
 
+  const refreshApprovals = async () => {
+    const [approvalsData, statsData] = await Promise.all([
+      fetchApi('/api/approvals'),
+      fetchApi('/api/approvals/summary/stats')
+    ]);
+    setApprovals(
+      approvalsData.requests 
+        ? Object.values(approvalsData.requests)
+        : (Array.isArray(approvalsData) ? approvalsData : [])
+    );
+    setStats(statsData);
+  };
+
+  // Request-level actions
+  const handleApproveRequest = async (requestId) => {
+    try {
+      setProcessingRequest(requestId);
+      await fetchApi('/api/approvals/approve', 'POST', { request_id: requestId });
+      toast.success(`Request ${requestId} fully approved`);
+      await refreshApprovals();
+    } catch (err) {
+      console.error('Failed to approve request:', err);
+      toast.error(`Failed to approve request: ${err.message}`);
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    try {
+      setProcessingRequest(requestId);
+      await fetchApi('/api/approvals/reject', 'POST', { request_id: requestId, reason: 'Rejected by reviewer' });
+      toast.warning(`Request ${requestId} rejected`);
+      await refreshApprovals();
+    } catch (err) {
+      console.error('Failed to reject request:', err);
+      toast.error(`Failed to reject request: ${err.message}`);
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
   const handleApprove = async (requestId, gapId) => {
     try {
       setProcessingGap(`${requestId}-${gapId}`);
       await fetchApi(
-        `/api/approvals/${requestId}/gaps/${gapId}/approve`,
-        'POST'
+        '/api/approvals/gap/approve',
+        'POST',
+        { request_id: requestId, gap_id: gapId }
       );
-      setSuccessMessage(`✅ Gap ${gapId} approved!`);
-      setTimeout(() => setSuccessMessage(null), 3000);
-      // Refresh approvals
-      const approvalsData = await fetchApi('/api/approvals');
-      setApprovals(
-        approvalsData.requests 
-          ? Object.values(approvalsData.requests)
-          : (Array.isArray(approvalsData) ? approvalsData : [])
-      );
+      toast.success(`Gap ${gapId} approved!`);
+      await refreshApprovals();
     } catch (err) {
       console.error('Failed to approve gap:', err);
       setErrorMessage(`Failed to approve gap: ${err.message}`);
@@ -72,24 +110,17 @@ function Approvals() {
       setProcessingGap(`${requestId}-${gapId}`);
       const reason = rejectionReason[`${requestId}-${gapId}`] || 'No reason provided';
       await fetchApi(
-        `/api/approvals/${requestId}/gaps/${gapId}/reject`,
+        '/api/approvals/gap/reject',
         'POST',
-        { reason }
+        { request_id: requestId, gap_id: gapId, reason }
       );
-      setSuccessMessage(`❌ Gap ${gapId} rejected!`);
-      setTimeout(() => setSuccessMessage(null), 3000);
+      toast.warning(`Gap ${gapId} rejected`);
       setRejectionReason(prev => {
         const newReason = {...prev};
         delete newReason[`${requestId}-${gapId}`];
         return newReason;
       });
-      // Refresh approvals
-      const approvalsData = await fetchApi('/api/approvals');
-      setApprovals(
-        approvalsData.requests 
-          ? Object.values(approvalsData.requests)
-          : (Array.isArray(approvalsData) ? approvalsData : [])
-      );
+      await refreshApprovals();
     } catch (err) {
       console.error('Failed to reject gap:', err);
       setErrorMessage(`Failed to reject gap: ${err.message}`);
@@ -172,11 +203,6 @@ function Approvals() {
       )}
 
       {/* Messages */}
-      {successMessage && (
-        <div className="message message-success">
-          {successMessage}
-        </div>
-      )}
       {errorMessage && (
         <div className="message message-error">
           {errorMessage}
@@ -234,6 +260,44 @@ function Approvals() {
                 </div>
               </div>
 
+              {/* Request Action Buttons */}
+              <div className="request-actions">
+                <button
+                  className="btn btn-review"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedRequest(
+                      expandedRequest === request.request_id ? null : request.request_id
+                    );
+                  }}
+                  title="Review gaps in this request"
+                >
+                  🔍 Review
+                </button>
+                <button
+                  className="btn btn-approve-request"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleApproveRequest(request.request_id);
+                  }}
+                  disabled={processingRequest === request.request_id || request.status === 'fully_approved'}
+                  title="Approve all gaps in this request"
+                >
+                  {processingRequest === request.request_id ? '⏳' : '✅'} Approve
+                </button>
+                <button
+                  className="btn btn-deny-request"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRejectRequest(request.request_id);
+                  }}
+                  disabled={processingRequest === request.request_id || request.status === 'rejected'}
+                  title="Deny all gaps in this request"
+                >
+                  {processingRequest === request.request_id ? '⏳' : '❌'} Deny
+                </button>
+              </div>
+
               {/* Expanded Content */}
               {expandedRequest === request.request_id && (
                 <div className="request-details">
@@ -241,26 +305,36 @@ function Approvals() {
                     <div className="meta-item">
                       <span className="meta-label">Created:</span>
                       <span className="meta-value">
-                        {new Date(request.created_at).toLocaleString()}
+                        {new Date(request.created_at || request.sent_at).toLocaleString()}
                       </span>
                     </div>
                     <div className="meta-item">
                       <span className="meta-label">Deadline:</span>
                       <span className="meta-value">
-                        {new Date(request.deadline).toLocaleString()}
+                        {new Date(request.deadline || request.approval_deadline).toLocaleString()}
                       </span>
                     </div>
                     <div className="meta-item">
                       <span className="meta-label">Sent To:</span>
                       <span className="meta-value">
-                        {request.sent_to_emails?.join(', ') || 'N/A'}
+                        {request.sent_to_emails?.join(', ') || 'You (Reviewer)'}
+                      </span>
+                    </div>
+
+                    {/* Gaps summary */}
+                    <div className="meta-item">
+                      <span className="meta-label">Gaps:</span>
+                      <span className="meta-value">
+                        {request.market_gaps?.length || 0} total
+                        {request.approved_gaps?.length > 0 && ` · ${request.approved_gaps.length} approved`}
+                        {request.rejected_gaps?.length > 0 && ` · ${request.rejected_gaps.length} rejected`}
                       </span>
                     </div>
                   </div>
 
                   {/* Gaps List */}
                   <div className="gaps-container">
-                    {request.gaps && request.gaps.map((gap) => (
+                    {(request.market_gaps || request.gaps || []).map((gap) => (
                       <div
                         key={`${request.request_id}-${gap.gap_id}`}
                         className="gap-card"

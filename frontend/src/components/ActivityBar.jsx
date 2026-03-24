@@ -1,4 +1,5 @@
 import React from 'react';
+import PiddyAvatar from './PiddyAvatar';
 
 /**
  * VS Code-style Activity Bar — thin vertical icon strip on the far left.
@@ -91,10 +92,14 @@ function ActivityBar({ activeSection, onSectionChange, chatOpen, onChatToggle, a
   return (
     <div className="activity-bar">
       <div className="activity-bar-top">
-        {/* Brand icon */}
-        <div className="activity-bar-brand" title="Piddy">
-          🎯
-        </div>
+        {/* Brand / Home icon */}
+        <button
+          className={`activity-bar-brand ${activePage === 'home' ? 'active' : ''}`}
+          title="Home"
+          onClick={() => onPageChange('home')}
+        >
+          <PiddyAvatar size="xs" glow />
+        </button>
 
         {/* Main section icons */}
         {SECTIONS.map(section => (
