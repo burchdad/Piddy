@@ -1,0 +1,6 @@
+fastapi[all]
+uvicorn
+sqlalchemy[asyncio]
+httpx
+python-multipart
+loguru

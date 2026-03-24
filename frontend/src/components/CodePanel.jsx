@@ -101,11 +101,12 @@ function highlightCode(code, language) {
 /**
  * CodePanel component
  * Props:
- *   files: Array of { path, content, success, language, size }
+ *   files: Array of { path, content, success, language, size, verification? }
  *   onClose: callback when panel is dismissed
  */
 function CodePanel({ files, onClose }) {
   const [activeTab, setActiveTab] = useState(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const codeRef = useRef(null);
 
   // Auto-select first tab, and auto-select new tabs as they arrive
@@ -125,6 +126,18 @@ function CodePanel({ files, onClose }) {
   const filename = activeFile ? activeFile.path.split('/').pop() : '';
   const language = activeFile ? getLanguage(filename) : 'text';
   const lines = activeFile?.content?.split('\n') || [];
+
+  // Extract verification data (attached by backend to each file)
+  const verification = files.find(f => f.verification)?.verification || null;
+  const activeFileIssues = verification?.issues?.filter(
+    iss => activeFile && (iss.file === activeFile.path || activeFile.path.endsWith(iss.file))
+  ) || [];
+  const issueLineSet = new Set(activeFileIssues.filter(i => i.line).map(i => i.line));
+
+  // Auto-open diagnostics when issues are found
+  useEffect(() => {
+    if (verification && !verification.passed) setShowDiagnostics(true);
+  }, [verification?.passed]);
 
   if (files.length === 0) {
     return (
@@ -162,6 +175,18 @@ function CodePanel({ files, onClose }) {
           })}
         </div>
         <div className="code-panel-tabs-actions">
+          {verification && (
+            <button
+              className={`code-panel-verify-badge ${verification.passed ? 'passed' : 'failed'}`}
+              onClick={() => setShowDiagnostics(d => !d)}
+              title={verification.summary}
+            >
+              {verification.passed ? '✅' : '⚠️'}
+              {' '}{verification.error_count > 0 ? `${verification.error_count}E` : ''}
+              {verification.warning_count > 0 ? ` ${verification.warning_count}W` : ''}
+              {verification.passed && '0 issues'}
+            </button>
+          )}
           <span className="code-panel-file-count">
             {files.filter(f => f.success !== false).length}/{files.length} files
           </span>
@@ -183,13 +208,52 @@ function CodePanel({ files, onClose }) {
         </div>
       )}
 
+      {/* Diagnostics panel */}
+      {showDiagnostics && verification && verification.issues?.length > 0 && (
+        <div className="code-panel-diagnostics">
+          <div className="code-panel-diagnostics-header">
+            <span>Problems</span>
+            <span className="code-panel-diagnostics-count">
+              {verification.error_count > 0 && <span className="diag-errors">{verification.error_count} errors</span>}
+              {verification.error_count > 0 && verification.warning_count > 0 && ', '}
+              {verification.warning_count > 0 && <span className="diag-warnings">{verification.warning_count} warnings</span>}
+            </span>
+            <button className="code-panel-diagnostics-close" onClick={() => setShowDiagnostics(false)}>✕</button>
+          </div>
+          <div className="code-panel-diagnostics-list">
+            {verification.issues.map((iss, idx) => (
+              <div key={idx} className={`code-panel-issue ${iss.severity}`}>
+                <span className="code-panel-issue-icon">{iss.severity === 'error' ? '🔴' : '🟡'}</span>
+                <span className="code-panel-issue-file">{iss.file}</span>
+                {iss.line && <span className="code-panel-issue-line">:{iss.line}</span>}
+                <span className="code-panel-issue-code">[{iss.code}]</span>
+                <span className="code-panel-issue-msg">{iss.message}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Code area */}
       {activeFile && activeFile.content ? (
         <div className="code-panel-editor" ref={codeRef}>
           <div className="code-panel-gutter">
-            {lines.map((_, i) => (
-              <div key={i} className="code-panel-line-num">{i + 1}</div>
-            ))}
+            {lines.map((_, i) => {
+              const lineNo = i + 1;
+              const hasIssue = issueLineSet.has(lineNo);
+              const severity = hasIssue
+                ? activeFileIssues.find(iss => iss.line === lineNo)?.severity || 'warning'
+                : null;
+              return (
+                <div
+                  key={i}
+                  className={`code-panel-line-num${severity === 'error' ? ' line-error' : ''}${severity === 'warning' ? ' line-warning' : ''}`}
+                  title={hasIssue ? activeFileIssues.filter(iss => iss.line === lineNo).map(iss => iss.message).join('; ') : undefined}
+                >
+                  {lineNo}
+                </div>
+              );
+            })}
           </div>
           <pre className="code-panel-code">
             <code dangerouslySetInnerHTML={{

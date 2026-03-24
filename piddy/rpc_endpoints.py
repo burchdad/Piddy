@@ -1451,6 +1451,7 @@ async def _chat_async(data: Dict) -> Dict:
     from src.agent.core import Command, CommandType, CommandResponse
     from src.agent.action_parser import parse_file_actions, execute_file_actions, strip_file_markers
     from src.agent.build_learnings import record_build_outcome
+    from src.agent.code_verifier import verify_files, format_issues_for_llm
 
     message = (data.get("message") or "").strip()
     session_id = data.get("session_id")
@@ -1526,6 +1527,104 @@ async def _chat_async(data: Dict) -> Dict:
                     reply = strip_file_markers(raw_reply)
                     logger.info(f"🛠️ Executed {len(actions_taken)} file action(s) from chat response")
 
+                    # ── Phase 53: Verify generated code ──
+                    verification = verify_files(file_actions)
+                    for act in actions_taken:
+                        act["verification"] = verification
+
+                    # ── Auto-fix loop: if errors found, ask LLM to fix ──
+                    if not verification["passed"] and not (_agent.settings.local_only if hasattr(_agent, 'settings') else False):
+                        fix_prompt = format_issues_for_llm(verification)
+                        max_fix_attempts = 2
+                        for fix_attempt in range(1, max_fix_attempts + 1):
+                            logger.info(
+                                f"🔧 Auto-fix attempt {fix_attempt}/{max_fix_attempts}: "
+                                f"{verification['error_count']} error(s) to fix"
+                            )
+                            # Build a targeted fix prompt with the original code + issues
+                            fix_context = (
+                                f"The user asked: {message}\n\n"
+                                f"You generated code but it has issues:\n{fix_prompt}\n\n"
+                                "Here are the original files you created:\n"
+                            )
+                            for fa in file_actions:
+                                fix_context += f"\n===FILE: {fa['path']}===\n{fa['content']}===END_FILE===\n"
+                            fix_context += (
+                                "\nFix ALL issues listed above. Output ONLY the corrected files "
+                                "using ===FILE: path=== ... ===END_FILE=== format."
+                            )
+
+                            # Try to get a fix from the LLM
+                            fix_reply = None
+                            try:
+                                fix_cmd = Command(
+                                    command_type=CommandType.CONVERSATION,
+                                    description=fix_context,
+                                    context={"query": fix_context},
+                                    source="auto_fix",
+                                    metadata={"is_conversation": True, "session_id": session_id or ""},
+                                )
+                                fix_response = await _agent.process_command(fix_cmd)
+                                if fix_response.success and fix_response.result:
+                                    fix_reply = str(fix_response.result)
+                            except Exception as fix_err:
+                                logger.warning(f"Auto-fix LLM call failed: {fix_err}")
+                                break
+
+                            if not fix_reply:
+                                break
+
+                            # Parse and apply fixes
+                            fix_actions = parse_file_actions(fix_reply)
+                            if not fix_actions:
+                                logger.warning("Auto-fix produced no parseable files")
+                                break
+
+                            # Re-execute only the fixed files
+                            fix_results = execute_file_actions(fix_actions)
+
+                            # Merge fixed files into our tracking
+                            fix_content_map = {fa["path"].replace("\\", "/").strip("/"): fa["content"] for fa in fix_actions}
+                            for fa in fix_actions:
+                                norm = fa["path"].replace("\\", "/").strip("/")
+                                # Update the original file_actions content
+                                for orig in file_actions:
+                                    if orig["path"].replace("\\", "/").strip("/") == norm:
+                                        orig["content"] = fa["content"]
+                                        break
+                                # Update actions_taken
+                                for act in actions_taken:
+                                    bare = act["path"].replace("\\", "/").removeprefix("projects/")
+                                    if bare == norm:
+                                        act["content"] = fa["content"]
+                                        act["size"] = len(fa["content"])
+                                        break
+
+                            # Re-verify
+                            verification = verify_files(file_actions)
+                            for act in actions_taken:
+                                act["verification"] = verification
+
+                            if verification["passed"]:
+                                logger.info(f"✅ Auto-fix succeeded on attempt {fix_attempt}")
+                                reply = strip_file_markers(raw_reply) + (
+                                    f"\n\n🔧 *Auto-fix applied ({fix_attempt} pass{'es' if fix_attempt > 1 else ''}) "
+                                    f"— {verification['summary']}*"
+                                )
+                                break
+                            else:
+                                fix_prompt = format_issues_for_llm(verification)
+                        else:
+                            # Exhausted fix attempts — report remaining issues
+                            logger.warning(
+                                f"⚠️ Auto-fix exhausted {max_fix_attempts} attempts, "
+                                f"{verification['error_count']} error(s) remain"
+                            )
+                            reply += (
+                                f"\n\n⚠️ *Verification found {verification['error_count']} issue(s) "
+                                f"that couldn't be auto-fixed — see diagnostics panel*"
+                            )
+
                     # Record build outcome (learning)
                     errors = [a["error"] for a in actions_taken if not a.get("success")]
                     record_build_outcome(
@@ -1587,6 +1686,14 @@ async def _chat_async(data: Dict) -> Dict:
                                     f"✅ Cloud fallback created {len(actions_taken)} file(s) "
                                     f"via {cloud_tier}"
                                 )
+                                # Verify cloud-generated code too
+                                cloud_verification = verify_files(cloud_actions)
+                                for act in actions_taken:
+                                    act["verification"] = cloud_verification
+                                if not cloud_verification["passed"]:
+                                    reply += (
+                                        f"\n\n⚠️ *Verification: {cloud_verification['summary']}*"
+                                    )
                                 errors = [a["error"] for a in actions_taken if not a.get("success")]
                                 record_build_outcome(
                                     llm_tier=cloud_engine,

@@ -325,6 +325,168 @@
   color: #f9e2af;
 }
 
+/* ── Verification badge ──────────────────────────────────────────────── */
+
+.code-panel-verify-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.code-panel-verify-badge.passed {
+  background: rgba(166, 227, 161, 0.12);
+  color: #a6e3a1;
+}
+
+.code-panel-verify-badge.passed:hover {
+  background: rgba(166, 227, 161, 0.2);
+}
+
+.code-panel-verify-badge.failed {
+  background: rgba(243, 139, 168, 0.12);
+  color: #f38ba8;
+}
+
+.code-panel-verify-badge.failed:hover {
+  background: rgba(243, 139, 168, 0.2);
+}
+
+/* ── Diagnostics panel ───────────────────────────────────────────────── */
+
+.code-panel-diagnostics {
+  flex-shrink: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  background: #181825;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.75rem;
+}
+
+.code-panel-diagnostics-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.code-panel-diagnostics-count {
+  font-weight: 400;
+  opacity: 0.7;
+  text-transform: none;
+}
+
+.diag-errors {
+  color: #f38ba8;
+}
+
+.diag-warnings {
+  color: #f9e2af;
+}
+
+.code-panel-diagnostics-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.code-panel-diagnostics-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.code-panel-diagnostics-list {
+  padding: 2px 0;
+}
+
+.code-panel-issue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  cursor: default;
+  transition: background 0.1s;
+}
+
+.code-panel-issue:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.code-panel-issue-icon {
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
+.code-panel-issue-file {
+  color: var(--text-primary);
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.7rem;
+}
+
+.code-panel-issue-line {
+  color: var(--text-secondary);
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.7rem;
+}
+
+.code-panel-issue-code {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  font-size: 0.68rem;
+}
+
+.code-panel-issue-msg {
+  color: var(--text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-panel-issue.error .code-panel-issue-msg {
+  color: #f38ba8;
+}
+
+.code-panel-issue.warning .code-panel-issue-msg {
+  color: #f9e2af;
+}
+
+/* ── Gutter issue indicators ─────────────────────────────────────────── */
+
+.code-panel-line-num.line-error {
+  color: #f38ba8 !important;
+  background: rgba(243, 139, 168, 0.08);
+  border-left: 2px solid #f38ba8;
+}
+
+.code-panel-line-num.line-warning {
+  color: #f9e2af !important;
+  background: rgba(249, 226, 175, 0.06);
+  border-left: 2px solid #f9e2af;
+}
+
 /* ── File creation animation ─────────────────────────────────────────── */
 
 .code-panel-tab.creating {

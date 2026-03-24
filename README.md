@@ -2,7 +2,7 @@
 
 A fully portable, plug-and-play AI assistant that runs from any directory with zero installation. Piddy ships with embedded runtimes (Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2), a React dashboard, an Electron desktop app, and a 21-agent consensus system.
 
-**Version 5.3.0** -- 60 skills -- 21 agents -- 51 development phases
+**Version 5.4.0** -- 60 skills -- 21 agents -- 53 development phases
 
 ## Quick Start
 
@@ -409,7 +409,7 @@ SERVER_PORT=8889
 
 ### Development Phases
 
-Piddy has progressed through 51 development phases. Key milestones:
+Piddy has progressed through 53 development phases. Key milestones:
 
 | Phases | Focus |
 |--------|-------|
@@ -424,6 +424,7 @@ Piddy has progressed through 51 development phases. Key milestones:
 | 39-50 | Impact visualization, simulation, multi-repo, continuous refactoring, consensus |
 | 51 | Autonomous loop engine, failure memory, dynamic tool selection |
 | 52 | VS Code-style layout, CodePanel, token-based syntax highlighting, parser improvements |
+| 53 | Verification engine, self-correcting code generation, auto-fix loop, diagnostics panel |
 
 See [CAPABILITIES.md](CAPABILITIES.md) for detailed phase descriptions.
 

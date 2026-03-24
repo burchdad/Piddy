@@ -2,7 +2,7 @@
 
 Comprehensive documentation of all features, modules, and capabilities available in Piddy — the portable, plug-and-play AI assistant.
 
-**Version**: 5.3.0  
+**Version**: 5.4.0  
 **Status**: ✅ PRODUCTION READY  
 **Last Updated**: March 2026
 
@@ -16,7 +16,7 @@ Piddy is a fully portable AI development assistant that runs from any directory 
 
 | Metric | Value |
 |--------|-------|
-| Version | 5.3.0 |
+| Version | 5.4.0 |
 | Agents | 21 specialized AI agents |
 | Skills | 60 reference skill packs |
 | CLI Commands | 16 (`piddy.py`) |
@@ -24,7 +24,7 @@ Piddy is a fully portable AI development assistant that runs from any directory 
 | RPC Endpoints | 45 + 6 stream functions = 51 |
 | REST Endpoints | 4 autonomous loop + 2 tool synthesis endpoints |
 | Dashboard Pages | 30+ React components |
-| Development Phases | 52 completed |
+| Development Phases | 53 completed |
 | Embedded Runtimes | Python 3.11.9, Node.js 20.19.0, Ollama v0.18.2 |
 
 ### Architecture
@@ -1730,6 +1730,84 @@ Phase 52 transforms the UI from a basic dashboard into a VS Code-style IDE layou
 - **4-stage parse cascade**: Tree → markers → path inference → flat extraction
 - **Self-improving**: Build learnings persisted for future reference
 - **Anthropic fallback**: Cloud parse-quality validation when local parsing uncertain
+
+---
+
+## Phase 53: Verification Engine — Self-Correcting Code Generation
+
+Phase 53 adds a post-generation verification layer that detects bugs in Piddy's code output and auto-fixes them via an LLM feedback loop.
+
+### Problem Solved
+
+LLM-generated code often contains subtle bugs: `await` in non-async functions, missing imports, incomplete Docker configs, hardcoded secrets. Phase 53 catches these automatically before the user ever sees broken code.
+
+### Architecture
+
+```
+User prompt → LLM generates code → parse_file_actions() → execute_file_actions()
+                                                              ↓
+                                                      verify_files()
+                                                     /              \
+                                              ✅ passed          ❌ issues found
+                                              return              ↓
+                                                          format_issues_for_llm()
+                                                              ↓
+                                                      LLM auto-fix (up to 2 passes)
+                                                              ↓
+                                                      re-verify → return
+```
+
+### Verification Module (`src/agent/code_verifier.py`)
+
+| Checker | Languages | Detects |
+|---------|-----------|--------|
+| `_check_python` | `.py` | Syntax errors (AST), missing imports, `await` in non-async, hardcoded secrets, `eval()`, SQL injection |
+| `_check_javascript` | `.js`, `.jsx`, `.ts`, `.tsx` | Unmatched braces/parens, mixed require/import |
+| `_check_html` | `.html` | Unclosed tags |
+| `_check_json` | `.json` | Parse errors |
+| `_check_yaml` | `.yaml`, `.yml` | Parse errors |
+| `_check_dockerfile` | `Dockerfile` | Missing FROM, missing CMD/ENTRYPOINT |
+| `_check_docker_compose` | `docker-compose.yml` | Services missing image/build, healthcheck mismatches |
+
+### Error Codes
+
+| Code | Severity | Description |
+|------|----------|------------|
+| E001 | error | Python syntax error |
+| E002 | error | Missing import |
+| E010 | error | `await` used in non-async function |
+| E011 | error | `yield`+`await` in non-async generator |
+| W001 | warning | Hardcoded secret pattern |
+| W002 | warning | Use of `eval()` |
+| W003 | warning | Possible SQL injection |
+| E020 | error | Unmatched JS braces |
+| E021 | error | Unmatched JS parentheses |
+| W020 | warning | Mixed require/import |
+| E040 | error | HTML unclosed tags |
+| E050 | error | JSON parse error |
+| E055 | error | YAML parse error |
+| E060 | error | Dockerfile missing FROM |
+| E061 | warning | Dockerfile missing CMD/ENTRYPOINT |
+| W060 | warning | Dockerfile FROM not first |
+| E070 | error | Docker Compose service missing image/build |
+| W071 | warning | Docker Compose healthcheck references unknown service |
+
+### Auto-Fix Loop (in `rpc_endpoints.py`)
+
+1. After `execute_file_actions()`, `verify_files()` runs all applicable checkers
+2. If issues found and not local-only mode, builds a fix prompt with the original code + issue list
+3. Sends fix prompt to the LLM as a new command (`source="auto_fix"`)
+4. Parses the LLM's fix response, re-executes changed files
+5. Re-verifies — repeats up to **2 passes**
+6. Appends "🔧 Auto-fix applied" or "⚠️ N issues couldn't be auto-fixed" to chat reply
+
+### Frontend Diagnostics Panel
+
+- **Verification badge** in tab bar actions: ✅ passed / ⚠️ NE NW (clickable toggle)
+- **Problems panel** below breadcrumb: collapsible list of issues with severity icons (🔴/🟡), file, line, error code, message
+- **Gutter line markers**: red/yellow left border + colored line number on lines with issues
+- **Auto-open**: diagnostics panel opens automatically when issues are detected
+- **Hover tooltips**: hovering gutter line markers shows issue messages
 
 ---
 
