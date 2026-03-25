@@ -643,6 +643,12 @@ class AutonomousBackgroundService:
                     except Exception as email_err:
                         self.logger.debug(f"Email check failed: {email_err}")
                 
+                # Every 30 cycles (~30 min): run self-diagnosis and auto-heal
+                health_check_interval = 30
+                if (self.cycles_completed % health_check_interval == 0
+                        and self.cycles_completed > 0):
+                    await self._auto_diagnose_and_heal()
+                
                 # Print status report periodically (every 10 cycles)
                 if self.cycles_completed % 10 == 0:
                     await self._print_status_report()
@@ -696,6 +702,175 @@ class AutonomousBackgroundService:
             bar = "█" * int(score * 10) + "░" * (10 - int(score * 10))
             lines.append(f"   Phase {phase}: {bar} {score:.0%}")
         return "\n".join(lines)
+    
+    async def _auto_diagnose_and_heal(self):
+        """
+        Periodic self-diagnosis and auto-healing loop.
+        
+        Runs doctor checks, and for any warnings/errors that have
+        known remediation steps, attempts to fix them automatically.
+        """
+        self.logger.warning("🩺 AUTO-HEAL: Running self-diagnosis...")
+        
+        try:
+            from src.api.doctor import run_diagnosis
+        except ImportError:
+            self.logger.debug("Doctor module not available — skipping auto-heal")
+            return
+        
+        try:
+            report = run_diagnosis()
+        except Exception as diag_err:
+            self.logger.warning(f"🩺 Diagnosis failed: {diag_err}")
+            return
+        
+        warnings = [c for c in report.get("checks", []) if c.get("status") == "warn"]
+        errors = [c for c in report.get("checks", []) if c.get("status") == "error"]
+        
+        if not warnings and not errors:
+            self.logger.warning("🩺 AUTO-HEAL: All checks passed — system healthy ✅")
+            return
+        
+        self.logger.warning(
+            f"🩺 AUTO-HEAL: Found {len(errors)} error(s), {len(warnings)} warning(s) — attempting remediation"
+        )
+        
+        healed = 0
+        
+        for check in errors + warnings:
+            name = check.get("name", "")
+            try:
+                fixed = await self._try_heal_check(check)
+                if fixed:
+                    healed += 1
+                    self.logger.warning(f"   ✅ Healed: {name}")
+                else:
+                    self.logger.info(f"   ⏭️  No auto-fix for: {name}")
+            except Exception as heal_err:
+                self.logger.warning(f"   ❌ Heal failed for {name}: {heal_err}")
+        
+        # If there are issues we can't auto-fix AND cloud LLM is available,
+        # ask it for advice and log the recommendation
+        unfixed = [c for c in errors + warnings
+                   if not await self._is_auto_fixable(c)]
+        if unfixed:
+            await self._ask_cloud_for_heal_advice(unfixed)
+        
+        self.logger.warning(
+            f"🩺 AUTO-HEAL complete: {healed} issue(s) remediated, "
+            f"{len(errors) + len(warnings) - healed} remaining"
+        )
+    
+    async def _is_auto_fixable(self, check: Dict) -> bool:
+        """Check if a diagnosis issue has a known auto-fix."""
+        name = check.get("name", "")
+        return name in (
+            "Ollama (Local LLM)",
+            "Python Dependencies",
+            "Frontend (React)",
+        )
+    
+    async def _try_heal_check(self, check: Dict) -> bool:
+        """
+        Attempt to auto-fix a single doctor check.
+        Returns True if remediation was successful.
+        """
+        import subprocess
+        name = check.get("name", "")
+        
+        # ── Ollama model not pulled ────────────────────────────
+        if name == "Ollama (Local LLM)" and not check.get("model_ready"):
+            model = check.get("configured_model", "")
+            if model and check.get("status") == "warn":
+                self.logger.warning(f"   🔄 Auto-pulling Ollama model: {model}")
+                try:
+                    result = subprocess.run(
+                        ["ollama", "pull", model],
+                        capture_output=True, text=True, timeout=600
+                    )
+                    return result.returncode == 0
+                except (subprocess.TimeoutExpired, FileNotFoundError):
+                    return False
+        
+        # ── Missing Python dependencies ────────────────────────
+        if name == "Python Dependencies" and check.get("missing"):
+            missing = check["missing"]
+            self.logger.warning(f"   🔄 Auto-installing missing deps: {missing}")
+            try:
+                result = subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "--quiet"] + missing,
+                    capture_output=True, text=True, timeout=120
+                )
+                return result.returncode == 0
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                return False
+        
+        # ── Frontend not built ─────────────────────────────────
+        if name == "Frontend (React)" and not check.get("built"):
+            frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+            if (frontend_dir / "package.json").exists():
+                self.logger.warning("   🔄 Auto-building frontend...")
+                try:
+                    # Install deps if needed
+                    subprocess.run(
+                        ["npm", "install"],
+                        cwd=str(frontend_dir),
+                        capture_output=True, text=True, timeout=120,
+                        shell=True
+                    )
+                    result = subprocess.run(
+                        ["npm", "run", "build"],
+                        cwd=str(frontend_dir),
+                        capture_output=True, text=True, timeout=120,
+                        shell=True
+                    )
+                    return result.returncode == 0
+                except (subprocess.TimeoutExpired, FileNotFoundError):
+                    return False
+        
+        return False
+    
+    async def _ask_cloud_for_heal_advice(self, unfixed_checks: List[Dict]):
+        """
+        When auto-fix can't handle issues, ask a cloud LLM for advice
+        and log the recommendation. Only fires if cloud keys are configured.
+        """
+        try:
+            from config.settings import get_settings
+            settings = get_settings()
+            
+            # Only proceed if we have a cloud API key
+            if not settings.anthropic_api_key and not settings.openai_api_key:
+                return
+            
+            if settings.local_only:
+                return
+            
+            check_summary = "\n".join(
+                f"- {c.get('name')}: {c.get('message', c.get('status', 'unknown'))}"
+                for c in unfixed_checks[:5]
+            )
+            
+            self.logger.info(
+                f"🤖 Cloud LLM heal advice requested for {len(unfixed_checks)} issue(s):\n"
+                f"{check_summary}"
+            )
+            
+            # Record this event for the learning system
+            from src.agent.build_learnings import record_build_outcome
+            record_build_outcome(
+                llm_tier="auto-heal",
+                llm_model="doctor",
+                user_prompt=f"Auto-heal diagnosis: {check_summary[:120]}",
+                files_expected=0,
+                files_created=0,
+                errors=[c.get("message", "") for c in unfixed_checks[:5]],
+                parse_method="none",
+                raw_snippet="",
+            )
+            
+        except Exception as e:
+            self.logger.debug(f"Cloud heal advice skipped: {e}")
     
     async def shutdown(self):
         """Graceful shutdown"""

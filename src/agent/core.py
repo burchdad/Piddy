@@ -454,6 +454,7 @@ Question: {input}
         
         # ── TIER 2: Ollama (free, local LLM) ──────────────────────────
         ollama_result = await self._try_local_llm(command, prompt, is_conversation)
+        ollama_failed = ollama_result is None
         if ollama_result:
             return ollama_result
         
@@ -473,11 +474,16 @@ Question: {input}
         # ── TIER 3: Anthropic Claude (paid cloud) ─────────────────────
         anthropic_result = await self._try_anthropic(command, prompt, is_conversation)
         if anthropic_result:
+            # Record cloud fix lesson so Ollama learns for next time
+            if ollama_failed:
+                self._record_fallback_lesson(prompt, anthropic_result, "claude")
             return anthropic_result
         
         # ── TIER 4: OpenAI GPT (paid cloud, last resort) ─────────────
         openai_result = await self._try_openai(command, prompt, is_conversation)
         if openai_result:
+            if ollama_failed:
+                self._record_fallback_lesson(prompt, openai_result, "gpt-4o")
             return openai_result
         
         # All tiers exhausted
@@ -556,6 +562,24 @@ Question: {input}
             command, prompt, is_conversation,
             self.openai_llm, "gpt-4o", "Tier 4"
         )
+    
+    def _record_fallback_lesson(self, prompt: str, cloud_result: 'CommandResponse', cloud_model: str):
+        """Record a lesson when cloud LLM succeeds after Ollama fails."""
+        try:
+            from src.agent.build_learnings import record_cloud_fix_lesson
+            cloud_output = cloud_result.result or ""
+            record_cloud_fix_lesson(
+                ollama_model=self.settings.ollama_model,
+                cloud_model=cloud_model,
+                user_prompt=prompt,
+                error_summary="Ollama failed to respond or returned None; cloud fallback succeeded",
+                ollama_code={},
+                cloud_code={"response": cloud_output[:2000]},
+                issues_fixed=["Ollama unavailable or failed — cloud provided response"],
+            )
+            logger.info(f"🎓 Fallback lesson recorded: {cloud_model} covered for Ollama")
+        except Exception as e:
+            logger.debug(f"Could not record fallback lesson: {e}")
     
     # Legacy alias for backward compatibility
     async def _try_cloud_llms(self, command, prompt, is_conversation) -> Optional[CommandResponse]:
